@@ -7,9 +7,11 @@ type IPCClient* = ref object of RootObj
   conn*: Connection
 
 proc send[T](ipcClient: IPCClient, data: T) =
-  var dataConv = data.toJson
+  var dataConv = jsony.toJson(data)
+  ipcClient.reactor.send(ipcClient.conn, dataConv)
 
+proc tick*(ipcClient: IPCClient):
+  ipcClient.reactor.tick()
 
-proc newIPCClient* =
-  var c = newReactor()
-  #var c2s = c.connect("127.0.0.1", 2048)
+proc newIPCClient*: IPCClient =
+  IPCClient()
