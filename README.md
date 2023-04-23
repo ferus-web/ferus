@@ -10,6 +10,7 @@ There's plenty of reasons.
 
 # Roadmap
 - Basic HTML parser                                                               [V]
+- Basic CSS parser                                                                [V]
 - Basic compositing (ps. possibly via [pixie](https://github.com/treeform/pixie)) [X]
 - Process isolation and sandboxing (Mozilla Ignition style sandboxing)            [X]
 - HTML5 (WHATWG) & CSS3 support                                                   [X]
