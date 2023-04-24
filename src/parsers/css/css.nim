@@ -29,11 +29,6 @@ proc parse*(parser: CSSParser, input: string): TableRef[string, TableRef[string,
       continue
 
     if parser.state == CSSParserState.psEndAttrib:
-      echo "endAttrib"
-      echo "eName: " & elementName
-      echo "can: " & currentAttribName
-      echo "cav: " & currentAttribValue
-      echo "============\n"
       attributes[elementName][currentAttribName] = currentAttribValue
 
       currentAttribName.reset()

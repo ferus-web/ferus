@@ -139,3 +139,6 @@ proc newButterfly*(data: string): Butterfly =
     error "[src/butterfly.nim] Invalid payload! Terminating!"
 
   Butterfly(payload: payload, butterType: bType, quality: ButterflyQuality.bqGood)
+
+var x = newButterfly("f[4.4]")
+echo $x.processFloat()

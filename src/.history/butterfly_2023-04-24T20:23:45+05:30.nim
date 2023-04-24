@@ -11,14 +11,13 @@
   s - string
   c - char
   i - int
-  f - float
 ]#
 import tables, chronicles, strutils
 
 #[
   Convert some data into a boolean.
 
-  For eg.,
+  For eg., 
   <html idonthaveanideaastoatagthatusesaboolean=true></html>
 
   Representation in butterfly form will be: ""true""
@@ -26,34 +25,19 @@ import tables, chronicles, strutils
 
 
 proc ferusButterflyBool*(data: string): bool =
-  if data == "true":
+  if data == "\"true\"":
     return true
-  elif data == "false":
+  elif data == "\"false\"":
     return false
-  elif data == "yes":
+  elif data == "\"yes\"":
     return true
-  elif data == "no":
+  elif data == "\"no\"":
     return false
 
   error "[src/butterfly.nim] ferusButterflyBool() hit an error -- payload does not match any(true, false, yes, no)"
 
-# This doesn't even need to exist
-proc ferusButterflyChar*(data: string): char =
-  if data.len < 1:
-    error "[src/butterfly.nim] ferusButterflyChar() hit an error -- payload is non-existant!!!! (len < 1; sanity check failed)"
-    return ' '
-  data[0]
-
 proc ferusButterflyInt*(data: string): int =
-  if data.len < 1:
-    error "[src/butterfly.nim] ferusButterflyInt() hit an error -- payload is non-existant!!!! (len < 1; sanity check failed)"
-
   parseInt(data)
-
-proc ferusButterflyFloat*(data: string): float =
-  if data.len < 1:
-    error "[src/butterfly.nim] ferusButterflyFloat() hit an error -- payload is non-existant!!!! (len < 1; sanity check failed)"
-  parseFloat(data)
 
 type
   ButterflyType* = enum
@@ -61,7 +45,6 @@ type
     btStr,
     btBool,
     btChar,
-    btFloat,
     btNone
 
   ButterflyQuality* = enum
@@ -87,21 +70,8 @@ proc processBool*(butterfly: Butterfly): bool =
     error "[src/butterfly.nim] Attempt to process bool out of a non-bool butterfly"
     return true
 
+  echo butterfly.payload
   return ferusButterflyBool(butterfly.payload)
-
-proc processChar*(butterfly: Butterfly): char =
-  if butterfly.butterType != ButterflyType.btChar:
-    error "[src/butterfly.nim] Attempt to process char out of a non-char butterfly"
-    return ' '
-
-  return ferusButterflyChar(butterfly.payload)
-
-proc processFloat*(butterfly: Butterfly): float =
-  if butterfly.butterType != ButterflyType.btFloat:
-    error "[src/butterfly.nim] Attempt to process float out of a non-float butterfly"
-    return 0.0
-
-  return ferusButterflyFloat(butterfly.payload)
 
 #[
   Get a pretty, new, shiny butterfly delivered to your house.
@@ -110,7 +80,7 @@ proc processFloat*(butterfly: Butterfly): float =
 proc newButterfly*(data: string): Butterfly =
   if data.len < 1:
     error "[src/butterfly.nim] Sanity check failed; raw data can not be empty!"
-
+ 
   var
     payload = ""
     bType: ButterflyType
@@ -120,7 +90,7 @@ proc newButterfly*(data: string): Butterfly =
     inc pIdx
     if c == '[' or c == ']':
       continue
-
+ 
     if pIdx == 0:
       continue
     payload = payload & c
@@ -133,9 +103,10 @@ proc newButterfly*(data: string): Butterfly =
     bType = ButterflyType.btChar
   elif data[0] == 'b':
     bType = ButterflyType.btBool
-  elif data[0] == 'f':
-    bType = ButterflyType.btFloat
   else:
     error "[src/butterfly.nim] Invalid payload! Terminating!"
 
   Butterfly(payload: payload, butterType: bType, quality: ButterflyQuality.bqGood)
+
+var x = newButterfly("b[true]")
+echo $x.processBool()

@@ -41,7 +41,7 @@ proc ferusButterflyBool*(data: string): bool =
 proc ferusButterflyChar*(data: string): char =
   if data.len < 1:
     error "[src/butterfly.nim] ferusButterflyChar() hit an error -- payload is non-existant!!!! (len < 1; sanity check failed)"
-    return ' '
+    ''
   data[0]
 
 proc ferusButterflyInt*(data: string): int =
@@ -92,7 +92,7 @@ proc processBool*(butterfly: Butterfly): bool =
 proc processChar*(butterfly: Butterfly): char =
   if butterfly.butterType != ButterflyType.btChar:
     error "[src/butterfly.nim] Attempt to process char out of a non-char butterfly"
-    return ' '
+    return ''
 
   return ferusButterflyChar(butterfly.payload)
 
@@ -139,3 +139,5 @@ proc newButterfly*(data: string): Butterfly =
     error "[src/butterfly.nim] Invalid payload! Terminating!"
 
   Butterfly(payload: payload, butterType: bType, quality: ButterflyQuality.bqGood)
+
+var x = newButterfly("f[4.4]")

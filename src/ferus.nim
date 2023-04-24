@@ -13,7 +13,6 @@ proc main =
   info fmt"[src/ferus.nim] Ferus {getVersion()} starting up!!"
   var dom = newDOM()
   parseFromFile(dom, "data/pages/test.html", true)
-
   echo dumpDOM(dom)
 
 when isMainModule:
