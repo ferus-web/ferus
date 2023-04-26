@@ -72,6 +72,3 @@ proc newIPCServer*: IPCServer =
   info "[src/ipc/server.nim] IPC server is now binding!", port=IPC_SERVER_DEFAULT_PORT
   var reactor = newReactor("localhost", IPC_SERVER_DEFAULT_PORT)
   IPCServer(reactor: reactor, alive: true, port: IPC_SERVER_DEFAULT_PORT, clients: @[])
-
-var s = newIPCServer()
-s.internalHeartbeat()

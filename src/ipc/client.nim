@@ -38,6 +38,3 @@ proc newIPCClient*: IPCClient =
   var conn = reactor.connect("127.0.0.1", IPC_SERVER_DEFAULT_PORT)
 
   IPCClient(reactor: reactor, port: IPC_SERVER_DEFAULT_PORT, conn: conn, alive: true)
-
-var c = newIPCClient()
-c.internalHeartbeat()
