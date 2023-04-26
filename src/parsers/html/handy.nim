@@ -9,11 +9,11 @@ import element
 proc recursiveDumpChild*(child: HTMLElement, t: int): string =
   var output = ""
 
-  let tabs = "\t"
+  var tabs = "\t"
   for tt in 0..t:
     tabs = tabs & "\t"
 
-  let cData = fmt"{tabs}ID: {}\n{tabs}TextContent: {}\n"
+  let cData = fmt"\nID: {child.tagName}\n{tabs}TextContent: {child.textContent}\n"
   output = output & cData
 
   for subchild in child.children:
@@ -26,7 +26,7 @@ proc dumpDOM*(dom: DOM): string =
 
   for rootsChildren in dom.root.children:
     let tabs = "\t"
-    let cData = fmt"{tabs}ID: {}\n{tabs}TextContent: {}\n"
+    let cData = fmt"{tabs}ID: {rootsChildren.tagName}\n{tabs}TextContent: {rootsChildren.textContent}\n"
     output = output & cData
 
     for rcChildren in rootsChildren.children:

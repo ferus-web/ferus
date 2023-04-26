@@ -1,4 +1,9 @@
 import std/tables
+import std/times
+
+import chronicles
+
+import rules/rules
 import ../../butterfly
 
 type
@@ -15,22 +20,30 @@ type
 
 proc isWhitespace*(c: char): bool =
   c == ' ' or c == '\n' or c == '\t'
-
-proc parse*(parser: CSSParser, input: string): TableRef[string, TableRef[string, string]] =
-  var 
+                                               # ROOT   OBJ     ATTRS   ATTRNAME BUTTERFLY
+proc parse*(parser: CSSParser, input: string): TableRef[string, TableRef[string, Butterfly]] =
+  var
+    startTime = cpuTime()
     elementName = ""
     currentAttribName = ""
     currentAttribValue = ""
-    # TODO: Finish src/butterfly.nim so that it can be used here and in the HTML parser
-    attributes = newTable[string, TableRef[string, string]]()
+    attributes = newTable[string, TableRef[string, Butterfly]]()
 
   for c in input:
     if isWhitespace(c):
       continue
 
     if parser.state == CSSParserState.psEndAttrib:
-      attributes[elementName][currentAttribName] = currentAttribValue
+      # compute butterfly payload
+      var data: string
+      try:
+        data = getCssTypes(currentAttribName) & "[" & currentAttribValue & "]"
+      except KeyError:
+        warn "[src/parsers/css.nim] No type in dictionary for this attribute! Defaulting to the good ol' string. (KeyError raised when trying to compare)", erroneousType=currentAttribName
+        data = "s[" & currentAttribValue & "]"
 
+      attributes[elementName][currentAttribName] = newButterfly(data)
+      
       currentAttribName.reset()
       currentAttribValue.reset()
 
@@ -53,7 +66,7 @@ proc parse*(parser: CSSParser, input: string): TableRef[string, TableRef[string,
       parser.state = CSSParserState.psReadName
 
     if c == '{' and parser.state != CSSParserState.psParseAttrName:
-      attributes[elementName] = newTable[string, string]()
+      attributes[elementName] = newTable[string, Butterfly]()
       parser.state = CSSParserState.psParseAttrName
       continue
     elif c != '{' and parser.state == CSSParserState.psReadName:
@@ -80,6 +93,7 @@ proc parse*(parser: CSSParser, input: string): TableRef[string, TableRef[string,
           parser.state = CSSParserState.psEndAttrib
         continue
 
+  info "[src/parsers/css.nim] Parsed CSS successfully!", timeMs=cpuTime() - startTime
   attributes
 
 proc newCSSParser*: CSSParser =
