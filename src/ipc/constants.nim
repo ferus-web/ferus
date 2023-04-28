@@ -1,5 +1,7 @@
 #[
   A directory for constant magic-ish integers indicating stuff
+
+  This code is licensed under the MIT license
 ]#
 
 const

@@ -1,9 +1,3 @@
-#[
-  The IPC Server.
-
-  This code is licensed under the MIT license
-]#
-
 import netty, jsony, chronicles, json, taskpools, constants, os, tables
 
 var tp = Taskpool.new(num_threads=8)

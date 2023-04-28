@@ -1,3 +1,9 @@
+#[
+  Event management system for Ferus
+
+  This code is licensed under the MIT license
+]#
+
 type Event* = ref object of RootObj
   name*: string
   listeners*: seq[proc(name: string) {.closure.}]

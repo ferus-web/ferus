@@ -1,3 +1,9 @@
+#[
+  State-machine based CSS parser for Ferus
+
+  This code is licensed under the MIT license
+]#
+
 import std/tables
 import std/times
 

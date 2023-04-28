@@ -1,5 +1,13 @@
-import netty, jsony, chronicles, weave, constants, os
+#[
+  The IPC Client.
+
+  This code is licensed under the MIT license
+]#
+
+import netty, jsony, chronicles, taskpools, constants, os
 import std/[tables, sequtils]
+
+var tp = Taskpool.new(num_threads=8)
 
 type IPCClient* = ref object of RootObj
   reactor*: Reactor
@@ -21,20 +29,23 @@ proc handshakeBegin*(ipcClient: IPCClient) =
     "clientPid": getCurrentProcessId()
   }.toTable)
 
-proc heartbeat*(ipcClient: IPCClient) =
+proc internalHeartbeat*(tp: Taskpool, ipcClient: IPCClient) =
   info "[src/ipc/client.nim] IPC client started using Weave multithreading"
   ipcClient.handshakeBegin()
   while ipcClient.alive:
+    sleep(8)
     ipcClient.reactor.tick()
 
-
-proc internalHeartbeat*(ipcClient: IPCClient) =
-  init(Weave)
-  spawn ipcClient.heartbeat
-  exit(Weave)
+proc heartbeat*(ipcClient: IPCClient) =
+  internalHeartbeat(tp, ipcClient)
 
 proc newIPCClient*: IPCClient =
   var reactor = newReactor()
   var conn = reactor.connect("127.0.0.1", IPC_SERVER_DEFAULT_PORT)
 
   IPCClient(reactor: reactor, port: IPC_SERVER_DEFAULT_PORT, conn: conn, alive: true)
+
+when defined(ferusDebugIpc):
+  info "[src/ipc/client.nim] Ferus compiled with -d:ferusDebugIpc; this should not be shipped in a mainstream release!"
+  var debuggerClient = newIPCClient()
+  debuggerClient.heartbeat()

@@ -1,3 +1,9 @@
+#[
+  Base Nim types with extra stuff to them for CSS' needs
+
+  This code is licensed under the MIT license
+]#
+
 import math
 
 type CSSFloat* = float

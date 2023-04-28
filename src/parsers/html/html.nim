@@ -1,3 +1,9 @@
+#[
+  State machine based HTML parser for Ferus.
+  
+  This code is licensed under the MIT license.
+]#
+
 import chronicles
 import element
 
@@ -5,6 +11,7 @@ type
   ParserState* = enum
     psInit,
     psStartTag,
+    psComment,
     psReadingTag,
     psReadingAttributes,
     psEndTag,
@@ -17,16 +24,42 @@ proc isWhitespace*(c: char): bool =
   c == ' '
 
 proc parse*(parser: Parser, input: string, root: HTMLElement): HTMLElement =
-  var lastParent: HTMLElement = root
-  var tagName: string = ""
+  var
+    lastParent: HTMLElement = root
+    tagName: string = ""
+
+    index: int = -1
 
   for c in input:
+    # Consume whitespace.
+    if isWhitespace(c):
+      continue
+  
+    inc index
+
+    # Comment handler
+    if parser.state == ParserState.psComment:
+      if c == '-':
+        if index + 1 < input.len and index + 2 < input.len:
+          if input[index + 1] == '-' and input[index + 2] == '>':
+            # Comment end! We now pretend that a tag has just ended.
+            parser.state = ParserState.psEndTag
+            continue
+
     if c == '<':
+      # Code to handle comments. They're just discarded by the parser.
+      #   !                                 -                     -
+      if index + 1 < input.len and index + 2 < input.len and index + 3 < input.len:
+        if input[index + 1] == '!' and input[index + 2] == '-' and input[index + 3] == '-':
+          # Comment detected!
+          parser.state = ParserState.psComment
+          continue
+        
       parser.state = ParserState.psStartTag
     elif parser.state == ParserState.psStartTag:
       if c == '/':
         parser.state = ParserState.psBeginClosingTag
-      elif not isWhitespace(c):
+      else:
         parser.state = ParserState.psReadingTag
         tagName = tagName & c
     elif parser.state == ParserState.psReadingTag:

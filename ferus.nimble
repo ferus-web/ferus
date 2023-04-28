@@ -16,4 +16,8 @@ requires "chronicles"
 requires "jsony"
 requires "netty"
 requires "urlly"
-requires "weave"
+requires "taskpools"
+
+# Linux-specific modules
+when defined(linux):
+  requires "seccomp"

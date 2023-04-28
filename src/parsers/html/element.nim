@@ -1,3 +1,9 @@
+#[
+  A HTML element.
+
+  This code is licensed under the MIT license
+]#
+
 type HTMLElement* = ref object of RootObj
   tagName*: string
   children*: seq[HTMLElement]

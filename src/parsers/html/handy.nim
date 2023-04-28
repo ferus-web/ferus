@@ -1,5 +1,7 @@
 #[
   Handy utilities for debugging the DOM in the console
+
+  This code is licensed under the MIT license
 ]#
 import strformat
 import ../dom

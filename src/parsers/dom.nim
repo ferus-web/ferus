@@ -1,3 +1,9 @@
+#[
+  The Document Object Model for Ferus
+
+  This code is licensed under the MIT license
+]#
+
 import chronicles
 import std/[times, os]
 import html/[html, element]

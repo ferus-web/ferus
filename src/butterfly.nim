@@ -1,5 +1,5 @@
 #[
-  Smart types for CSS/HTML values
+  Smart types for CSS/HTML values for Ferus
 
   Basic butterfly syntax (inside Butterfly.payload) is:
   ```
@@ -12,6 +12,8 @@
   c - char
   i - int
   f - float
+
+  This code is licensed under the MIT licensed
 ]#
 import tables, chronicles, strutils, panic
 

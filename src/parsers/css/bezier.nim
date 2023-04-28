@@ -2,6 +2,8 @@
   Parametric bezier curves.
 
   This is based on `servo/components/style/bezier.rs` in Servo.
+
+  This code is licensed under the MIT license
 ]#
 import csstypes
 
