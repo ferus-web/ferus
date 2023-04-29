@@ -15,7 +15,7 @@ import chronicles
 proc getFlagAt(idx: int): string =
   if idx > paramCount():
     error "[src/libferuscli.nim] getFlagAt() failed, idx > os.paramCount()"
-    return ""
+    quit()
 
   paramStr(idx).strip(chars = {'-', '-'}).toLowerAscii()
 
@@ -58,7 +58,5 @@ proc main =
 
   var sandboxedProcess = newChildProcess(procRole)
   sandboxedProcess.init()
-
-  
 
 main()

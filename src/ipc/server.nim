@@ -54,11 +54,11 @@ proc processMessages*(ipcServer: IPCServer) =
     if not ipcServer.isConnected(message.conn.address):
       info "[src/ipc/server.nim] New potential IPC client connected!", address=message.conn.address
 
-      if "payload" in data:
-        if data["payload"].getInt() == IPC_CLIENT_HANDSHAKE:
+      if "status" in data:
+        if data["status"].getInt() == IPC_CLIENT_HANDSHAKE:
           info "[src/ipc/server.nim] New IPC client wants to handshake!"
           ipcServer.sendExplicit(message.conn, {
-            "payload": IPC_SERVER_HANDSHAKE_ACCEPTED,
+            "status": IPC_SERVER_HANDSHAKE_ACCEPTED,
             "serverPid": getCurrentProcessId()
           }.toTable)
           ipcServer.clients.add(newClient(message.conn, data["clientPid"].getInt()))

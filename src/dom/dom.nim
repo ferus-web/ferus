@@ -19,6 +19,4 @@ proc getDocument*(dom: DOM): HTMLElement =
   dom.document
 
 proc newDOM*: DOM =
-  var parser = newParser()
-
-  DOM(parser: parser, root: newHTMLElement("root", "", parser))
+  DOM(document: newDocument(), style: newTable[string, TableRef[string, Butterfly]]())

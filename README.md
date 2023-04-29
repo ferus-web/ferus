@@ -8,12 +8,12 @@ There's plenty of reasons.
 - Be extremely customizable. Seriously. The only thing that I dislike about Chromium feature-wise is the lack of customizability of UI via CSS.
 - A side-aim, if you can call it that, is to increase the popularity of the Nim programming language. Seriously, it's awesome!
 
-# Roadmap
+# Roadmap (P = Partially done)
 - Basic HTML parser                                                               [V]
 - Basic CSS parser                                                                [V]
 - Basic compositing (ps. possibly via [pixie](https://github.com/treeform/pixie)) [X]
-- Process isolation and sandboxing (Mozilla Ignition style sandboxing)            [X]
-- HTML5 (WHATWG) & CSS3 support                                                   [X]
+- Process isolation and sandboxing (Chromium style sandboxing)                    [P]
+- HTML5 (WHATWG) & CSS3 support                                                   [P]
 - Hardware accelerated video decode                                               [X]
 - MV2-3 support (MV2 will never be deprecated here, once implemented)             [X]
 - Windows and MacOS builds                                                        [X]
@@ -32,6 +32,6 @@ Anything beyond Nim 1.6 should do. Nimble is also required.
 ```bash
 $ git clone https://github.com/xTrayambak/ferus.git
 $ cd ferus
-$ nimble build
+$ nimble productionBuild # Package maintainers: use this, there is productionBuildDebug, but it is only for Ferus developers
 $ ./ferus
 ```

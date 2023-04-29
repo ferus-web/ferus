@@ -54,17 +54,22 @@ proc policymanEnforceSeccompPolicy*(ctx: ScmpFilterCtx, processType: ProcessType
   info "[src/sandbox/linux/policyman.nim] Computing policy strategy for sandboxing"
   if processType == ProcessType.ptRenderer:
     info "[src/sandbox/linux/policyman.nim] Set Seccomp policy (ptRenderer)"
-    ctx.add_rule(Kill, "write")
-    ctx.add_rule(Kill, "read")
+    policymanProhibitIO(ctx)
   elif processType == ProcessType.ptNetwork:
     info "[src/sandbox/linux/policyman.nim] Set Seccomp policy (ptNetwork)"
-    ctx.add_rule(Kill, "write")
-    ctx.add_rule(Kill, "read")
+    policymanProhibitIO(ctx)
   elif processType == ProcessType.ptHtmlParser:
     info "[src/sandbox/linux/policyman.nim] Set Seccomp policy (ptHtmlParser)"
-    ctx.add_rule(Kill, "write")
-    ctx.add_rule(Kill, "read")
-    policymanProhibitSockets()
+    policymanProhibitIO(ctx)
+    policymanProhibitSockets(ctx)
+  elif processType == ProcessType.ptCssParser:
+    info "[src/sandbox/linux/policyman.nim] Set Seccomp policy (ptCssParser)"
+    policymanProhibitIO(ctx)
+    policymanProhibitSockets(ctx)
+  elif processType == ProcessType.ptBaliRuntime:
+    info "[src/sandbox/linux/policyman.nim] Set Seccomp policy (ptBaliRuntime)"
+    policymanProhibitIO(ctx)
+    policymanProhibitESD(ctx)
  
   info "[src/sandbox/linux/policyman.nim] Enforcing Seccomp policies! This process will no longer be able to do certain things."
   ctx.load()

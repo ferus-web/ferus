@@ -25,7 +25,7 @@ proc handshakeBegin*(ipcClient: IPCClient) =
   ipcClient.reactor.tick()
 
   ipcClient.send({
-    "payload": IPC_CLIENT_HANDSHAKE,
+    "status": IPC_CLIENT_HANDSHAKE,
     "clientPid": getCurrentProcessId()
   }.toTable)
 

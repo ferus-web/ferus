@@ -10,3 +10,17 @@ type ProcessType* = enum
   ptNetwork,
   ptCssParser,
   ptBaliRuntime
+
+proc processTypeToString*(procType: ProcessType): string =
+  if procType == ptRenderer:
+    return "renderer"
+  elif procType == ptHtmlParser:
+    return "html"
+  elif procType == ptNetwork:
+    return "net"
+  elif procType == ptCssParser:
+    return "css"
+  elif procType == ptBaliRuntime:
+    return "bali"
+  else:
+    raise newException(ValueError, "Invalid procType")

@@ -13,25 +13,33 @@ type
     drLoading, drInteractive, drComplete
 
   Document* = ref object of HTMLElement
+    root*: HTMLElement
     body*: HTMLElement
     head*: HTMLElement
 
-    parser*: Parser
+    htmlParser*: HTMLParser
     readyState*: DocumentReadyState
 
     title*: string
     dir*: string
 
-proc createElement*(document: Document, localName: string, options: TableRef[string, string])
 
-proc parseHTML(document: Document, input: string) =
+# proc createElement*(document: Document, localName: string, options: TableRef[string, string])
+
+proc parseHTML*(document: Document, input: string) =
   var startTime = cpuTime()
 
-  document.root = parse(document.parser, input, document.root)
-  
+  document.root = parse(document.htmlParser, input, document.root)
+
+  try:
+    document.body = document.root.findByTagName("html").findByTagName("body")
+    document.head = document.root.findByTagName("html").findByTagName("head")
+  except ValueError as e:
+    warn "[src/dom/document.nim] findByTagName() threw a ValueError! This means that we may be parsing bad data."
+ 
   info "[src/dom/document.nim] parseHTML(): completed parsing HTML!", timeTaken=cpuTime() - startTime
 
-proc parseFromFile(document: Document, fileName: string) =
+proc parseFromFile*(document: Document, fileName: string) =
   info "[src/parsers/dom.nim] parseFromFile(): fetching file"
   assert fileExists(fileName)
 
@@ -40,7 +48,9 @@ proc parseFromFile(document: Document, fileName: string) =
   parseHTML(document, contents)
 
 proc newDocument*: Document =
-  var parser = newParser()
-  Document(parser: parser, 
-           body: newHTMLElement("root", "", parser), 
+  var parser = newHTMLParser()
+  Document(htmlParser: parser, 
+           root: newHTMLElement("ferusRootIgnore", "", parser),
+           head: newHTMLElement("head", "", parser),
+           body: newHTMLElement("body", "", parser), 
            readyState: DocumentReadyState.drLoading)
