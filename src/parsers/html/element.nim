@@ -11,4 +11,5 @@ type HTMLElement* = ref object of RootObj
   textContent*: string
 
 proc newHTMLElement*(tagName: string, textContent: string, root: HTMLElement): HTMLElement =
-  HTMLElement(tagName: tagName, children: @[], parentElement: root, textContent: textContent)
+  HTMLElement(tagName: tagName, children: @[], 
+              parentElement: root, textContent: textContent)
