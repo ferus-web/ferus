@@ -39,13 +39,12 @@ proc internalHeartbeat*(tp: Taskpool, ipcClient: IPCClient) =
 proc heartbeat*(ipcClient: IPCClient) =
   internalHeartbeat(tp, ipcClient)
 
+proc kill*(ipcClient: IPCClient) =
+  info "[src/ipc/client.nim] IPC client is now shutting down"
+  ipcClient.alive = false
+
 proc newIPCClient*: IPCClient =
   var reactor = newReactor()
   var conn = reactor.connect("127.0.0.1", IPC_SERVER_DEFAULT_PORT)
 
   IPCClient(reactor: reactor, port: IPC_SERVER_DEFAULT_PORT, conn: conn, alive: true)
-
-when defined(ferusDebugIpc):
-  info "[src/ipc/client.nim] Ferus compiled with -d:ferusDebugIpc; this should not be shipped in a mainstream release!"
-  var debuggerClient = newIPCClient()
-  debuggerClient.heartbeat()

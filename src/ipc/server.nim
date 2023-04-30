@@ -74,11 +74,11 @@ proc internalHeartbeat*(tp: Taskpool, ipcServer: IPCServer) =
 proc heartbeat*(ipcServer: IPCServer) =
   internalHeartbeat(tp, ipcServer)
 
+proc kill*(ipcServer: IPCServer) =
+  info "[src/ipc/server.nim] IPC server is now shutting down"
+  ipcServer.alive = false
+
 proc newIPCServer*: IPCServer =
   info "[src/ipc/server.nim] IPC server is now binding!", port=IPC_SERVER_DEFAULT_PORT
   var reactor = newReactor("localhost", IPC_SERVER_DEFAULT_PORT)
   IPCServer(reactor: reactor, alive: true, port: IPC_SERVER_DEFAULT_PORT, clients: @[])
-
-info "[src/ipc/client.nim] Ferus compiled with -d:ferusDebugIpc; this should not be shipped to mainstream!"
-var debuggerServer = newIPCServer()
-debuggerServer.heartbeat()
