@@ -6,21 +6,32 @@
 
 import seccomp
 import seccomp/seccomp_lowlevel
-import chronicles
+import chronicles, taskpools
 import ../processtypes
+
+var tp = Taskpool.new(num_threads=2)
 
 #[
   policymanProhibitSockets()
 
   prevents a process from calling any traditional UNIX socket syscalls like bind(2), accept(2), sendto(2) etc.
 ]#
-proc policymanProhibitSockets(ctx: ScmpFilterCtx) {.inline.} =
+proc policymanProhibitSockets(ctx: ScmpFilterCtx, allowClient: bool) {.inline.} =
   ctx.add_rule(Kill, "read")
   ctx.add_rule(Kill, "bind")
-  ctx.add_rule(Kill, "recvfrom")
-  ctx.add_rule(Kill, "connect")
+  
+  # Allow "client" socket syscalls, necessary for IPC connections
+  # Doesn't allow any "server" socket syscalls like read, bind or accept
+  if allowClient:
+    ctx.add_rule(Allow, "recvfrom")
+    ctx.add_rule(Allow, "connect")
+    ctx.add_rule(Allow, "sendto")
+  else:
+    ctx.add_rule(Kill, "recvfrom")
+    ctx.add_rule(Kill, "connect")
+    ctx.add_rule(Kill, "sendto")
+
   ctx.add_rule(Kill, "accept")
-  ctx.add_rule(Kill, "sendto")
   ctx.add_rule(Kill, "setsockopt")
   ctx.add_rule(Kill, "getsockopt")
   ctx.add_rule(Kill, "getpeername")
@@ -61,15 +72,16 @@ proc policymanEnforceSeccompPolicy*(ctx: ScmpFilterCtx, processType: ProcessType
   elif processType == ProcessType.ptHtmlParser:
     info "[src/sandbox/linux/policyman.nim] Set Seccomp policy (ptHtmlParser)"
     policymanProhibitIO(ctx)
-    policymanProhibitSockets(ctx)
+    policymanProhibitSockets(ctx, true)
   elif processType == ProcessType.ptCssParser:
     info "[src/sandbox/linux/policyman.nim] Set Seccomp policy (ptCssParser)"
     policymanProhibitIO(ctx)
-    policymanProhibitSockets(ctx)
+    policymanProhibitSockets(ctx, true)
   elif processType == ProcessType.ptBaliRuntime:
     info "[src/sandbox/linux/policyman.nim] Set Seccomp policy (ptBaliRuntime)"
     policymanProhibitIO(ctx)
     policymanProhibitESD(ctx)
  
   info "[src/sandbox/linux/policyman.nim] Enforcing Seccomp policies! This process will no longer be able to do certain things."
-  ctx.load()
+  tp.spawn ctx.load()
+  info "[src/sandbox/linux/policyman.nim] Enforced."

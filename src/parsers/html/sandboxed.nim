@@ -8,7 +8,7 @@
 ]#
 
 import tables
-import html, ../../ipc/client, ../../ipc/constants
+import html, ../../ipc/client, ../../ipc/constants, ../../sandbox/processtypes
 
 
 type SandboxedHTMLParser* = ref object of RootObj
@@ -16,4 +16,11 @@ type SandboxedHTMLParser* = ref object of RootObj
   ipcClient*: IPCClient
 
 proc parse*(sandboxedHtmlParser: SandboxedHTMLParser, input: string) =
-  sandboxedHtmlParser.ipcClient.send({"status": IPC_CLIENT_RESULT, "payload": {}.toTable}.toTable)
+  sandboxedHtmlParser.ipcClient.send(
+    {
+      "status": IPC_CLIENT_RESULT, 
+      "payload": {
+        "role": processTypeToString(ptHtmlParser)
+      }.toTable
+    }.toTable
+  )

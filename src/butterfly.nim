@@ -15,7 +15,7 @@
 
   This code is licensed under the MIT licensed
 ]#
-import tables, chronicles, strutils, panic
+import tables, chronicles, strutils
 
 #[
   Convert some data into a boolean.

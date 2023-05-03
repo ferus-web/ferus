@@ -5,9 +5,11 @@
 ]#
 
 import netty, jsony, chronicles, taskpools, constants, os
-import std/[tables, sequtils]
+import std/[tables]
 
-var tp = Taskpool.new(num_threads=8)
+const FERUS_IPC_CLIENT_NUMTHREADS {.intdefine.} = 2
+
+var tp = Taskpool.new(num_threads=FERUS_IPC_CLIENT_NUMTHREADS)
 
 type IPCClient* = ref object of RootObj
   reactor*: Reactor
@@ -38,10 +40,12 @@ proc internalHeartbeat*(tp: Taskpool, ipcClient: IPCClient) =
 
 proc heartbeat*(ipcClient: IPCClient) =
   internalHeartbeat(tp, ipcClient)
+  tp.syncAll()
 
 proc kill*(ipcClient: IPCClient) =
   info "[src/ipc/client.nim] IPC client is now shutting down"
   ipcClient.alive = false
+  tp.shutdown()
 
 proc newIPCClient*: IPCClient =
   var reactor = newReactor()

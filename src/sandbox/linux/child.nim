@@ -5,7 +5,7 @@
 ]#
 
 import sandbox,
-       os,
+       os, tables,
        ../../ipc/client,
        ../processtypes
 
@@ -16,6 +16,7 @@ type ChildProcess* = ref object of RootObj
 
 proc init*(childProc: ChildProcess) =
   childProc.sandbox.beginSandbox()
+  childProc.ipcClient.heartbeat()
 
 proc newChildProcess*(procType: ProcessType): ChildProcess =
   # Note to all developers -- do NOT add any code before the sandbox is initialized!

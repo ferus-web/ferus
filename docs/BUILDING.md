@@ -21,7 +21,7 @@ $ nimble productionBuild
 
 Build (debug build, should never be packaged as it contains debug symbols)
 ```bash
-$ nimble productionBuildDebug
+$ nimble debugBuild
 ```
 - In the bin/ folder, two binaries will be generated. They both must be shipped together.
 

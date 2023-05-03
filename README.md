@@ -35,3 +35,6 @@ $ cd ferus
 $ nimble productionBuild # Package maintainers: use this, there is productionBuildDebug, but it is only for Ferus developers
 $ ./ferus
 ```
+
+# Attributions
+[SHA256 implementation](https://github.com/jangko/nimSHA2/)

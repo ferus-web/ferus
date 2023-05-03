@@ -5,7 +5,7 @@
 ]#
 
 import os, strutils
-import sandbox/processtypes
+import sandbox/processtypes, renderer/sandboxed
 
 when defined(linux):
   import sandbox/linux/child
@@ -58,5 +58,12 @@ proc main =
 
   var sandboxedProcess = newChildProcess(procRole)
   sandboxedProcess.init()
+
+  if procRole == ptRenderer:
+    var sRenderer = newSandboxedRenderer()
+    sRenderer.initialize()
+  else:
+    echo procRole
+
 
 main()

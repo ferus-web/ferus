@@ -6,10 +6,51 @@
 ]#
 
 import chronicles
-import std/[random, sysrand]
+import std/[random, sysrand, sequtils]
+
+# Small character set for the hasher
+var CHAR_SET = [
+  'a', 'A',
+  'b', 'B',
+  'c', 'C',
+  'd', 'D',
+  'e', 'E',
+  'f', 'F',
+  'g', 'G',
+  'h', 'H',
+  'i', 'I',
+  'j', 'J',
+  'k', 'K',
+  'l', 'L',
+  'm', 'M',
+  'n', 'N',
+  'o', 'O',
+  'p', 'P',
+  'q', 'Q',
+  'r', 'R',
+  's', 'S', 
+  't', 'T',
+  'u', 'U',
+  'v', 'V',
+  'w', 'W',
+  'x', 'X',
+  'y', 'Y',
+  'z', 'Z',
+  # '@', '!', '?', '#', '$', '%', '^', '&', '*', '(', ')', '{', '}', '|', '/', ':', 
+  # ';', '[', ']', ',', '.', '<', '>', '~', '`', '\'',
+  '1', '2', '3', '4', '5', '6', '7', '8', '9', '0'
+]
 
 info "[src/rand.nim] Randomizing Xoroshiro128+ initial state"
 randomize()
+
+proc getRandAlphabetSequence*(stop: int): string =
+  var x = ""
+  for i in 0..stop:
+    shuffle(CHAR_SET)
+    x = x & CHAR_SET[0]
+
+  x
 
 proc randint*(start: int, stop: int): int =
   rand(start..stop)
