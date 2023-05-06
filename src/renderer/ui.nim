@@ -1,31 +1,29 @@
-import gintro/[gtk4, gobject, gio]
-import chronicles
+import render, windy, pixie, boxy
 
 type UI* = ref object of RootObj
-  app*: Application
+  renderer*: Renderer
+  boxy*: Boxy
 
-var 
-  window: ApplicationWindow
-  ui: UI
+proc blit*(ui: UI) =
+  let image = newImage(200, 200)
+  image.fill(rgba(255, 255, 255, 255))
 
-proc setTitle*(ui: UI, title: string) =
-  window.title = "Ferus — " & title
+  var font = readFont("../data/IBMPlexSans-Bold.ttf")
+  font.size = 20
 
-proc setWindowSize*(ui: UI, size: tuple[w: int, h: int]) =
-  window.defaultSize = (size.w, size.h)
+  image.fillText(font.typeset("Hello Ferus!", vec2(180, 180)), translate(vec2(10, 10)))
 
-proc initialize*(app: Application) =
-  info "[src/renderer/ui.nim] Using GTK as backend; initializing!"
-  window = newApplicationWindow(app)
-  ui.setTitle("initializing!")
-  ui.setWindowSize((w: 200, h: 200))
+  ui.boxy.addImage("frame", image, genMipmaps = false)
 
-  window.show()
+  ui.boxy.beginFrame(ui.renderer.window.size)
+  ui.boxy.drawImage("frame", vec2(0, 0))
+  ui.boxy.endFrame()
+
+proc init*(ui: UI) =
+  proc iOnRender(window: Window) =
+    ui.blit()
+  ui.renderer.attachToRender(iOnRender)
+  ui.renderer.init()
 
 proc newUI*: UI =
-  var app = newApplication("io.github.xtrayambak.ferus")
-  ui = UI(app: app)
-
-  discard connect(app, "activate", initialize)
-  discard run(app)
-  ui
+  UI(renderer: newRenderer(), boxy: newBoxy())

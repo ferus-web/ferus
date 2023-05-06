@@ -6,7 +6,6 @@
 
 import chronicles
 import ipc/server
-import renderer/ui
 import tab
 
 import sandbox/processtypes
@@ -22,6 +21,8 @@ proc initRenderer*(app: FerusApplication) =
   app.broker.createNewProcess(ptRenderer)
 
 proc newFerusApplication*: FerusApplication =
+  info "[src/app.nim] Ferus application layer is now starting"
+
   var server = newIPCServer()
   var broker = newBroker(server)
 

@@ -6,7 +6,7 @@
 ]#
 
 import chronicles
-import std/[random, sysrand, sequtils]
+import std/[random, sysrand]
 
 # Small character set for the hasher
 var CHAR_SET = [

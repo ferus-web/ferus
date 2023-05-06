@@ -60,6 +60,7 @@ proc main =
   sandboxedProcess.init()
 
   if procRole == ptRenderer:
+    info "[src/libferuscli.nim] Renderer is initializing in sandboxed mode!"
     var sRenderer = newSandboxedRenderer()
     sRenderer.initialize()
   else:

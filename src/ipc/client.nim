@@ -4,12 +4,10 @@
   This code is licensed under the MIT license
 ]#
 
-import netty, jsony, chronicles, taskpools, constants, os
+import netty, jsony, chronicles, weave, constants, os
 import std/[tables]
 
 const FERUS_IPC_CLIENT_NUMTHREADS {.intdefine.} = 2
-
-var tp = Taskpool.new(num_threads=FERUS_IPC_CLIENT_NUMTHREADS)
 
 type IPCClient* = ref object of RootObj
   reactor*: Reactor
@@ -31,7 +29,7 @@ proc handshakeBegin*(ipcClient: IPCClient) =
     "clientPid": getCurrentProcessId()
   }.toTable)
 
-proc internalHeartbeat*(tp: Taskpool, ipcClient: IPCClient) =
+proc internalHeartbeat*(ipcClient: IPCClient) =
   info "[src/ipc/client.nim] IPC client started using Weave multithreading"
   ipcClient.handshakeBegin()
   while ipcClient.alive:
@@ -39,13 +37,13 @@ proc internalHeartbeat*(tp: Taskpool, ipcClient: IPCClient) =
     ipcClient.reactor.tick()
 
 proc heartbeat*(ipcClient: IPCClient) =
-  internalHeartbeat(tp, ipcClient)
-  tp.syncAll()
+  init(Weave)
+  ipcClient.internalHeartbeat()
+  exit(Weave)
 
 proc kill*(ipcClient: IPCClient) =
   info "[src/ipc/client.nim] IPC client is now shutting down"
   ipcClient.alive = false
-  tp.shutdown()
 
 proc newIPCClient*: IPCClient =
   var reactor = newReactor()

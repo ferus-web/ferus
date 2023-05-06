@@ -6,10 +6,11 @@
 
 import seccomp
 import seccomp/seccomp_lowlevel
-import chronicles, taskpools
+import chronicles
 import ../processtypes
+import taskpools
 
-var tp = Taskpool.new(num_threads=2)
+var tp = Taskpool.new(num_threads=1)
 
 #[
   policymanProhibitSockets()

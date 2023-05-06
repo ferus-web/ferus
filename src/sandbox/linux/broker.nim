@@ -5,7 +5,7 @@ import chronicles, ../../rand, osproc, strformat,
 # The higher the number, more the time taken to generate the string,
 # but lesser the chance for a Broker signature conflict causing major confusions
 # TODO: Put an end to Broker conflicts, make sure they never share the same signature.
-const FERUS_BROKER_ALPHABET_SEQUENCE_LENGTH = 512
+const FERUS_BROKER_ALPHABET_SEQUENCE_LENGTH = 128
 
 type Broker* = ref object of RootObj
   ipcServer*: IPCServer

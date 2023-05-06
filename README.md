@@ -32,7 +32,7 @@ Anything beyond Nim 1.6 should do. Nimble is also required.
 ```bash
 $ git clone https://github.com/xTrayambak/ferus.git
 $ cd ferus
-$ nimble productionBuild # Package maintainers: use this, there is productionBuildDebug, but it is only for Ferus developers
+$ nimble productionBuild # Package maintainers: use this, there is debugBuild, but it is only for Ferus developers
 $ ./ferus
 ```
 

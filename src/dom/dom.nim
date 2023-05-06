@@ -4,11 +4,10 @@
   This code is licensed under the MIT license
 ]#
 
-import chronicles
 import std/tables
 
 import ../butterfly
-import ../parsers/html/[html, element]
+import ../parsers/html/[element]
 import document
 
 type DOM* = ref object of RootObj

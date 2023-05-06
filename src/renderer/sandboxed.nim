@@ -13,7 +13,7 @@ type SandboxedRenderer* = ref object of RootObj
   ui*: UI
 
 proc initialize*(sandboxedRenderer: SandboxedRenderer) =
-  initialize(sandboxedRenderer.ui.app)
+  sandboxedRenderer.ui.init()
 
 proc newSandboxedRenderer*: SandboxedRenderer =
   var client = IPCClient()

@@ -12,12 +12,29 @@ binDir        = "bin"
 
 requires "nim >= 1.6.10"
 
+# Chronicles -- logger
 requires "chronicles"
+
+# Jsony -- JSON encode/decode for IPC layer
 requires "jsony"
+
+# Netty -- low latency reliable UDP implementation
 requires "netty"
+
+# Urlly -- URL parser (I have no clue if it's 100% WHATWG compliant)
 requires "urlly"
+
+# Taskpools -- threading abstraction
 requires "taskpools"
-requires "gintro#head"
+
+# opengl -- OpenGL bindings for Nim
+requires "opengl"
+
+# windy -- Windowing system
+requires "windy"
+
+# boxy -- using pixie to render to an OpenGL context
+requires "boxy"
 
 # Linux-specific modules
 when defined(linux):
