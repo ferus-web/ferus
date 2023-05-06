@@ -9,17 +9,17 @@ There's plenty of reasons.
 - A side-aim, if you can call it that, is to increase the popularity of the Nim programming language. Seriously, it's awesome!
 
 # Roadmap (P = Partially done)
-- Basic HTML parser                                                               [V]
-- Basic CSS parser                                                                [V]
-- Basic compositing (ps. possibly via [pixie](https://github.com/treeform/pixie)) [X]
-- Process isolation and sandboxing (Chromium style sandboxing)                    [P]
-- HTML5 (WHATWG) & CSS3 support                                                   [P]
-- Hardware accelerated video decode                                               [X]
-- MV2-3 support (MV2 will never be deprecated here, once implemented)             [X]
-- Windows and MacOS builds                                                        [X]
-- BSD-family builds, should be trivial                                            [X]
-- Android and iOS builds, probably will be hellish                                [X]
-- ...Nintendo Switch builds, I suppose...?                                        [X]
+- [V] Basic HTML parser
+- [V] Basic CSS parser
+- [P] Basic compositing (ps. possibly via [pixie](https://github.com/treeform/pixie))
+- [V] Process isolation and sandboxing (Chromium style sandboxing)
+- [P] HTML5 (WHATWG) & CSS3 support
+- [X] Hardware accelerated video decode
+- [X] MV2-3 support (MV2 will never be deprecated here, once implemented)
+- [X] Windows and MacOS builds
+- [X] BSD-family builds, should be trivial
+- [X] Android and iOS builds, probably will be hellish
+- [X] ...Nintendo Switch builds, I suppose...?
 
 # When will it be complete?
 Like all free and open source software, there is no set date for release 1.0

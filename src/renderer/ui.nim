@@ -1,29 +1,42 @@
-import render, windy, pixie, boxy
+import render, windy, pixie, tables, chronicles
+
+var x = 80f
 
 type UI* = ref object of RootObj
   renderer*: Renderer
-  boxy*: Boxy
+  fonts*: TableRef[string, Font]
 
-proc blit*(ui: UI) =
-  let image = newImage(200, 200)
-  image.fill(rgba(255, 255, 255, 255))
+proc getFont*(ui: UI, fontName: string): Font =
+  ui.fonts[fontName]
 
-  var font = readFont("../data/IBMPlexSans-Bold.ttf")
-  font.size = 20
+proc addFont*(ui: UI, name: string, path: string) =
+  if name in ui.fonts:
+    warn "[src/renderer/ui.nim] Overwriting existing entry for font!", fontName=name
 
-  image.fillText(font.typeset("Hello Ferus!", vec2(180, 180)), translate(vec2(10, 10)))
+  ui.fonts[name] = readFont(path)
 
-  ui.boxy.addImage("frame", image, genMipmaps = false)
+proc blit*(ui: UI, surface: Image) =
+  # > be me
+  # > load font every frame
+  # > CPU screeches in agony, kernel OOM mechanism constantly kills Ferus
+  # > confused, refuse to elaborate
+  #[var font = readFont("../data/IBMPlexSans-Bold.ttf")
+  font.size = 20]#
 
-  ui.boxy.beginFrame(ui.renderer.window.size)
-  ui.boxy.drawImage("frame", vec2(0, 0))
-  ui.boxy.endFrame()
+  var font = ui.getFont("Default")
+
+  x += 0.5
+  
+  ui.renderer.drawText("Hello Ferus!", (x: x + 0.0f, y: 600f), (w: 240f, h: 180f), font, surface)
+  var x = ui.renderer.blurImg(surface)
 
 proc init*(ui: UI) =
-  proc iOnRender(window: Window) =
-    ui.blit()
+  proc iOnRender(window: Window, surface: Image) =
+    ui.blit(surface)
+  
+  ui.addFont("Default", "../data/IBMPlexSans-Bold.ttf")
   ui.renderer.attachToRender(iOnRender)
   ui.renderer.init()
 
-proc newUI*: UI =
-  UI(renderer: newRenderer(), boxy: newBoxy())
+proc newUI*(renderer: Renderer): UI =
+  UI(renderer: renderer, fonts: newTable[string, Font]())
