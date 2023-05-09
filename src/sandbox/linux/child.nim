@@ -11,7 +11,7 @@ import sandbox,
 
 
 type ChildProcess* = ref object of RootObj
-  ipcClient*: IPCClient
+  # ipcClient*: IPCClient
   sandbox*: FerusSandbox
 
 proc init*(childProc: ChildProcess) =
@@ -21,6 +21,7 @@ proc init*(childProc: ChildProcess) =
 proc newChildProcess*(procType: ProcessType): ChildProcess =
   # Note to all developers -- do NOT add any code before the sandbox is initialized!
   var sandbox = newFerusSandbox(8089, procType)
-  var ipc = newIPCClient()
+  # var ipc = newIPCClient()
+  # ipc.heartbeat()
 
-  ChildProcess(ipcClient: ipc, sandbox: sandbox)
+  ChildProcess(sandbox: sandbox)

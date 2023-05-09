@@ -24,8 +24,8 @@ requires "netty"
 # Urlly -- URL parser (I have no clue if it's 100% WHATWG compliant)
 requires "urlly"
 
-# Taskpools -- threading abstraction
-requires "taskpools"
+# Weave -- threading abstraction (ringabout's fork)
+requires "https://github.com/ringabout/weave"
 
 # opengl -- OpenGL bindings for Nim
 requires "opengl"

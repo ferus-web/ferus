@@ -17,5 +17,8 @@ type DOM* = ref object of RootObj
 proc getDocument*(dom: DOM): HTMLElement =
   dom.document
 
+proc push*(dom: DOM, elem: HTMLElement) =
+  dom.document.children.add(elem)
+
 proc newDOM*: DOM =
   DOM(document: newDocument(), style: newTable[string, TableRef[string, Butterfly]]())

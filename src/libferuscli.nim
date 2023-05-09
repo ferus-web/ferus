@@ -21,17 +21,20 @@ proc getFlagAt(idx: int): string =
 
 proc clean(s: string): string =
   var
-    idx = -1
     builder = ""
+    canWriteArgNow = false
 
   for c in s:
-    inc idx
-    if idx > 4:
+    if c == '=':
+      canWriteArgNow = true
+      continue
+    
+    if canWriteArgNow:
       builder = builder & c
 
   builder
 
-proc getProcessRole*(): ProcessType =
+proc getProcessRole*(): ProcessType {.inline.} =
   if getFlagAt(1).startswith("role"):
     var role = getFlagAt(1).clean()
     if role == "net":
@@ -46,13 +49,30 @@ proc getProcessRole*(): ProcessType =
       return ProcessType.ptBaliRuntime
     else:
       error "[src/libferuscli.nim] Could not determine ProcessType", roleGiven=role
-      quit()
+      quit(1)
+  else:
+    error "[src/libferuscli.nim] Process role must always be the first argument, this will be fixed in the future."
+    quit(1)
+
+proc getUnixTimeOfLaunch*(): uint64 {.inline.} =
+  if getFlagAt(2).startswith("unix-time-at-launch"):
+    return parseInt(getFlagAt(2).clean()).uint64
+  else:
+    error "[src/libferuscli.nim] Launch time (in UNIX time) must always be the second argument, this will be fixed in the future."
+    quit(1)
+
+proc getBrokerAffinitySignature*(): string {.inline.} =
+  if getFlagAt(3).startswith("broker-affinity-signature"):
+    return getFlagAt(3).clean()
+  else:
+    error "[src/libferuscli.nim] Broker affinity signature must always be the third argument, this will be fixed in the future."
+    quit(1)
 
 proc main =
   var initialFlag = getFlagAt(0)
   if initialFlag.len < 1:
     error "[src/libferuscli.nim] Expected arguments, got none."
-    quit()
+    quit(1)
 
   var procRole = getProcessRole()
 
@@ -61,7 +81,7 @@ proc main =
 
   if procRole == ptRenderer:
     info "[src/libferuscli.nim] Renderer is initializing in sandboxed mode!"
-    var sRenderer = newSandboxedRenderer()
+    var sRenderer = newSandboxedRenderer(sandboxedProcess)
     sRenderer.initialize()
   else:
     echo procRole

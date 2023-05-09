@@ -13,7 +13,6 @@ import seccomp,
 
 type
   FerusSandbox* = ref object of RootObj
-    #ipcClient*: IPCClient
     seccompCtx*: ScmpFilterCtx
     processType*: ProcessType
 
@@ -27,6 +26,5 @@ proc beginSandbox*(ferusSandbox: FerusSandbox) =
 
 proc newFerusSandbox*(parentPort: int, processType: ProcessType): FerusSandbox =
   info "[src/sandbox/linux/sandbox.nim] New sandbox initialized!"
-  #var ipc = newIPCClient()
 
   FerusSandbox(seccompCtx: seccomp_ctx(), processType: processType)

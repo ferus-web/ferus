@@ -7,18 +7,18 @@ import ui
 
 when defined(linux):
   import ../sandbox/linux/sandbox
+  import ../sandbox/linux/child
 
 
 type SandboxedRenderer* = ref object of RootObj
-  ipcClient*: IPCClient
-  renderer: Renderer
+  child*: ChildProcess
+  sandbox*: FerusSandbox
   ui*: UI
 
 proc initialize*(sandboxedRenderer: SandboxedRenderer) =
   sandboxedRenderer.ui.init()
 
-proc newSandboxedRenderer*: SandboxedRenderer =
+proc newSandboxedRenderer*(child: ChildProcess): SandboxedRenderer =
   var 
-    client = IPCClient()
     renderer = newRenderer(1280, 1080)
-  SandboxedRenderer(ipcClient: client, ui: newUI(renderer))
+  SandboxedRenderer(ui: newUI(renderer), child: child)

@@ -20,14 +20,15 @@ type
     psEndAttrib,
     psBadAttrib,
     psEndTag
-
+  
+  RuleSet* = TableRef[string, TableRef[string, Butterfly]]
   CSSParser* = ref object of RootObj
     state*: CSSParserState
 
 proc isWhitespace*(c: char): bool =
   c == ' ' or c == '\n' or c == '\t'
                                                # ROOT   OBJ     ATTRS   ATTRNAME BUTTERFLY
-proc parse*(parser: CSSParser, input: string): TableRef[string, TableRef[string, Butterfly]] =
+proc parse*(parser: CSSParser, input: string): RuleSet =
   var
     startTime = cpuTime()
     elementName = ""

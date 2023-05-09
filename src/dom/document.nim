@@ -4,7 +4,7 @@
   This code is licensed under the MIT license
 ]#
 
-import chronicles, times, os, tables
+import chronicles, times, os
 import ../parsers/html/element
 import ../parsers/html/html
 

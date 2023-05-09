@@ -1,5 +1,6 @@
 # Ferus -- a prototype web engine written in the Nim programming language
 Ferus is a small web rendering engine that is 100% independent (not based on WebKit, Blink or Gecko), fast, and (hopefully) secure. It aims to stand as an alternative to more popular web engines by providing full compatibility to how they work.
+Ferus also stands for Fast Engine (for) Rendering Ur Site, if you'd prefer that. :)
 
 # Why? (Why not just make a WebKit/Blink browser?)
 There's plenty of reasons.

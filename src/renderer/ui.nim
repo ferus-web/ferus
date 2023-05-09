@@ -1,40 +1,28 @@
-import render, windy, pixie, tables, chronicles
-
-var x = 80f
+import windy, pixie, 
+       chronicles,
+       tables,
+       render,
+       primitives,
+       ../layout/layout
 
 type UI* = ref object of RootObj
   renderer*: Renderer
+  layoutEngine*: LayoutEngine
   fonts*: TableRef[string, Font]
 
-proc getFont*(ui: UI, fontName: string): Font =
-  ui.fonts[fontName]
+proc loadIcon*(ui: UI) {.inline.} =
+  info "[src/renderer/ui.nim] Loading Ferus icon!"
+  ui.renderer.setIcon(readImage("../data/ferus_logo.png"))
 
-proc addFont*(ui: UI, name: string, path: string) =
-  if name in ui.fonts:
-    warn "[src/renderer/ui.nim] Overwriting existing entry for font!", fontName=name
-
-  ui.fonts[name] = readFont(path)
-
-proc blit*(ui: UI, surface: Image) =
-  # > be me
-  # > load font every frame
-  # > CPU screeches in agony, kernel OOM mechanism constantly kills Ferus
-  # > confused, refuse to elaborate
-  #[var font = readFont("../data/IBMPlexSans-Bold.ttf")
-  font.size = 20]#
-
-  var font = ui.getFont("Default")
-
-  x += 0.5
-  
-  ui.renderer.drawText("Hello Ferus!", (x: x + 0.0f, y: 600f), (w: 240f, h: 180f), font, surface)
-  var x = ui.renderer.blurImg(surface)
+proc blit*(ui: UI, surface: RenderImage) =
+  #ui.renderer.blurImg(surface, 4)
+  return
 
 proc init*(ui: UI) =
-  proc iOnRender(window: Window, surface: Image) =
+  proc iOnRender(window: Window, surface: RenderImage) =
     ui.blit(surface)
   
-  ui.addFont("Default", "../data/IBMPlexSans-Bold.ttf")
+  ui.loadIcon()
   ui.renderer.attachToRender(iOnRender)
   ui.renderer.init()
 

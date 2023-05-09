@@ -1,4 +1,4 @@
-import chronicles, ../../rand, osproc, strformat,
+import chronicles, ../../rand, osproc, strformat, times,
        ../../ipc/server,
        ../../sandbox/processtypes
 
@@ -14,7 +14,8 @@ type Broker* = ref object of RootObj
 proc createNewProcess*(broker: Broker, procType: ProcessType) =
   info "[src/sandbox/linux/broker.nim] Broker is creating new process!"
   
-  discard execCmd("./libferuscli" & fmt" --role={processTypeToString(procType)} --broker-affinity-signature={broker.signature}")
+  discard execCmd("./libferuscli" & 
+    fmt" --role={processTypeToString(procType)} --unix-time-at-launch={$epochTime()} --broker-affinity-signature={broker.signature}")
 
 proc newBroker*(ipcServer: IPCServer): Broker =
   var hasherInput = getRandAlphabetSequence(FERUS_BROKER_ALPHABET_SEQUENCE_LENGTH)
