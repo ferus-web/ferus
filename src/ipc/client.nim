@@ -5,7 +5,7 @@
 ]#
 
 import netty, jsony, chronicles, weave, constants, os, ../sandbox/processtypes
-import std/[tables, json]
+import std/[tables, json, strutils]
 
 const FERUS_IPC_CLIENT_NUMTHREADS {.intdefine.} = 2
 
@@ -17,6 +17,9 @@ type
     port*: int
     conn*: Connection
     receivers*: seq[Receiver]
+    
+    isBroker*: bool
+    brokerSignature*: string
 
     handshakeCompleted*: bool
     alive*: bool
@@ -30,11 +33,10 @@ proc handshakeBegin*(ipcClient: IPCClient) =
   ipcClient.reactor.tick()
 
   ipcClient.send({
-    "status": IPC_CLIENT_HANDSHAKE,
-    "payload": {
-      "role": ptRenderer.int
-    }.toTable,
-    "clientPid": getCurrentProcessId()
+    "status": IPC_CLIENT_HANDSHAKE.intToStr(),
+    "role": ptRenderer.processTypeToString(),
+    "clientPid": getCurrentProcessId().intToStr(),
+    "brokerAffinitySignature": ipcClient.brokerSignature
   }.toTable)
 
 proc parse*(ipcClient: IPCClient, message: string): JsonNode =
@@ -46,12 +48,20 @@ proc processMessages*(ipcClient: IPCClient) =
     for receiver in ipcClient.receivers:
       receiver(data)
 
-    if "handshakeResult" in data and not ipcClient.handshakeCompleted:
-      if data["handshakeResult"].getInt() == IPC_SERVER_HANDSHAKE_ACCEPTED:
-        info "[src/ipc/client.nim] We have been accepted by the IPC server!"
-      else:
-        warn "[src/ipc/client.nim] We have been declined access by the IPC server.", errCode=data["handshakeResult"].getInt()
-        quit(1)
+    if "status" in data and not ipcClient.handshakeCompleted:
+      try:
+        let status = data["status"]
+                  .getStr()
+                  .parseInt()
+
+        if status == IPC_SERVER_HANDSHAKE_ACCEPTED:
+          info "[src/ipc/client.nim] We have been accepted by the IPC server!"
+          ipcClient.handshakeCompleted = true
+        else:
+          warn "[src/ipc/client.nim] We have been declined access by the IPC server.", errCode=status
+          quit(1)
+      except ValueError:
+        warn "[src/ipc/client.nim] IPC server sent malformed packet (is it a bug?)"
 
 proc internalHeartbeat*(ipcClient: IPCClient) =
   info "[src/ipc/client.nim] IPC client started using Weave multithreading"
@@ -70,8 +80,11 @@ proc kill*(ipcClient: IPCClient) =
   info "[src/ipc/client.nim] IPC client is now shutting down"
   ipcClient.alive = false
 
-proc newIPCClient*: IPCClient =
+proc newIPCClient*(brokerSignature: string): IPCClient =
   var reactor = newReactor()
   var conn = reactor.connect("127.0.0.1", IPC_SERVER_DEFAULT_PORT)
 
-  IPCClient(reactor: reactor, port: IPC_SERVER_DEFAULT_PORT, conn: conn, alive: true)
+  IPCClient(
+    reactor: reactor, port: IPC_SERVER_DEFAULT_PORT, conn: conn, alive: true,
+    isBroker: true, brokerSignature: brokerSignature
+  )

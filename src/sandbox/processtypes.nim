@@ -41,3 +41,17 @@ proc stringToProcessType*(str: string): ProcessType =
     return ptBaliRuntime
   else:
     raise newException(ValueError, "Invalid str")
+
+proc intToProcessType*(i: int): ProcessType =
+  if i == 0:
+    return ptRenderer
+  elif i == 1:
+    return ptHtmlParser
+  elif i == 2:
+    return ptNetwork
+  elif i == 3:
+    return ptCssParser
+  elif i == 4:
+    return ptBaliRuntime
+
+  raise newException(ValueError, "Invalid int")

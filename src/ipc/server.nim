@@ -5,6 +5,7 @@
 ]#
 
 import netty, jsony, chronicles, json, taskpools, constants, os, tables,
+       strutils,
        ../sandbox/processtypes
 
 const FERUS_IPC_SERVER_NUMTHREADS {.intdefine.} = 2
@@ -24,8 +25,8 @@ type
     port*: int
     alive*: bool
     receivers*: seq[Receiver]
-
-    clients*: TableRef[ProcessType, Client]
+            # broker affinity         # process type # client reference
+    clients*: TableRef[string, TableRef[ProcessType, Client]]
 
 proc newClient*(connection: Connection, pid: int, affinitySignature: string): Client =
   Client(connection: connection, pid: pid, affinitySignature: affinitySignature)
@@ -33,17 +34,19 @@ proc newClient*(connection: Connection, pid: int, affinitySignature: string): Cl
 proc addReceiver*(ipcServer: IPCServer, receiver: Receiver) =
   ipcServer.receivers.add(receiver)
 
-proc send*[T](ipcServer: IPCServer, clientId: int, data: T) =
-  if clientId > ipcServer.clients.len:
-    error "[src/ipc/server.nim] Invalid call to send(); clientId exceeds ipcServer.clients.len! (sanity check failed)", clientId=clientId
-    return
-    
-  if clientId < 0:
-    error "[src/ipc/server.nim] Invalid call to send(); clientId is lesser than 0! (sanity check failed)"
-    return
+proc getClient*(ipcServer: IPCServer, affinitySignature: string, role: ProcessType): Client =
+  for affinity, clients in ipcServer.clients:
+    if affinity == affinitySignature:
+      for cRole, client in clients:
+        if cRole == role:
+          return client
 
+  raise newException(ValueError, "No such client in affinity signature " & affinitySignature & " with role " & $role)
+
+proc send*[T](ipcServer: IPCServer, affinitySignature: string, 
+              role: ProcessType, data: T) =
   var dataConv = jsony.toJson(data)
-  ipcServer.reactor.send(ipcServer.clients[clientId], dataConv)
+  ipcServer.reactor.send(getClient(affinitySignature, role).connection, dataConv)
 
 proc sendExplicit*[T](ipcServer: IPCServer, conn: Connection, data: T) =
   var dataConv = jsony.toJson(data)
@@ -53,9 +56,10 @@ proc parse*(ipcServer: IPCServer, message: string): JsonNode =
   jsony.fromJson(message)
 
 proc isConnected*(ipcServer: IPCServer, address: Address): bool =
-  for pType, client in ipcServer.clients:
-    if client.connection.address.port.int == address.port.int:
-      return true
+  for affinity, clients in ipcServer.clients:
+    for clientRole, client in clients:
+      if client.connection.address.port.int == address.port.int:
+        return true
 
   return false
 
@@ -72,26 +76,30 @@ proc processMessages*(ipcServer: IPCServer) =
         brokerAffinitySignature: string
 
       if "status" in data:
-        if data["status"].getInt() == IPC_CLIENT_HANDSHAKE:
+        let status = data["status"]
+          .getStr()
+          .parseInt()
+
+        if status == IPC_CLIENT_HANDSHAKE:
           info "[src/ipc/server.nim] New IPC client wants to handshake!"
-          if "payload" notin data:
-            warn "[src/ipc/server.nim] IPC client attempted to handshake without payload key"
-            ipcServer.sendExplicit(message.conn, {"handshakeResult": IPC_SERVER_HANDSHAKE_FAILED_EMPTY_PAYLOAD}.toTable)
+          
+          # Process role
+          if "role" notin data:
+            warn "[src/ipc/server.nim] IPC client attempted to handshake without describing process role"
+            ipcServer.sendExplicit(message.conn, {"handshakeResult": IPC_SERVER_HANDSHAKE_FAILED_EMPTY_ROLE_KEY}.toTable)
             return
           else:
-            var payload = data["payload"]
-            if "role" notin payload:
-              warn "[src/ipc/server.nim] IPC client attempted to handshake without describing process role"
-              ipcServer.sendExplicit(message.conn, {"handshakeResult": IPC_SERVER_HANDSHAKE_FAILED_EMPTY_ROLE_KEY}.toTable)
-              return
-            else:
+            try:
+              role = data["role"]
+                .getInt()
+                .intToProcessType()
 
-              try:
-                role = stringToProcessType(payload["role"].getStr())
-              except ValueError:
-                warn "[src/ipc/server.nim] IPC client sent invalid role key"
-                ipcServer.sendExplicit(message.conn, {"handshakeResult": IPC_SERVER_HANDSHAKE_FAILED_INVALID_ROLE_KEY}.toTable)
-                return
+            except ValueError:
+              warn "[src/ipc/server.nim] IPC client sent invalid role key"
+              ipcServer.sendExplicit(message.conn, {"handshakeResult": IPC_SERVER_HANDSHAKE_FAILED_INVALID_ROLE_KEY}.toTable)
+              return
+
+          # Process broker affinity signature
           if "brokerAffinitySignature" notin data:
             warn "[src/ipc/server.nim] IPC client attempted to handshake without a broker affinity signature"
             ipcServer.sendExplicit(message.conn, {"handshakeResult": IPC_SERVER_HANDSHAKE_FAILED_NO_BROKER_AFFINITY}.toTable)
@@ -100,11 +108,14 @@ proc processMessages*(ipcServer: IPCServer) =
             brokerAffinitySignature = data["brokerAffinitySignature"].getStr()
 
           ipcServer.sendExplicit(message.conn, {
-            "status": IPC_SERVER_HANDSHAKE_ACCEPTED,
-            "serverPid": getCurrentProcessId()
+            "status": IPC_SERVER_HANDSHAKE_ACCEPTED.intToStr(),
+            "serverPid": getCurrentProcessId().intToStr()
           }.toTable)
-          ipcServer.clients[role] = newClient(message.conn, data["clientPid"].getInt(), brokerAffinitySignature)
-          info "[src/ipc/server.nim] IPC client registered!", clientPid = data["clientPid"].getInt()
+
+
+          ipcServer.clients[brokerAffinitySignature] = newTable[ProcessType, Client]()
+          ipcServer.clients[brokerAffinitySignature][role] = newClient(message.conn, data["clientPid"].getStr().parseInt(), brokerAffinitySignature)
+          info "[src/ipc/server.nim] IPC client registered!", clientPid = data["clientPid"].getStr().parseInt()
 
 proc internalHeartbeat*(tp: Taskpool, ipcServer: IPCServer) =
   info "[src/ipc/server.nim] internalHeartbeat(): running in multithreaded mode via Weave."
@@ -123,4 +134,5 @@ proc kill*(ipcServer: IPCServer) =
 proc newIPCServer*: IPCServer =
   info "[src/ipc/server.nim] IPC server is now binding!", port=IPC_SERVER_DEFAULT_PORT
   var reactor = newReactor("localhost", IPC_SERVER_DEFAULT_PORT)
-  IPCServer(reactor: reactor, alive: true, port: IPC_SERVER_DEFAULT_PORT, clients: newTable[ProcessType, Client]())
+  IPCServer(reactor: reactor, alive: true, port: IPC_SERVER_DEFAULT_PORT, 
+            clients: newTable[string, newTable[ProcessType, Client]()]())
