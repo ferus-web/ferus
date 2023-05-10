@@ -3,6 +3,7 @@ import windy, pixie,
        tables,
        render,
        primitives,
+       ../dom/dom,
        ../layout/layout
 
 type UI* = ref object of RootObj
@@ -15,8 +16,7 @@ proc loadIcon*(ui: UI) {.inline.} =
   ui.renderer.setIcon(readImage("../data/ferus_logo.png"))
 
 proc blit*(ui: UI, surface: RenderImage) =
-  #ui.renderer.blurImg(surface, 4)
-  return
+  ui.layoutEngine.processLayout(surface)
 
 proc init*(ui: UI) =
   proc iOnRender(window: Window, surface: RenderImage) =
@@ -26,5 +26,7 @@ proc init*(ui: UI) =
   ui.renderer.attachToRender(iOnRender)
   ui.renderer.init()
 
-proc newUI*(renderer: Renderer): UI =
-  UI(renderer: renderer, fonts: newTable[string, Font]())
+proc newUI*(dom: DOM, renderer: Renderer): UI =
+  UI(renderer: renderer, 
+     fonts: newTable[string, Font](), layoutEngine: newLayoutEngine(dom, renderer)
+  )

@@ -76,11 +76,13 @@ proc processMessages*(ipcServer: IPCServer) =
           info "[src/ipc/server.nim] New IPC client wants to handshake!"
           if "payload" notin data:
             warn "[src/ipc/server.nim] IPC client attempted to handshake without payload key"
+            ipcServer.sendExplicit(message.conn, {"handshakeResult": IPC_SERVER_HANDSHAKE_FAILED_EMPTY_PAYLOAD}.toTable)
             return
           else:
             var payload = data["payload"]
             if "role" notin payload:
               warn "[src/ipc/server.nim] IPC client attempted to handshake without describing process role"
+              ipcServer.sendExplicit(message.conn, {"handshakeResult": IPC_SERVER_HANDSHAKE_FAILED_EMPTY_ROLE_KEY}.toTable)
               return
             else:
 
@@ -88,9 +90,11 @@ proc processMessages*(ipcServer: IPCServer) =
                 role = stringToProcessType(payload["role"].getStr())
               except ValueError:
                 warn "[src/ipc/server.nim] IPC client sent invalid role key"
+                ipcServer.sendExplicit(message.conn, {"handshakeResult": IPC_SERVER_HANDSHAKE_FAILED_INVALID_ROLE_KEY}.toTable)
                 return
           if "brokerAffinitySignature" notin data:
             warn "[src/ipc/server.nim] IPC client attempted to handshake without a broker affinity signature"
+            ipcServer.sendExplicit(message.conn, {"handshakeResult": IPC_SERVER_HANDSHAKE_FAILED_NO_BROKER_AFFINITY}.toTable)
             return
           else:
             brokerAffinitySignature = data["brokerAffinitySignature"].getStr()

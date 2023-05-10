@@ -4,17 +4,22 @@
   This code is licensed under the MIT license
 ]#
 
-import netty, jsony, chronicles, weave, constants, os
-import std/[tables]
+import netty, jsony, chronicles, weave, constants, os, ../sandbox/processtypes
+import std/[tables, json]
 
 const FERUS_IPC_CLIENT_NUMTHREADS {.intdefine.} = 2
 
-type IPCClient* = ref object of RootObj
-  reactor*: Reactor
-  port*: int
-  conn*: Connection
+type
+  Receiver* = proc(jsonNode: JSONNode)
 
-  alive*: bool
+  IPCClient* = ref object of RootObj
+    reactor*: Reactor
+    port*: int
+    conn*: Connection
+    receivers*: seq[Receiver]
+
+    handshakeCompleted*: bool
+    alive*: bool
 
 proc send[T](ipcClient: IPCClient, data: T) =
   var dataConv = jsony.toJson(data)
@@ -26,8 +31,27 @@ proc handshakeBegin*(ipcClient: IPCClient) =
 
   ipcClient.send({
     "status": IPC_CLIENT_HANDSHAKE,
+    "payload": {
+      "role": ptRenderer.int
+    }.toTable,
     "clientPid": getCurrentProcessId()
   }.toTable)
+
+proc parse*(ipcClient: IPCClient, message: string): JsonNode =
+  jsony.fromJson(message)
+
+proc processMessages*(ipcClient: IPCClient) =
+  for msg in ipcClient.reactor.messages:
+    var data = ipcClient.parse(msg.data)
+    for receiver in ipcClient.receivers:
+      receiver(data)
+
+    if "handshakeResult" in data and not ipcClient.handshakeCompleted:
+      if data["handshakeResult"].getInt() == IPC_SERVER_HANDSHAKE_ACCEPTED:
+        info "[src/ipc/client.nim] We have been accepted by the IPC server!"
+      else:
+        warn "[src/ipc/client.nim] We have been declined access by the IPC server.", errCode=data["handshakeResult"].getInt()
+        quit(1)
 
 proc internalHeartbeat*(ipcClient: IPCClient) =
   info "[src/ipc/client.nim] IPC client started using Weave multithreading"
@@ -35,6 +59,7 @@ proc internalHeartbeat*(ipcClient: IPCClient) =
   while ipcClient.alive:
     sleep(8)
     ipcClient.reactor.tick()
+    ipcClient.processMessages()
 
 proc heartbeat*(ipcClient: IPCClient) =
   init(Weave)
