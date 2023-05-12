@@ -1,6 +1,7 @@
 # Ferus -- a prototype web engine written in the Nim programming language
 Ferus is a small web rendering engine that is 100% independent (not based on WebKit, Blink or Gecko), fast, and (hopefully) secure. It aims to stand as an alternative to more popular web engines by providing full compatibility to how they work.
 Ferus also stands for Fast Engine (for) Rendering Ur Site, if you'd prefer that. :)
+It currently stands at 1.8k lines of code, and has simple compositing, a WIP layout engine, an incomplete DOM and HTML/CSS parsers ready.
 
 # Why? (Why not just make a WebKit/Blink browser?)
 There's plenty of reasons.
@@ -12,7 +13,7 @@ There's plenty of reasons.
 # Roadmap (P = Partially done)
 - [X] Basic HTML parser
 - [X] Basic CSS parser
-- [X] Basic compositing (ps. possibly via [pixie](https://github.com/treeform/pixie))
+- [X] Basic compositing
 - [X] Process isolation and sandboxing (Chromium style sandboxing)
 - [X] HTML5 (WHATWG) & CSS3 support
 - [ ] Hardware accelerated video decode
@@ -34,6 +35,7 @@ Anything beyond Nim 1.6 should do. Nimble is also required.
 $ git clone https://github.com/xTrayambak/ferus.git
 $ cd ferus
 $ nimble productionBuild # Package maintainers: use this, there is debugBuild, but it is only for Ferus developers
+$ cd bin
 $ ./ferus
 ```
 

@@ -4,10 +4,8 @@
   This code is licensed under the MIT license
 ]#
 
-import netty, jsony, chronicles, weave, constants, os, ../sandbox/processtypes
+import netty, jsony, chronicles, constants, os, ../sandbox/processtypes
 import std/[tables, json, strutils]
-
-const FERUS_IPC_CLIENT_NUMTHREADS {.intdefine.} = 2
 
 type
   Receiver* = proc(jsonNode: JSONNode)
@@ -63,18 +61,10 @@ proc processMessages*(ipcClient: IPCClient) =
       except ValueError:
         warn "[src/ipc/client.nim] IPC server sent malformed packet (is it a bug?)"
 
-proc internalHeartbeat*(ipcClient: IPCClient) =
-  info "[src/ipc/client.nim] IPC client started using Weave multithreading"
-  ipcClient.handshakeBegin()
-  while ipcClient.alive:
-    sleep(8)
-    ipcClient.reactor.tick()
-    ipcClient.processMessages()
-
 proc heartbeat*(ipcClient: IPCClient) =
-  init(Weave)
-  ipcClient.internalHeartbeat()
-  exit(Weave)
+  ipcClient.handshakeBegin()
+  ipcClient.reactor.tick()
+  ipcClient.processMessages()
 
 proc kill*(ipcClient: IPCClient) =
   info "[src/ipc/client.nim] IPC client is now shutting down"

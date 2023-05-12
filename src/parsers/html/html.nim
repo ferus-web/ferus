@@ -93,6 +93,9 @@ proc parse*(parser: HTMLParser, input: string, root: HTMLElement): HTMLElement =
         lastParent = parent
     elif parser.state == HTMLParserState.psEndTag:
       lastParent.textContent = lastParent.textContent & c
+
+      # Guess who messed up and never realized it...
+      tagName.reset()
     elif parser.state == HTMLParserState.psBeginClosingTag:
       if c == '>':
         lastParent = lastParent.parentElement

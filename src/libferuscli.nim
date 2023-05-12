@@ -5,7 +5,7 @@
 ]#
 
 import os, strutils
-import sandbox/processtypes, renderer/sandboxed
+import sandbox/processtypes, renderer/sandboxed, orchestral/client
 
 when defined(linux):
   import sandbox/linux/child
@@ -74,17 +74,25 @@ proc main =
     error "[src/libferuscli.nim] Expected arguments, got none."
     quit(1)
 
-  var procRole = getProcessRole()
+  var 
+    procRole = getProcessRole()
+    brokerAffinitySignature = getBrokerAffinitySignature()
+    taskMgr: OrchestralClient
 
-  var sandboxedProcess = newChildProcess(procRole)
+  var sandboxedProcess = newChildProcess(procRole, brokerAffinitySignature)
   sandboxedProcess.init()
 
   if procRole == ptRenderer:
     info "[src/libferuscli.nim] Renderer is initializing in sandboxed mode!"
     var sRenderer = newSandboxedRenderer(sandboxedProcess)
     sRenderer.initialize()
+
+    taskMgr = newOrchestralClient(sRenderer.ui.renderer,
+                                  sandboxedProcess.ipcClient)
   else:
     echo procRole
 
+  while true:
+    taskMgr.update()
 
 main()

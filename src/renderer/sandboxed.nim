@@ -1,7 +1,8 @@
 #[
   The sandboxed renderer (only 1 has to be created per Ferus instance)
 ]#
-import ../ipc/client
+import ../ipc/client,
+       ../dom/dom
 import render
 import ui
 
@@ -12,13 +13,12 @@ when defined(linux):
 
 type SandboxedRenderer* = ref object of RootObj
   child*: ChildProcess
-  sandbox*: FerusSandbox
   ui*: UI
 
 proc initialize*(sandboxedRenderer: SandboxedRenderer) =
   sandboxedRenderer.ui.init()
 
-proc newSandboxedRenderer*(child: ChildProcess): SandboxedRenderer =
+proc newSandboxedRenderer*(dom: DOM, child: ChildProcess): SandboxedRenderer =
   var 
     renderer = newRenderer(1280, 1080)
-  SandboxedRenderer(ui: newUI(renderer), child: child)
+  SandboxedRenderer(ui: newUI(dom, renderer), child: child)

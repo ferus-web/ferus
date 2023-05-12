@@ -4,13 +4,11 @@
   This code is licensed under the MIT license
 ]#
 
-import netty, jsony, chronicles, json, taskpools, constants, os, tables,
+import netty, jsony, chronicles, json, constants, os, tables,
        strutils,
        ../sandbox/processtypes
 
 const FERUS_IPC_SERVER_NUMTHREADS {.intdefine.} = 2
-
-var tp = Taskpool.new(num_threads=FERUS_IPC_SERVER_NUMTHREADS)
 
 type 
   Client* = ref object of RootObj
@@ -18,7 +16,7 @@ type
     pid*: int
     affinitySignature*: string
 
-  Receiver* = proc(jsonNode: JSONNode)
+  Receiver* = proc(jsonNode: JSONNode) {.gcsafe.} # but muh safety
 
   IPCServer* = ref object of RootObj
     reactor*: Reactor
@@ -117,16 +115,10 @@ proc processMessages*(ipcServer: IPCServer) =
           ipcServer.clients[brokerAffinitySignature][role] = newClient(message.conn, data["clientPid"].getStr().parseInt(), brokerAffinitySignature)
           info "[src/ipc/server.nim] IPC client registered!", clientPid = data["clientPid"].getStr().parseInt()
 
-proc internalHeartbeat*(tp: Taskpool, ipcServer: IPCServer) =
-  info "[src/ipc/server.nim] internalHeartbeat(): running in multithreaded mode via Weave."
-  while ipcServer.alive:
-    sleep(8)
-    ipcServer.reactor.tick()
-    ipcServer.processMessages()
- 
 proc heartbeat*(ipcServer: IPCServer) =
-  internalHeartbeat(tp, ipcServer)
-
+  ipcServer.reactor.tick()
+  ipcServer.processMessages()
+ 
 proc kill*(ipcServer: IPCServer) =
   info "[src/ipc/server.nim] IPC server is now shutting down"
   ipcServer.alive = false

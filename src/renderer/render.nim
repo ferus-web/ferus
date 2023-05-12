@@ -3,6 +3,8 @@ import opengl, chronicles,
        boxy, weave, 
        os, primitives
 
+const FERUS_RENDER_PIPELINE_NUMTHREADS {.intdefine.} = 4
+
 type
   DrawListener* = proc(window: Window, surface: RenderImage)
   Renderer* = ref object of RootObj
@@ -92,13 +94,6 @@ proc init*(renderer: Renderer) =
   renderer.glVendor = glVendor
   renderer.glRenderer = glRenderer
  
-  info "[src/renderer/render.nim] Renderer is entering main loop!", glVersion=glVersion, glVendor=glVendor, glRenderer=glRenderer
-  while not renderer.window.closeRequested:
-    renderer.onRender()
-
-  info "[src/renderer/render.nim] Shutting down context."
-  renderer.alive = false
-
 proc newRenderer*(height, width: int): Renderer =
   info "[src/renderer/render.nim] Instantiating renderer"
   loadExtensions()

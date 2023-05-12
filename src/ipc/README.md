@@ -12,7 +12,7 @@ import ipc/client
 
 var myIClient = newIPCClient()
 
-# after you call this, the client will run on a seperate thread and poll itself
+# after you call this, the client will run and poll itself
 # automatically.
 myICClient.heartbeat()
 ```
@@ -25,7 +25,7 @@ import ipc/server
 
 var myIServer = newIPCServer()
 
-# after you call this, the server will run on a seperate thread and poll itself
+# after you call this, the server will run and poll itself
 # automatically
 
 myIServer.heartbeat()

@@ -27,13 +27,20 @@ type
 # proc createElement*(document: Document, localName: string, options: TableRef[string, string])
 
 proc parseHTML*(document: Document, input: string) =
+  assert input.len > 0
+
   var startTime = cpuTime()
 
   document.root = parse(document.htmlParser, input, document.root)
 
   try:
-    document.body = document.root.findByTagName("html").findByTagName("body")
-    document.head = document.root.findByTagName("html").findByTagName("head")
+    document.body = document.root
+                    .findByTagName("html")
+                    .findByTagName("body")
+    document.head = document.root
+                    .findByTagName("html")
+                    .findByTagName("head")
+
   except ValueError as e:
     warn "[src/dom/document.nim] findByTagName() threw a ValueError! This means that we may be parsing bad data."
  
