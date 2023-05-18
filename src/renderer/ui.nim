@@ -9,7 +9,6 @@ import windy, pixie,
 type UI* = ref object of RootObj
   renderer*: Renderer
   layoutEngine*: LayoutEngine
-  fonts*: TableRef[string, Font]
 
 proc loadIcon*(ui: UI) {.inline.} =
   info "[src/renderer/ui.nim] Loading Ferus icon!"
@@ -28,5 +27,5 @@ proc init*(ui: UI) =
 
 proc newUI*(dom: DOM, renderer: Renderer): UI =
   UI(renderer: renderer, 
-     fonts: newTable[string, Font](), layoutEngine: newLayoutEngine(dom, renderer)
+     layoutEngine: newLayoutEngine(dom, renderer)
   )

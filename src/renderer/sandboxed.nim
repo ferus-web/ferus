@@ -1,10 +1,11 @@
 #[
   The sandboxed renderer (only 1 has to be created per Ferus instance)
 ]#
-import ../ipc/client,
-       ../dom/dom
-import render
-import ui
+import ../ipc/[client, constants],
+       ../dom/dom,
+       ui, render, ../orchestral/client,
+       ../layout/layout
+import std/[json, marshal, tables, strutils]
 
 when defined(linux):
   import ../sandbox/linux/sandbox
@@ -15,10 +16,39 @@ type SandboxedRenderer* = ref object of RootObj
   child*: ChildProcess
   ui*: UI
 
-proc initialize*(sandboxedRenderer: SandboxedRenderer) =
+proc startUI*(sandboxedRenderer: SandboxedRenderer, dom: DOM) =
+  var 
+    renderer = newRenderer(1280, 720)
+    ui = newUI(dom, renderer)
+
+  sandboxedRenderer.ui = ui
   sandboxedRenderer.ui.init()
 
-proc newSandboxedRenderer*(dom: DOM, child: ChildProcess): SandboxedRenderer =
-  var 
-    renderer = newRenderer(1280, 1080)
-  SandboxedRenderer(ui: newUI(dom, renderer), child: child)
+  var orchestralClient = newOrchestralClient(
+    sandboxedRenderer.ui.renderer, 
+    sandboxedRenderer.child.ipcClient
+  )
+  
+  while true:
+    orchestralClient.update()
+
+proc initialize*(sandboxedRenderer: SandboxedRenderer) =
+  sandboxedRenderer.child.ipcClient.send(
+    {
+      "result": IPC_CLIENT_NEEDS_DOM
+    }.toTable
+  )
+  proc domRecv(data: JSONNode) =
+    if "result" in data:
+      if data["result"].getStr().parseInt() == PACKET_TYPE_DOM:
+        var dom = to[DOM](data.getStr())
+        sandboxedRenderer.startUI(dom)
+      else:
+        echo "EEEEEEEEEEEEEEEEEEE"
+    else:
+      echo $data
+
+  sandboxedRenderer.child.ipcClient.addReceiver(domRecv)
+
+proc newSandboxedRenderer*(child: ChildProcess): SandboxedRenderer =
+  SandboxedRenderer(child: child)

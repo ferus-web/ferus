@@ -3,6 +3,9 @@
 
   This code is licensed under the MIT license
 ]#
+
+raise newException(Exception, "Tabs are coming in the future, you dingus!")
+
 import chronicles
 import dom/dom
 import ipc/server

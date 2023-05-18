@@ -3,7 +3,12 @@ import chronicles
 import utils
 import app
 
+proc userExit {.noconv.} =
+  info "[src/ferus.nim] User-triggered exit occured, goodbye world!"
+  quit 0
+
 proc main =
+  setControlCHook(userExit)
   info fmt"[src/ferus.nim] Ferus {getVersion()} starting up!!"
 
   when defined(windows) or defined(mac):
@@ -16,6 +21,7 @@ proc main =
 
   var app = newFerusApplication()
   app.initRenderer()
+  app.run()
 
 when isMainModule:
   main()

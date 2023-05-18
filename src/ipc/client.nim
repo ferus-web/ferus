@@ -22,7 +22,10 @@ type
     handshakeCompleted*: bool
     alive*: bool
 
-proc send[T](ipcClient: IPCClient, data: T) =
+proc addReceiver*(ipcClient: IPCClient, receiver: Receiver) =
+  ipcClient.receivers.add(receiver)
+
+proc send*[T](ipcClient: IPCClient, data: T) =
   var dataConv = jsony.toJson(data)
   ipcClient.reactor.send(ipcClient.conn, dataConv)
 

@@ -5,7 +5,6 @@
 ]#
 
 import seccomp,
-       seccomp/seccomp_lowlevel,
        chronicles,
        ../../ipc/client,
        ../processtypes,
@@ -13,13 +12,11 @@ import seccomp,
 
 type
   FerusSandbox* = ref object of RootObj
-    seccompCtx*: ScmpFilterCtx
     processType*: ProcessType
 
 proc beginSandbox*(ferusSandbox: FerusSandbox) =
   info "[src/sandbox/linux/sandbox.nim] Sandbox is now being started!", backend="seccomp", seccompVersion=get_version()
-  policymanEnforceSeccompPolicy(
-    ferusSandbox.seccompCtx, 
+  policymanEnforceSeccompPolicy( 
     ferusSandbox.processType
   )
   info "[src/sandbox/linux/sandbox.nim] Sandbox completed! This process is now isolated.", backend="seccomp", seccompVersion=get_version()
@@ -27,4 +24,4 @@ proc beginSandbox*(ferusSandbox: FerusSandbox) =
 proc newFerusSandbox*(parentPort: int, processType: ProcessType): FerusSandbox =
   info "[src/sandbox/linux/sandbox.nim] New sandbox initialized!"
 
-  FerusSandbox(seccompCtx: seccomp_ctx(), processType: processType)
+  FerusSandbox(processType: processType)

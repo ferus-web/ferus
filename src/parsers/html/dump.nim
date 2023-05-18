@@ -19,7 +19,7 @@ proc dump*(elem: HTMLElement,
   else:
     textContent = ""
   
-  if elem.tagName != "ferusRootIgnore":
+  if discardInternals and elem.tagName != "ferusRootIgnore":
     let elemInfo = fmt"[id: {elem.tagName}; numchildren: {elem.children.len}; textContent: {textContent}]"
     var tabs = ""
 

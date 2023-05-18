@@ -13,9 +13,7 @@ type Broker* = ref object of RootObj
 
 proc createNewProcess*(broker: Broker, procType: ProcessType) =
   info "[src/sandbox/linux/broker.nim] Broker is creating new process!"
-  
-  discard execCmd("./libferuscli" & 
-    fmt" --role={processTypeToString(procType)} --unix-time-at-launch={$epochTime()} --broker-affinity-signature={broker.signature}")
+  discard execCmd(fmt"./libferuscli --role={processTypeToString()} --broker-affinity-signature={broker.signature} --unix-time-at-launch={$getEpochTime()}")
 
 proc newBroker*(ipcServer: IPCServer): Broker =
   var hasherInput = getRandAlphabetSequence(FERUS_BROKER_ALPHABET_SEQUENCE_LENGTH)

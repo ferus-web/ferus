@@ -16,7 +16,7 @@ type
     pid*: int
     affinitySignature*: string
 
-  Receiver* = proc(jsonNode: JSONNode) {.gcsafe.} # but muh safety
+  Receiver* = proc(sender: Connection, jsonNode: JSONNode) {.gcsafe.} # but muh safety
 
   IPCServer* = ref object of RootObj
     reactor*: Reactor
@@ -65,7 +65,7 @@ proc processMessages*(ipcServer: IPCServer) =
   for message in ipcServer.reactor.messages:
     var data = ipcServer.parse(message.data)
     for receivers in ipcServer.receivers:
-      receivers(data)
+      receivers(message.conn, data)
 
     if not ipcServer.isConnected(message.conn.address):
       info "[src/ipc/server.nim] New potential IPC client connected!", address=message.conn.address
@@ -110,11 +110,10 @@ proc processMessages*(ipcServer: IPCServer) =
             "serverPid": getCurrentProcessId().intToStr()
           }.toTable)
 
-
           ipcServer.clients[brokerAffinitySignature] = newTable[ProcessType, Client]()
           ipcServer.clients[brokerAffinitySignature][role] = newClient(message.conn, data["clientPid"].getStr().parseInt(), brokerAffinitySignature)
           info "[src/ipc/server.nim] IPC client registered!", clientPid = data["clientPid"].getStr().parseInt()
-
+        
 proc heartbeat*(ipcServer: IPCServer) =
   ipcServer.reactor.tick()
   ipcServer.processMessages()

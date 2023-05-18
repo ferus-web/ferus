@@ -5,47 +5,41 @@
 ]#
 
 import seccomp
-import seccomp/seccomp_lowlevel
 import chronicles
 import ../processtypes
-import taskpools
-
-var tp = Taskpool.new(num_threads=1)
 
 #[
   policymanProhibitSockets()
 
   prevents a process from calling any traditional UNIX socket syscalls like bind(2), accept(2), sendto(2) etc.
 ]#
-proc policymanProhibitSockets(ctx: ScmpFilterCtx, allowClient: bool) {.inline.} =
-  ctx.add_rule(Kill, "read")
-  ctx.add_rule(Kill, "bind")
+proc policymanProhibitSockets(allowClient: bool) {.inline.} =
+  setSeccomp("read exit_group")
+  setSeccomp("bind exit_group")
   
   # Allow "client" socket syscalls, necessary for IPC connections
   # Doesn't allow any "server" socket syscalls like read, bind or accept
-  if allowClient:
-    ctx.add_rule(Allow, "recvfrom")
-    ctx.add_rule(Allow, "connect")
-    ctx.add_rule(Allow, "sendto")
-  else:
-    ctx.add_rule(Kill, "recvfrom")
-    ctx.add_rule(Kill, "connect")
-    ctx.add_rule(Kill, "sendto")
+  if not allowClient:
+    setSeccomp("recvfrom exit_group")
+    setSeccomp("connect exit_group")
+    setSeccomp("sendto exit_group")
 
-  ctx.add_rule(Kill, "accept")
-  ctx.add_rule(Kill, "setsockopt")
-  ctx.add_rule(Kill, "getsockopt")
-  ctx.add_rule(Kill, "getpeername")
-  ctx.add_rule(Kill, "listen")
+  setSeccomp("accept exit_group")
+  setSeccomp("setsockopt exit_group")
+  setSeccomp("getsockopt exit_group")
+  setSeccomp("getpeername exit_group")
+  setSeccomp("listen exit_group")
 
 #[
   policymanProhibitIO()
 
   prevents the process from calling the write(1) and read(1) syscalls
 ]#
-proc policymanProhibitIO(ctx: ScmpFilterCtx) {.inline.} =
-  ctx.add_rule(Kill, "write")
-  ctx.add_rule(Kill, "read")
+proc policymanProhibitIO {.inline.} =
+  echo "TODO(xTrayambak) THIS IS INTENTIONAL DAMAGE CONTROL!!!!!"
+  return
+  setSeccomp("write exit_group")
+  setSeccomp("read exit_group")
 
 #[
   policymanProhibitESD()
@@ -53,36 +47,33 @@ proc policymanProhibitIO(ctx: ScmpFilterCtx) {.inline.} =
   prevents the process from calling the shutdown(8) or exit(2)
   syscalls
 ]#
-proc policymanProhibitESD(ctx: ScmpFilterCtx) {.inline.} =
-  ctx.add_rule(Kill, "shutdown")
-  ctx.add_rule(Kill, "exit")
+proc policymanProhibitESD {.inline.} =
+  setSeccomp("shutdown exit_group")
 
 #[
   policymanEnforceSeccompPolicy()
 
   enforce an appropriate policy on the basis of process type
 ]#
-proc policymanEnforceSeccompPolicy*(ctx: ScmpFilterCtx, processType: ProcessType) =
+proc policymanEnforceSeccompPolicy*(processType: ProcessType) =
   info "[src/sandbox/linux/policyman.nim] Computing policy strategy for sandboxing"
   if processType == ProcessType.ptRenderer:
     info "[src/sandbox/linux/policyman.nim] Set Seccomp policy (ptRenderer)"
-    policymanProhibitIO(ctx)
+    policymanProhibitIO()
   elif processType == ProcessType.ptNetwork:
     info "[src/sandbox/linux/policyman.nim] Set Seccomp policy (ptNetwork)"
-    policymanProhibitIO(ctx)
+    policymanProhibitIO()
   elif processType == ProcessType.ptHtmlParser:
     info "[src/sandbox/linux/policyman.nim] Set Seccomp policy (ptHtmlParser)"
-    policymanProhibitIO(ctx)
-    policymanProhibitSockets(ctx, true)
+    policymanProhibitIO()
+    policymanProhibitSockets(true)
   elif processType == ProcessType.ptCssParser:
     info "[src/sandbox/linux/policyman.nim] Set Seccomp policy (ptCssParser)"
-    policymanProhibitIO(ctx)
-    policymanProhibitSockets(ctx, true)
+    policymanProhibitIO()
+    policymanProhibitSockets(true)
   elif processType == ProcessType.ptBaliRuntime:
     info "[src/sandbox/linux/policyman.nim] Set Seccomp policy (ptBaliRuntime)"
-    policymanProhibitIO(ctx)
-    policymanProhibitESD(ctx)
+    policymanProhibitIO()
+    policymanProhibitESD()
  
-  info "[src/sandbox/linux/policyman.nim] Enforcing Seccomp policies! This process will no longer be able to do certain things."
-  tp.spawn ctx.load()
   info "[src/sandbox/linux/policyman.nim] Enforced."

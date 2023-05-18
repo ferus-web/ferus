@@ -5,48 +5,33 @@
   This code is licensed under the MIT license
 ]#
 
-import ../renderer/render,
-       ../ipc/client,
+import ../ipc/server,
        chronicles
 
-type OrchestralClient* = ref object of RootObj
-  renderer*: tuple[cooldown: float, context: Renderer] # The renderer context
-  client*: tuple[cooldown: float, context: IPCClient] # the IPC client
+type OrchestralServer* = ref object of RootObj
+  server*: tuple[cooldown: float32, context: IPCServer] # the IPC client
 
-  clientLastUpdated*: 0f
-  rendererLastUpdated*: 0f
+  serverLastUpdated*: float
 
-proc updateRenderer*(orchestral: OrchestralClient) =
-  if orchestral.renderer.context.isNil:
-    warn "[src/orchestral/orchestral.nim] Scheduler was passed `nil` instead of src.renderer.render.Renderer; this function won't execute further to prevent a crash."
-    return
-
-  if orchestral.rendererLastUpdated >= orchestral.renderer.cooldown:
-    when defined(ferusUseVerboseLogging):
-      info "[src/orchestral/orchestral.nim] Updating renderer state!"
-
-    orchestral.renderer.context.onRender()
-  else:
-    orchestral.rendererLastUpdated += 0.1f
-
-proc updateClient*(orchestral: OrchestralClient) =
-  if orchestral.client.context.isNil:
+proc updateClient*(orchestral: OrchestralServer) =
+  if orchestral.server.context.isNil:
     warn "[src/orchestral/orchestral.nim] Scheduler was passed `nil` instead of src.ipc.client.Client; this function won't execute further to prevent a crash."
     return
 
-  if orchestral.clientLastUpdated >= orchestral.client.cooldown:
+  if orchestral.serverLastUpdated >= orchestral.server.cooldown:
     when defined(ferusUseVerboseLogging):
       info "[src/orchestral/orchestral.nim] Updating IPC client state!"
 
-    orchestral.client.context.heartbeat()
-    orchestral.clientLastUpdated = 0f
+    orchestral.server.context.heartbeat()
+    orchestral.serverLastUpdated = 0f
   else:
-    orchestral.clientLastUpdated += 0.1f
+    orchestral.serverLastUpdated += 0.1f
 
-proc update*(orchestral: OrchestralClient) =
+proc update*(orchestral: OrchestralServer) =
   orchestral
-    .updateRenderer()
     .updateClient()
 
-proc newOrchestralClient*(renderer: Renderer, client: IPCClient): OrchestralClient =
-  OrchestralClient(renderer: (cooldown: 0f, context: renderer), client: (cooldown: 8f, context: client))
+proc newOrchestralServer*(iserver: IPCServer): OrchestralServer =
+  OrchestralServer(
+    server: (cooldown: 8f, context: iserver)
+  )

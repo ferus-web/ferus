@@ -18,4 +18,8 @@ let data = """
 var x = newDOM()
 x.document.parseHTML(data)
 
-echo x.document.root.dump(0)
+let y = $$x
+let z = to[DOM](y)
+
+echo "Z: " & z.document.root.dump(0) & "\n\n"
+echo "X: " & x.document.root.dump(0) 
