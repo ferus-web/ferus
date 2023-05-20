@@ -23,8 +23,11 @@ proc newRenderImage*(img: Image): RenderImage =
 
 proc setIcon*(renderer: Renderer, image: Image) =
   # Ferus should only support 64x64 icons
-  assert image.height == 64 and image.width == 64
-  renderer.window.icon = image
+  if not renderer.isNil:
+    assert image.height == 64 and image.width == 64
+    renderer.window.icon = image
+  else:
+    warn "[src/renderer/render.nim] setIcon() failed as renderer has not yet been initialized."
 
 proc onRender*(renderer: Renderer) =
   let surface = newRenderImage(newImage(renderer.width, renderer.height))

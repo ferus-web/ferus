@@ -24,7 +24,10 @@ type FerusApplication* = ref object of RootObj
 proc init*(app: FerusApplication) =
   proc getDom(sender: Connection, data: JSONNode) =
     if "result" in data:
-      if data["result"].getStr().parseInt() == IPC_CLIENT_NEEDS_DOM:
+      let result = data["result"]
+
+      if result.getInt() == IPC_CLIENT_NEEDS_DOM:
+        info "[src/app.nim] Sending DOM to child"
         app.orchestral.server.context.sendExplicit(sender, {
           "result": PACKET_TYPE_DOM.intToStr(),
           "payload": app.dom.serialize()

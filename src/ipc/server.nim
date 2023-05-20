@@ -113,6 +113,18 @@ proc processMessages*(ipcServer: IPCServer) =
           ipcServer.clients[brokerAffinitySignature] = newTable[ProcessType, Client]()
           ipcServer.clients[brokerAffinitySignature][role] = newClient(message.conn, data["clientPid"].getStr().parseInt(), brokerAffinitySignature)
           info "[src/ipc/server.nim] IPC client registered!", clientPid = data["clientPid"].getStr().parseInt()
+    else:
+      if "status" in data:
+        let status = data["status"]
+          .getStr()
+          .parseInt()
+        
+        # trying to access data without a registration.
+        if status != IPC_CLIENT_HANDSHAKE:
+          warn "[src/ipc/server.nim] Something attempted to connect without proper registration -- possibly a misconfigured fuzzer or a goofy little program trying to use this port for something completely different!"
+          ipcServer.sendExplicit(message.conn, {
+            "status": IPC_SERVER_REQUEST_DECLINE_NOT_REGISTERED.intToStr()
+          }.toTable)
         
 proc heartbeat*(ipcServer: IPCServer) =
   ipcServer.reactor.tick()
@@ -124,6 +136,13 @@ proc kill*(ipcServer: IPCServer) =
 
 proc newIPCServer*: IPCServer =
   info "[src/ipc/server.nim] IPC server is now binding!", port=IPC_SERVER_DEFAULT_PORT
-  var reactor = newReactor("localhost", IPC_SERVER_DEFAULT_PORT)
+  var reactor: Reactor
+  try:
+    reactor = newReactor("localhost", IPC_SERVER_DEFAULT_PORT)
+  except Exception:
+    fatal "[src/ipc/server.nim] Cannot create IPC server -- port is occupied."
+    fatal "[src/ipc/server.nim] Dynamic port selection will be added in the future." # TODO(xTrayambak) I should probably fix this. Seems a bit stupid.
+    quit 1
+
   IPCServer(reactor: reactor, alive: true, port: IPC_SERVER_DEFAULT_PORT, 
             clients: newTable[string, newTable[ProcessType, Client]()]())

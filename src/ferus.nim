@@ -20,6 +20,7 @@ proc main =
     quit 1
 
   var app = newFerusApplication()
+  app.init()
   app.initRenderer()
   app.run()
 

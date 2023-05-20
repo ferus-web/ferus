@@ -12,7 +12,8 @@ type UI* = ref object of RootObj
 
 proc loadIcon*(ui: UI) {.inline.} =
   info "[src/renderer/ui.nim] Loading Ferus icon!"
-  ui.renderer.setIcon(readImage("../data/ferus_logo.png"))
+  let logo = readImage("../data/ferus_logo.png")
+  ui.renderer.setIcon(logo)
 
 proc blit*(ui: UI, surface: RenderImage) =
   ui.layoutEngine.processLayout(surface)

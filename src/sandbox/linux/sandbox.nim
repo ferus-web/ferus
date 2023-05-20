@@ -21,7 +21,7 @@ proc beginSandbox*(ferusSandbox: FerusSandbox) =
   )
   info "[src/sandbox/linux/sandbox.nim] Sandbox completed! This process is now isolated.", backend="seccomp", seccompVersion=get_version()
 
-proc newFerusSandbox*(parentPort: int, processType: ProcessType): FerusSandbox =
+proc newFerusSandbox*(processType: ProcessType): FerusSandbox =
   info "[src/sandbox/linux/sandbox.nim] New sandbox initialized!"
 
   FerusSandbox(processType: processType)

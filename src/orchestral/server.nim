@@ -13,23 +13,24 @@ type OrchestralServer* = ref object of RootObj
 
   serverLastUpdated*: float
 
-proc updateClient*(orchestral: OrchestralServer) =
+proc updateServer*(orchestral: OrchestralServer) =
   if orchestral.server.context.isNil:
     warn "[src/orchestral/orchestral.nim] Scheduler was passed `nil` instead of src.ipc.client.Client; this function won't execute further to prevent a crash."
     return
 
   if orchestral.serverLastUpdated >= orchestral.server.cooldown:
     when defined(ferusUseVerboseLogging):
-      info "[src/orchestral/orchestral.nim] Updating IPC client state!"
+      info "[src/orchestral/orchestral.nim] Updating IPC server state!"
 
     orchestral.server.context.heartbeat()
     orchestral.serverLastUpdated = 0f
   else:
-    orchestral.serverLastUpdated += 0.1f
+    # Ideally in the future this should be some non-constant incremental number
+    orchestral.serverLastUpdated += 1f
 
 proc update*(orchestral: OrchestralServer) =
   orchestral
-    .updateClient()
+    .updateServer()
 
 proc newOrchestralServer*(iserver: IPCServer): OrchestralServer =
   OrchestralServer(

@@ -48,13 +48,13 @@ proc processMessages*(ipcClient: IPCClient) =
     var data = ipcClient.parse(msg.data)
     for receiver in ipcClient.receivers:
       receiver(data)
-
+    
+    # Handshake handler
     if "status" in data and not ipcClient.handshakeCompleted:
       try:
         let status = data["status"]
                   .getStr()
                   .parseInt()
-
         if status == IPC_SERVER_HANDSHAKE_ACCEPTED:
           info "[src/ipc/client.nim] We have been accepted by the IPC server!"
           ipcClient.handshakeCompleted = true
@@ -64,8 +64,20 @@ proc processMessages*(ipcClient: IPCClient) =
       except ValueError:
         warn "[src/ipc/client.nim] IPC server sent malformed packet (is it a bug?)"
 
+    # Other packets
+    if "status" in data and ipcClient.handshakeCompleted:
+      try:
+        let status = data["status"]
+                  .getStr()
+                  .parseInt()
+
+        if status == IPC_SERVER_REQUEST_DECLINE_NOT_REGISTERED:
+          fatal "[src/ipc/client.nim] We attempted to send a request without first registering! Abort."
+          quit(1)
+      except ValueError:
+        warn "[src/ipc/client.nim] IPC server sent malformed packet (is it a bug?)"
+
 proc heartbeat*(ipcClient: IPCClient) =
-  ipcClient.handshakeBegin()
   ipcClient.reactor.tick()
   ipcClient.processMessages()
 

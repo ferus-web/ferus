@@ -5,7 +5,7 @@ import ../ipc/[client, constants],
        ../dom/dom,
        ui, render, ../orchestral/client,
        ../layout/layout
-import std/[json, marshal, tables, strutils]
+import std/[json, marshal, tables, strutils, os], chronicles
 
 when defined(linux):
   import ../sandbox/linux/sandbox
@@ -15,40 +15,33 @@ when defined(linux):
 type SandboxedRenderer* = ref object of RootObj
   child*: ChildProcess
   ui*: UI
+  renderer*: Renderer
 
 proc startUI*(sandboxedRenderer: SandboxedRenderer, dom: DOM) =
   var 
-    renderer = newRenderer(1280, 720)
-    ui = newUI(dom, renderer)
+    ui = newUI(dom, sandboxedRenderer.renderer)
 
   sandboxedRenderer.ui = ui
   sandboxedRenderer.ui.init()
 
-  var orchestralClient = newOrchestralClient(
-    sandboxedRenderer.ui.renderer, 
-    sandboxedRenderer.child.ipcClient
-  )
-  
-  while true:
-    orchestralClient.update()
-
 proc initialize*(sandboxedRenderer: SandboxedRenderer) =
+  sandboxedRenderer.child.handshake()
+  info "[src/renderer/sandboxed.nim] Request IPC server for DOM"
   sandboxedRenderer.child.ipcClient.send(
     {
       "result": IPC_CLIENT_NEEDS_DOM
     }.toTable
   )
+
   proc domRecv(data: JSONNode) =
+    info "domRecv"
     if "result" in data:
       if data["result"].getStr().parseInt() == PACKET_TYPE_DOM:
-        var dom = to[DOM](data.getStr())
+        info "[src/renderer/sandboxed.nim] Received DOM; layout engine start!"
+        var dom = to[DOM](data["payload"].getStr())
         sandboxedRenderer.startUI(dom)
-      else:
-        echo "EEEEEEEEEEEEEEEEEEE"
-    else:
-      echo $data
-
+     
   sandboxedRenderer.child.ipcClient.addReceiver(domRecv)
 
-proc newSandboxedRenderer*(child: ChildProcess): SandboxedRenderer =
-  SandboxedRenderer(child: child)
+proc newSandboxedRenderer*(child: ChildProcess, renderer: Renderer): SandboxedRenderer =
+  SandboxedRenderer(child: child, renderer: renderer)

@@ -7,6 +7,8 @@
 
 import ../renderer/render,
        ../ipc/client,
+       pixie,
+       windy,
        chronicles
 
 type OrchestralClient* = ref object of RootObj
@@ -18,7 +20,8 @@ type OrchestralClient* = ref object of RootObj
 
 proc updateRenderer*(orchestral: OrchestralClient) =
   if orchestral.renderer.context.isNil:
-    warn "[src/orchestral/orchestral.nim] Scheduler was passed `nil` instead of src.renderer.render.Renderer; this function won't execute further to prevent a crash."
+    when defined(ferusUseVerboseLogging):
+      warn "[src/orchestral/orchestral.nim] Scheduler was passed `nil` instead of src.renderer.render.Renderer; this function won't execute further to prevent a crash."
     return
 
   if orchestral.rendererLastUpdated >= orchestral.renderer.cooldown:
@@ -31,7 +34,8 @@ proc updateRenderer*(orchestral: OrchestralClient) =
 
 proc updateClient*(orchestral: OrchestralClient) =
   if orchestral.client.context.isNil:
-    warn "[src/orchestral/orchestral.nim] Scheduler was passed `nil` instead of src.ipc.client.Client; this function won't execute further to prevent a crash."
+    when defined(ferusUseVerboseLogging):
+      warn "[src/orchestral/orchestral.nim] Scheduler was passed `nil` instead of src.ipc.client.Client; this function won't execute further to prevent a crash."
     return
 
   if orchestral.clientLastUpdated >= orchestral.client.cooldown:
@@ -43,9 +47,14 @@ proc updateClient*(orchestral: OrchestralClient) =
   else:
     orchestral.clientLastUpdated += 0.1f
 
-proc update*(orchestral: OrchestralClient) =
+proc update*(orchestral: OrchestralClient): bool =
   orchestral.updateRenderer()
   orchestral.updateClient()
+  
+  if not orchestral.renderer.context.isNil:
+    orchestral.renderer.context.window.closeRequested
+  else:
+    false
 
 proc newOrchestralClient*(renderer: Renderer, client: IPCClient): OrchestralClient =
   OrchestralClient(renderer: (cooldown: 0f, context: renderer), 

@@ -36,6 +36,9 @@ requires "windy"
 # boxy -- using pixie to render to an OpenGL context
 requires "boxy"
 
+# urlly -- URL parser
+requires "urlly"
+
 # Linux-specific modules
 when defined(linux):
   requires "seccomp"
@@ -44,10 +47,8 @@ when defined(linux):
 task debugBuild, "Build Ferus as a production package (debug)":
   exec "echo Building the Ferus web engine with debug symbols"
 
-  exec "nim c src/ferus.nim"
-  exec "echo Successfully built main Ferus binary"
-  exec "nim c src/libferuscli.nim"
-  exec "echo Successfully built libferuscli binary"
+  exec "nim c src/ferus.nim && nim c src/libferuscli.nim"
+  exec "echo Successfully built main Ferus binary + libferuscli"
 
   # TODO: This is a hacky fix. But I am too lazy to find a proper fix for this!
   exec "mv src/ferus bin/ferus"
@@ -56,8 +57,7 @@ task debugBuild, "Build Ferus as a production package (debug)":
 # Production build (ferus + libferuscli)
 task productionBuild, "Build Ferus as a production package":
   exec "echo Building the Ferus web engine"
-  exec "nim c src/ferus.nim -d:release"
-  exec "nim c src/libferuscli.nim -d:release"
+  exec "nim c src/ferus.nim -d:release && nim c src/libferuscli.nim -d:release"
 
   exec "mv src/ferus bin/ferus"
   exec "mv src/libferuscli bin/libferuscli"

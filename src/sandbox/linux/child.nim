@@ -5,8 +5,9 @@
 ]#
 
 import sandbox,
-       os, tables,
-       ../../ipc/client,
+       os, tables, strutils, chronicles,
+       ../../ipc/[client, constants],
+       ../../sandbox/processtypes,
        ../processtypes
 
 
@@ -17,9 +18,13 @@ type ChildProcess* = ref object of RootObj
 proc init*(childProc: ChildProcess) =
   childProc.sandbox.beginSandbox()
 
+proc handshake*(childProc: ChildProcess) =
+  info "[src/sandbox/linux/child.nim] i can haz hendshek?"
+  childProc.ipcClient.handshakeBegin()
+
 proc newChildProcess*(procType: ProcessType, brokerAffinitySignature: string): ChildProcess =
   # Note to all developers -- do NOT add any code before the sandbox is initialized!
-  var sandbox = newFerusSandbox(8089, procType)
+  var sandbox = newFerusSandbox(procType)
   var ipc = newIPCClient(brokerAffinitySignature)
 
   ChildProcess(sandbox: sandbox, ipcClient: ipc)
