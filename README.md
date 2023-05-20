@@ -1,7 +1,7 @@
 # Ferus -- a prototype web engine written in the Nim programming language
-Ferus is a small web rendering engine that is 100% independent (not based on WebKit, Blink or Gecko), fast, and (hopefully) secure. It aims to stand as an alternative to more popular web engines by providing full compatibility to how they work.
-Ferus also stands for Fast Engine (for) Rendering Ur Site, if you'd prefer that. :)
-It currently stands at 1.8k lines of code, and has simple compositing, a WIP layout engine, an incomplete DOM and HTML/CSS parsers ready.
+Ferus is a small web rendering engine that is 100% independent (not based on WebKit, Blink or Gecko), fast, and (hopefully) secure. It aims to stand as an alternative to more popular web engines by providing full compatibility to how they work.\
+Ferus also stands for "Fast Engine (for) Rendering Ur Site", if you'd prefer that. :)\
+It currently stands at 2.07k lines of code, and has process isolation, simple compositing, a WIP layout engine, an incomplete DOM and HTML/CSS parsers ready.
 
 # Why? (Why not just make a WebKit/Blink browser?)
 There's plenty of reasons.
@@ -9,6 +9,10 @@ There's plenty of reasons.
 - This web engine aims to have as less code as humanly possible, in order to reduce the attack surface.
 - Be extremely customizable. Seriously. The only thing that I dislike about Chromium feature-wise is the lack of customizability of UI via CSS.
 - A side-aim, if you can call it that, is to increase the popularity of the Nim programming language. Seriously, it's awesome!
+
+# Aim
+- To work as a usable web engine/browser for my personal usage.
+- To do what every other engine isn't doing, that is, full utilization of system cores (not as in Chrome's memory hog, but lenient utilization of cores). All modern web engines were built with 1 or 2 cores in mind, Ferus will use a good parallelization library for Nim called [weave](https://github.com/mratsim/weave) for parallelizing everything.
 
 # Roadmap (P = Partially done)
 - [X] Basic HTML parser

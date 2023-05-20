@@ -22,6 +22,8 @@ proc init*(ui: UI) =
   proc iOnRender(window: Window, surface: RenderImage) =
     ui.blit(surface)
   
+  ui.layoutEngine.calculateLayout()
+
   ui.loadIcon()
   ui.renderer.attachToRender(iOnRender)
   ui.renderer.init()

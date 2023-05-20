@@ -41,7 +41,7 @@ proc parseHTML*(document: Document, input: string) =
                     .findByTagName("html")
                     .findByTagName("head")
 
-  except ValueError as e:
+  except ValueError:
     warn "[src/dom/document.nim] findByTagName() threw a ValueError! This means that we may be parsing bad data."
  
   info "[src/dom/document.nim] parseHTML(): completed parsing HTML!", timeTaken=cpuTime() - startTime
