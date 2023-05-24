@@ -6,6 +6,7 @@ import os, strutils
 import sandbox/processtypes, 
        renderer/sandboxed, 
        orchestral/client,
+       ipc/client,
        renderer/render
 
 when defined(linux):
@@ -51,4 +52,5 @@ proc summon*(procRole: ProcessType,
   while true:
     if orchestralClient.update():
       info "[src/feruschild.nim] Orchestral client shutting down..."
+      sandboxedProcess.ipcClient.kill()
       break

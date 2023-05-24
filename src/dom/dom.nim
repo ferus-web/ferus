@@ -7,8 +7,7 @@
 import std/[tables, marshal]
 
 import ../butterfly
-import ../parsers/html/[element]
-import document
+import ferushtml
 
 type DOM* = ref object of RootObj
   document*: Document
@@ -17,11 +16,11 @@ type DOM* = ref object of RootObj
 proc serialize*(dom: DOM): string =
   $$dom
 
-proc getDocument*(dom: DOM): HTMLElement =
+proc getDocument*(dom: DOM): Document =
   dom.document
 
 proc push*(dom: DOM, elem: HTMLElement) =
-  dom.document.children.add(elem)
+  dom.document.root.push(elem)
 
-proc newDOM*: DOM =
-  DOM(document: newDocument(), style: newTable[string, TableRef[string, Butterfly]]())
+proc newDOM*(document: Document): DOM =
+    DOM(document: document, style: newTable[string, TableRef[string, Butterfly]]())

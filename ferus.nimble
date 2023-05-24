@@ -39,6 +39,9 @@ requires "boxy"
 # urlly -- URL parser
 requires "urlly"
 
+# ferushtml/2html5you -- next gen Ferus HTML parser (will put it on Nimble later)
+requires "https://github.com/xTrayambak/ferushtml"
+
 # Linux-specific modules
 when defined(linux):
   requires "seccomp"

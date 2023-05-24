@@ -34,7 +34,6 @@ proc initialize*(sandboxedRenderer: SandboxedRenderer) =
   )
 
   proc domRecv(data: JSONNode) =
-    info "domRecv"
     if "result" in data:
       if data["result"].getStr().parseInt() == PACKET_TYPE_DOM:
         info "[src/renderer/sandboxed.nim] Received DOM; layout engine start!"

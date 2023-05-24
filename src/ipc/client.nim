@@ -84,6 +84,7 @@ proc heartbeat*(ipcClient: IPCClient) =
 proc kill*(ipcClient: IPCClient) =
   info "[src/ipc/client.nim] IPC client is now shutting down"
   ipcClient.alive = false
+  ipcClient.send({"status": IPC_CLIENT_SHUTDOWN})
 
 proc newIPCClient*(brokerSignature: string): IPCClient =
   var reactor = newReactor()

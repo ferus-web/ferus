@@ -1,6 +1,6 @@
 import std/strformat
 import chronicles
-import utils
+import utils/build
 import app
 
 proc userExit {.noconv.} =
