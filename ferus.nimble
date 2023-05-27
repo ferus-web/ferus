@@ -39,6 +39,9 @@ requires "boxy"
 # urlly -- URL parser
 requires "urlly"
 
+# nim-taskpools -- Thread task pools
+requires "taskpools"
+
 # ferushtml/2html5you -- next gen Ferus HTML parser (will put it on Nimble later)
 requires "https://github.com/xTrayambak/ferushtml"
 

@@ -51,7 +51,7 @@ proc calculateLayout*(layoutEngine: LayoutEngine) =
   info "[src/layout/layout.nim] Calculating layout!"
 
   var font = layoutEngine.fontManager.loadFont("Default", "../data/IBMPlexSans-Regular.ttf")
-  echo layoutEngine.dom.document.root.dump(0)
+  echo layoutEngine.dom.document.root.dump()
 
   layoutEngine.placeElement(layoutEngine.dom.document.body, font, true)
 
