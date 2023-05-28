@@ -152,15 +152,23 @@ proc kill*(ipcServer: IPCServer) =
   info "[src/ipc/server.nim] IPC server is now shutting down"
   ipcServer.alive = false
 
-proc newIPCServer*: IPCServer =
-  info "[src/ipc/server.nim] IPC server is now binding!", port=IPC_SERVER_DEFAULT_PORT
-  var reactor: Reactor
-  try:
-    reactor = newReactor("localhost", IPC_SERVER_DEFAULT_PORT)
-  except Exception:
-    fatal "[src/ipc/server.nim] Cannot create IPC server -- port is occupied."
-    fatal "[src/ipc/server.nim] Dynamic port selection will be added in the future." # TODO(xTrayambak) I should probably fix this. Seems a bit stupid.
+proc createReactor(port: int = IPC_SERVER_DEFAULT_PORT): tuple[reactor: Reactor, port: int] =
+  if port > 65536:
+    fatal "[src/ipc/server.nim] Maximum port limit reached -- Ferus cannot instantiate. (all ports from 8080 to 65536 are occupied)"
     quit 1
 
-  IPCServer(reactor: reactor, alive: true, port: IPC_SERVER_DEFAULT_PORT, 
+  var res: tuple[reactor: Reactor, port: int]
+  try:
+    res = (reactor: newReactor("localhost", port), port: port)
+  except Exception:
+    info "[src/ipc/server.nim] Port is occupied, trying another port!", port=port
+    res = createReactor(port + 1)
+
+  return res
+
+proc newIPCServer*: IPCServer =
+  info "[src/ipc/server.nim] IPC server is now binding!", port=IPC_SERVER_DEFAULT_PORT
+  var res = createReactor()
+
+  IPCServer(reactor: res.reactor, alive: true, port: res.port, 
             clients: newTable[string, newTable[ProcessType, Client]()]())

@@ -16,7 +16,7 @@ when defined(linux):
 import chronicles
 
 proc summon*(procRole: ProcessType, 
-            brokerAffinitySignature: string) =
+             brokerAffinitySignature: string, ipcServerPort: int) =
   info "[src/feruschild.nim] Ejecting from parent!"
   var 
     sRenderer: SandboxedRenderer
@@ -37,7 +37,7 @@ proc summon*(procRole: ProcessType,
       # how tf do you use waitpid?
 
   info "[src/feruschild.nim] We are now a child process."
-  var sandboxedProcess = newChildProcess(procRole, brokerAffinitySignature)
+  var sandboxedProcess = newChildProcess(procRole, brokerAffinitySignature, ipcServerPort)
   sandboxedProcess.init()
 
   if procRole == ptRenderer:

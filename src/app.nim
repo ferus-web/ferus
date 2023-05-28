@@ -50,7 +50,7 @@ proc init*(app: FerusApplication) =
       <title>Hi</title>
     </head>
     <body>
-      <p1>Hi</title>
+      <p2>Hi</p2>
     </body>
   </html>
   """

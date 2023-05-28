@@ -18,7 +18,8 @@ proc createNewProcess*(broker: Broker, procType: ProcessType) =
   let cmd = "./libferuscli" & 
     fmt" --role={processTypeToString(procType)}" & 
     fmt" --unix-time-at-launch={epochTime().int}" &
-    fmt" --broker-affinity-signature={broker.signature}"
+    fmt" --broker-affinity-signature={broker.signature}" &
+    fmt" --ipc-server-port={broker.ipcServer.port}"
 
   let _ = tp.spawn execCmd(cmd)
   info "[src/sandbox/linux/broker.nim] libferuscli launched!"

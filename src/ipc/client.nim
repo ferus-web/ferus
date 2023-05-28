@@ -86,11 +86,11 @@ proc kill*(ipcClient: IPCClient) =
   ipcClient.alive = false
   ipcClient.send({"status": IPC_CLIENT_SHUTDOWN})
 
-proc newIPCClient*(brokerSignature: string): IPCClient =
+proc newIPCClient*(brokerSignature: string, port: int): IPCClient =
   var reactor = newReactor()
-  var conn = reactor.connect("127.0.0.1", IPC_SERVER_DEFAULT_PORT)
+  var conn = reactor.connect("127.0.0.1", port)
 
   IPCClient(
-    reactor: reactor, port: IPC_SERVER_DEFAULT_PORT, conn: conn, alive: true,
+    reactor: reactor, port: port, conn: conn, alive: true,
     isBroker: true, brokerSignature: brokerSignature
   )

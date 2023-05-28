@@ -70,6 +70,15 @@ proc getBrokerAffinitySignature*(): string {.inline.} =
     error "[src/libferuscli.nim] Broker affinity signature must always be the third argument, this will be fixed in the future."
     quit(1)
 
+proc getIPCServerPort*(): int {.inline.} =
+  if getFlagAt(4).startswith("ipc-server-port"):
+    return getFlagAt(4)
+          .clean()
+          .parseInt()
+  else:
+    error "[src/libferuscli.nim] IPC server port must always be the fourth argument, this will be fixed in the future."
+    quit(1)
+
 proc main =
   var initialFlag = getFlagAt(0)
   if initialFlag.len < 1:
@@ -79,6 +88,7 @@ proc main =
   var 
     procRole = getProcessRole()
     brokerAffinitySignature = getBrokerAffinitySignature()
-  summon(procRole, brokerAffinitySignature)
+    ipcServerPort = getIPCServerPort()
+  summon(procRole, brokerAffinitySignature, ipcServerPort)
 
 main()

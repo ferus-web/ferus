@@ -17,10 +17,8 @@ type
     glVersion*: string
     glVendor*: string
     glRenderer*: string
+    surface*: RenderImage
   
-proc newRenderImage*(img: Image): RenderImage =
-  RenderImage(img: img, blurEnabled: false)
-
 proc setIcon*(renderer: Renderer, image: Image) =
   # Ferus should only support 64x64 icons
   if not renderer.isNil:
@@ -30,7 +28,8 @@ proc setIcon*(renderer: Renderer, image: Image) =
     warn "[src/renderer/render.nim] setIcon() failed as renderer has not yet been initialized."
 
 proc onRender*(renderer: Renderer) =
-  let surface = newRenderImage(newImage(renderer.width, renderer.height))
+  let
+    surface = renderer.surface
 
   surface.img.fill(rgba(255, 255, 255, 255))
 
@@ -80,6 +79,17 @@ proc onResize*(renderer: Renderer) =
   
   when defined(ferusExtraVerboseLogging):
     info "[src/renderer/render.nim] Window resizing!", width=width, height=height
+  
+  var img = newImage(
+    width, height
+  )
+  
+  discard renderer.surface.img
+  discard renderer.surface
+
+  renderer.surface = newRenderImage(
+    img, (w: width.float32, h: height.float32)
+  )
 
   renderer.width = width
   renderer.height = height
@@ -107,7 +117,12 @@ proc newRenderer*(height, width: int): Renderer =
   
   info "[src/renderer/render.nim] Renderer initialized"
   var renderer = Renderer(window: window, width: width, height: height, 
-                          boxy: newBoxy(), alive: true)
+                          boxy: newBoxy(), alive: true, 
+                          surface: newRenderImage(
+                            newImage(width, height), 
+                            (w: width.float32, h: height.float32)
+                          )
+                  )
   proc iOnResize() =
     renderer.onResize()
 

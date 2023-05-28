@@ -22,9 +22,9 @@ proc handshake*(childProc: ChildProcess) =
   info "[src/sandbox/linux/child.nim] i can haz hendshek?"
   childProc.ipcClient.handshakeBegin()
 
-proc newChildProcess*(procType: ProcessType, brokerAffinitySignature: string): ChildProcess =
+proc newChildProcess*(procType: ProcessType, brokerAffinitySignature: string, port: int): ChildProcess =
   # Note to all developers -- do NOT add any code before the sandbox is initialized!
   var sandbox = newFerusSandbox(procType)
-  var ipc = newIPCClient(brokerAffinitySignature)
+  var ipc = newIPCClient(brokerAffinitySignature, port)
 
   ChildProcess(sandbox: sandbox, ipcClient: ipc)

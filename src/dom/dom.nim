@@ -6,7 +6,6 @@
 
 import std/[tables, marshal]
 
-import ../butterfly
 import ferushtml
 
 type DOM* = ref object of RootObj

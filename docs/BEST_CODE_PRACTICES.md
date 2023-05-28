@@ -37,8 +37,7 @@ info "[src/{directory to source file of log}] Doing the dishes"
 
 # Dependencies
 - You cannot add any new dependencies without explaining them fully and the reasoning,
-and why they could not be implemented in the codebase itself. Refrain from segregating
-the engine into seperate Nimble dependencies (for now).
+and why they could not be implemented in the codebase itself.
 
 - Try to use "pure" libraries (Nim's way of saying libraries written in any language 
 other than Nim). Only critical libraries such as GLFW (windowing) and 
