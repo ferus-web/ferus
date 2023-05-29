@@ -10,6 +10,13 @@ There's plenty of reasons.
 - Be extremely customizable. Seriously. The only thing that I dislike about Chromium feature-wise is the lack of customizability of UI via CSS.
 - A side-aim, if you can call it that, is to increase the popularity of the Nim programming language. Seriously, it's awesome!
 
+# Contributions
+Please read the best code practices in the documentation and follow basic human etiquette.
+Helping out is more than appreciated!
+
+You can join the Discord server for more in-depth discussion on Ferus: https://discord.gg/Cz5uRWsR
+If you don't like Discord (for obvious reasons) then you can just make issues.
+
 # Aim
 - To work as a usable web engine/browser for my personal usage.
 - To do what every other engine isn't doing, that is, full utilization of system cores (not as in Chrome's memory hog, but lenient utilization of cores). All modern web engines were built with 1 or 2 cores in mind, Ferus will use a good parallelization library for Nim called [weave](https://github.com/mratsim/weave) for parallelizing everything.
