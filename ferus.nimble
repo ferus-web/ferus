@@ -51,19 +51,13 @@ when defined(linux):
 
 # Debug build (ferus + libferuscli)
 task debugBuild, "Build Ferus as a production package (debug)":
-  exec "echo Building the Ferus web engine with debug symbols"
-
-  exec "nim c src/ferus.nim && nim c src/libferuscli.nim"
-  exec "echo Successfully built main Ferus binary + libferuscli"
-
-  # TODO: This is a hacky fix. But I am too lazy to find a proper fix for this!
-  exec "mv src/ferus bin/ferus"
-  exec "mv src/libferuscli bin/libferuscli"
+  exec "nim c -o:bin/ferus src/ferus.nim && nim c -o:bin/libferuscli src/libferuscli.nim"
 
 # Production build (ferus + libferuscli)
 task productionBuild, "Build Ferus as a production package":
-  exec "echo Building the Ferus web engine"
-  exec "nim c src/ferus.nim -d:release && nim c src/libferuscli.nim -d:release"
+  exec "nim c -o:bin/ferus -d:release src/ferus.nim && nim c -o:bin/libferuscli -d:release src/libferuscli.nim"
 
-  exec "mv src/ferus bin/ferus"
-  exec "mv src/libferuscli bin/libferuscli"
+task quickdebug, "Build and run debug version of Ferus":
+  exec "nim c -o:bin/ferus src/ferus.nim && nim c -o:bin/libferuscli src/libferuscli.nim"
+  withDir "bin":
+    exec "./ferus"
