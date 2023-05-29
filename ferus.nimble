@@ -56,3 +56,8 @@ task debugBuild, "Build Ferus as a production package (debug)":
 # Production build (ferus + libferuscli)
 task productionBuild, "Build Ferus as a production package":
   exec "nim c -o:bin/ferus -d:release src/ferus.nim && nim c -o:bin/libferuscli -d:release src/libferuscli.nim"
+
+task quickdebug, "Build and run debug version of Ferus":
+  exec "nim c -o:bin/ferus src/ferus.nim && nim c -o:bin/libferuscli src/libferuscli.nim"
+  withDir "bin":
+    exec "./ferus"
