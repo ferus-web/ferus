@@ -45,9 +45,10 @@ requires "taskpools"
 # ferushtml/2html5you -- next gen Ferus HTML parser (will put it on Nimble later)
 requires "https://github.com/xTrayambak/ferushtml"
 
-# Linux-specific modules
+#[ Linux-specific modules
 when defined(linux):
-  requires "seccomp"
+  requires "firejail"
+]#
 
 # Debug build (ferus + libferuscli)
 task debugBuild, "Build Ferus as a production package (debug)":

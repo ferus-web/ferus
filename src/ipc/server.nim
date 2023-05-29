@@ -140,9 +140,10 @@ proc processMessages*(ipcServer: IPCServer) =
           ipcServer.sendExplicit(message.conn, {
             "status": IPC_SERVER_REQUEST_DECLINE_NOT_REGISTERED.intToStr()
           }.toTable)
-
+ 
+    let client = ipcServer.getClientByAddr(message.conn.address)
     for receivers in ipcServer.receivers:
-      receivers(ipcServer.getClientByAddr(message.conn.address), data)
+      receivers(client, data)
         
 proc heartbeat*(ipcServer: IPCServer) =
   ipcServer.reactor.tick()

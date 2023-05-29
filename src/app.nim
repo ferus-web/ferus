@@ -38,8 +38,6 @@ proc processMsg*(app: FerusApplication, sender: Client, data: JSONNode) =
         info "[src/app.nim] Since the renderer is shutting down, we have to die too. Adios!"
         quit 0
 
-    echo result.getInt()
-
 proc init*(app: FerusApplication) =
   proc get(sender: Client, data: JSONNode) =
     app.processMsg(sender, data)
@@ -50,7 +48,7 @@ proc init*(app: FerusApplication) =
       <title>Hi</title>
     </head>
     <body>
-      <p2>Hi</p2>
+      <p1>Hi</p2>
     </body>
   </html>
   """

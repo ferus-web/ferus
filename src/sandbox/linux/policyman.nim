@@ -4,76 +4,62 @@
   This code is licensed under the MIT license
 ]#
 
-import seccomp
+import firejail
 import chronicles
 import ../processtypes
 
-#[
-  policymanProhibitSockets()
+proc policymanCreateAppropriateJail*(procType: ProcessType): Firejail =
+  info "[src/sandbox/linux/policyman.nim] Creating jail"
 
-  prevents a process from calling any traditional UNIX socket syscalls like bind(2), accept(2), sendto(2) etc.
-]#
-proc policymanProhibitSockets(allowClient: bool) {.inline.} =
-  setSeccomp("read exit_group")
-  setSeccomp("bind exit_group")
-  
-  # Allow "client" socket syscalls, necessary for IPC connections
-  # Doesn't allow any "server" socket syscalls like read, bind or accept
-  if not allowClient:
-    setSeccomp("recvfrom exit_group")
-    setSeccomp("connect exit_group")
-    setSeccomp("sendto exit_group")
-
-  setSeccomp("accept exit_group")
-  setSeccomp("setsockopt exit_group")
-  setSeccomp("getsockopt exit_group")
-  setSeccomp("getpeername exit_group")
-  setSeccomp("listen exit_group")
-
-#[
-  policymanProhibitIO()
-
-  prevents the process from calling the write(1) and read(1) syscalls
-]#
-proc policymanProhibitIO {.inline.} =
-  echo "TODO(xTrayambak) THIS IS INTENTIONAL DAMAGE CONTROL!!!!!"
-  return
-  setSeccomp("write exit_group")
-  setSeccomp("read exit_group")
-
-#[
-  policymanProhibitESD()
-
-  prevents the process from calling the shutdown(8) or exit(2)
-  syscalls
-]#
-proc policymanProhibitESD {.inline.} =
-  setSeccomp("shutdown exit_group")
-
-#[
-  policymanEnforceSeccompPolicy()
-
-  enforce an appropriate policy on the basis of process type
-]#
-proc policymanEnforceSeccompPolicy*(processType: ProcessType) =
-  info "[src/sandbox/linux/policyman.nim] Computing policy strategy for sandboxing"
-  if processType == ProcessType.ptRenderer:
-    info "[src/sandbox/linux/policyman.nim] Set Seccomp policy (ptRenderer)"
-    policymanProhibitIO()
-  elif processType == ProcessType.ptNetwork:
-    info "[src/sandbox/linux/policyman.nim] Set Seccomp policy (ptNetwork)"
-    policymanProhibitIO()
-  elif processType == ProcessType.ptHtmlParser:
-    info "[src/sandbox/linux/policyman.nim] Set Seccomp policy (ptHtmlParser)"
-    policymanProhibitIO()
-    policymanProhibitSockets(true)
-  elif processType == ProcessType.ptCssParser:
-    info "[src/sandbox/linux/policyman.nim] Set Seccomp policy (ptCssParser)"
-    policymanProhibitIO()
-    policymanProhibitSockets(true)
-  elif processType == ProcessType.ptBaliRuntime:
-    info "[src/sandbox/linux/policyman.nim] Set Seccomp policy (ptBaliRuntime)"
-    policymanProhibitIO()
-    policymanProhibitESD()
- 
-  info "[src/sandbox/linux/policyman.nim] Enforced."
+  if procType == ptRenderer:
+    return Firejail(no3d: false, # Hardware acceleration
+             noDbus: true, 
+             noDvd: true, 
+             noRoot: true, 
+             noSound: false, # Sound playback
+             noVideo: false, # GStreamer
+             noShell: true,
+             noX: false, # X11 (bleh)
+             noNet: false, # IPC client
+             noIp: true,
+             writables: false
+    )
+  elif procType == ptNetwork:
+    return Firejail(no3d: true,
+             noDbus: true,
+             noDvd: true,
+             noRoot: true,
+             noSound: true,
+             noVideo: true,
+             noShell: true,
+             noX: true,
+             noNet: false, # Sockets/IPC
+             noIp: false,   # Sockets/IPC
+             writables: false
+    )
+  elif procType == ptHtmlParser or procType == ptCssParser:
+    return Firejail(no3d: true,
+             noDbus: true,
+             noDvd: true,
+             noRoot: true,
+             noSound: true,
+             noVideo: true,
+             noShell: true,
+             noX: true,
+             noNet: false, # IPC
+             noIp: true,
+             writables: false
+    )
+  elif procType == ptBaliRuntime:
+    return Firejail(no3d: true,
+             noDbus: true,
+             noDvd: true,
+             noRoot: true,
+             noSound: true,
+             noVideo: true,
+             noShell: true,
+             noX: true,
+             noNet: false,
+             noIp: false,
+             writables: false
+    )

@@ -8,9 +8,6 @@ import os, strutils
 import sandbox/processtypes, 
        renderer/sandboxed,
        feruschild
-
-when defined(linux):
-  import sandbox/linux/child
   
 import chronicles
 

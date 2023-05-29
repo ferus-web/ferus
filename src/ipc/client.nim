@@ -27,9 +27,10 @@ proc addReceiver*(ipcClient: IPCClient, receiver: Receiver) =
 
 proc send*[T](ipcClient: IPCClient, data: T) =
   var dataConv = jsony.toJson(data)
+  echo dataConv
   ipcClient.reactor.send(ipcClient.conn, dataConv)
 
-proc handshakeBegin*(ipcClient: IPCClient) =
+proc handshake*(ipcClient: IPCClient) =
   info "[src/ipc/client.nim] Beginning handshake with IPC server"
   ipcClient.reactor.tick()
 
@@ -83,8 +84,8 @@ proc heartbeat*(ipcClient: IPCClient) =
 
 proc kill*(ipcClient: IPCClient) =
   info "[src/ipc/client.nim] IPC client is now shutting down"
+  ipcClient.send({"result": IPC_CLIENT_SHUTDOWN})
   ipcClient.alive = false
-  ipcClient.send({"status": IPC_CLIENT_SHUTDOWN})
 
 proc newIPCClient*(brokerSignature: string, port: int): IPCClient =
   var reactor = newReactor()

@@ -7,15 +7,11 @@ import ../ipc/[client, constants],
        ../layout/layout
 import std/[json, marshal, tables, strutils, os], chronicles
 
-when defined(linux):
-  import ../sandbox/linux/sandbox
-  import ../sandbox/linux/child
-
 
 type SandboxedRenderer* = ref object of RootObj
-  child*: ChildProcess
   ui*: UI
   renderer*: Renderer
+  ipcClient*: IPCClient
 
 proc startUI*(sandboxedRenderer: SandboxedRenderer, dom: DOM) =
   var 
@@ -25,9 +21,8 @@ proc startUI*(sandboxedRenderer: SandboxedRenderer, dom: DOM) =
   sandboxedRenderer.ui.init()
 
 proc initialize*(sandboxedRenderer: SandboxedRenderer) =
-  sandboxedRenderer.child.handshake()
   info "[src/renderer/sandboxed.nim] Request IPC server for DOM"
-  sandboxedRenderer.child.ipcClient.send(
+  sandboxedRenderer.ipcClient.send(
     {
       "result": IPC_CLIENT_NEEDS_DOM
     }.toTable
@@ -40,7 +35,7 @@ proc initialize*(sandboxedRenderer: SandboxedRenderer) =
         var dom = to[DOM](data["payload"].getStr())
         sandboxedRenderer.startUI(dom)
      
-  sandboxedRenderer.child.ipcClient.addReceiver(domRecv)
+  sandboxedRenderer.ipcClient.addReceiver(domRecv)
 
-proc newSandboxedRenderer*(child: ChildProcess, renderer: Renderer): SandboxedRenderer =
-  SandboxedRenderer(child: child, renderer: renderer)
+proc newSandboxedRenderer*(ipcClient: IPCClient, renderer: Renderer): SandboxedRenderer =
+  SandboxedRenderer(ipcClient: ipcClient, renderer: renderer)

@@ -9,10 +9,6 @@ import sandbox/processtypes,
        ipc/client,
        renderer/render
 
-when defined(linux):
-  import sandbox/linux/child
-  import std/posix
-  
 import chronicles
 
 proc summon*(procRole: ProcessType, 
@@ -23,34 +19,22 @@ proc summon*(procRole: ProcessType,
     orchestralClient: OrchestralClient
     uRenderer = newRenderer(1280, 720)
   
-  when defined(ferusForkStrategy):
-    var pid = fork()
-    info "[src/feruschild.nim] Using forking strategy, this is not supported and a bad idea! (Ferus was compiled with -d:ferusForkStrategy)"
-    if pid == -1:
-      fatal "[src/feruschild.nim] Fork failed -- abort."
-      quit 1
-    elif pid == 0:
-      info "[src/feruschild.nim] Fork successful."
-    else:
-      info "[src/feruschild.nim] Waiting for proper fork"
-      var status = 0
-      # how tf do you use waitpid?
-
   info "[src/feruschild.nim] We are now a child process."
-  var sandboxedProcess = newChildProcess(procRole, brokerAffinitySignature, ipcServerPort)
-  sandboxedProcess.init()
+
+  var ipcClient = newIPCClient(brokerAffinitySignature, ipcServerPort)
+  ipcClient.handshake()
 
   if procRole == ptRenderer:
     info "[src/feruschild.nim] Renderer is initializing in sandboxed mode!"
-    sRenderer = newSandboxedRenderer(sandboxedProcess, uRenderer)
+    sRenderer = newSandboxedRenderer(ipcClient, uRenderer)
     sRenderer.initialize()
 
   orchestralClient = newOrchestralClient(
-    uRenderer, sandboxedProcess.ipcClient
+    uRenderer, ipcClient 
   )
 
   while true:
     if orchestralClient.update():
       info "[src/feruschild.nim] Orchestral client shutting down..."
-      sandboxedProcess.ipcClient.kill()
+      ipcClient.kill()
       break
