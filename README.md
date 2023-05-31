@@ -50,5 +50,14 @@ $ cd bin
 $ ./ferus
 ```
 
+To run Ferus in Docker:
+```bash
+$ docker-compose build
+$ docker compose run ferus /bin/bash
+$ nimble debugBuild
+$ cd bin
+$ ./ferus
+```
+
 # Attributions
 [SHA256 implementation](https://github.com/jangko/nimSHA2/)
