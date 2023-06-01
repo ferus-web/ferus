@@ -47,7 +47,7 @@ requires "https://github.com/xTrayambak/ferushtml"
 
 # Linux-specific modules
 when defined(linux):
-  requires "https://github.com/moigagoo/nim-firejail"
+  requires "https://github.com/moigagoo/nim-firejail#patch-1"
 
 # Debug build (ferus + libferuscli)
 task debugBuild, "Build Ferus as a production package (debug)":
