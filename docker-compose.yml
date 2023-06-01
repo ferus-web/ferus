@@ -24,5 +24,6 @@ services:
     volumes:
       - /tmp/X11-unix:/tmp/X11-unix
       - ./bin:/usr/src/app/bin
+    network_mode: host
     command: ./ferus
-
+    
