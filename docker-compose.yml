@@ -1,14 +1,28 @@
 version: '3'
 
 services:
+  debugBuild:
+    image: ferus 
+    build: .
+    working_dir: /usr/src/app
+    volumes:
+      - .:/usr/src/app
+    command: nimble debugBuild
+  prodBuild:
+    image: ferus 
+    build: .
+    working_dir: /usr/src/app
+    volumes:
+      - .:/usr/src/app
+    command: nimble productionBuild
   ferus:
     image: ferus 
     build: .
     environment:
       - DISPLAY
-    working_dir: /usr/src/app
+    working_dir: /usr/src/app/bin
     volumes:
-      - .:/usr/src/app
       - /tmp/X11-unix:/tmp/X11-unix
-    network_mode: host
+      - ./bin:/usr/src/app/bin
+    command: ./ferus
 

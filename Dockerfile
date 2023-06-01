@@ -10,7 +10,7 @@ RUN rm init.sh
 ENV PATH=/root/.nimble/bin:$PATH
 
 WORKDIR /usr/src/app
-COPY . /usr/src/app
+COPY ferus.nimble /usr/src/app/ferus.nimble
 
 RUN nimble install -yd
 
