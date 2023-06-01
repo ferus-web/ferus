@@ -23,7 +23,7 @@ services:
     working_dir: /usr/src/app/bin
     volumes:
       - /tmp/X11-unix:/tmp/X11-unix
-      - ./bin:/usr/src/app/bin
+      - .:/usr/src/app
     network_mode: host
     command: ./ferus
     
