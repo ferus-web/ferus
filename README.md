@@ -52,12 +52,14 @@ $ ./ferus
 
 To run Ferus in Docker:
 ```bash
-$ docker-compose build
+$ xhost +local:docker                  # Run once
+$ docker-compose build                 # Run once
 $ docker compose run ferus /bin/bash
 $ nimble debugBuild
 $ cd bin
 $ ./ferus
 ```
+
 
 # Attributions
 [SHA256 implementation](https://github.com/jangko/nimSHA2/)
