@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  ferus:
+    image: ferus 
+    build: .
+    environment:
+      - DISPLAY
+    working_dir: /usr/src/app
+    volumes:
+      - .:/usr/src/app
+      - /tmp/X11-unix:/tmp/X11-unix
+    network_mode: host
+
