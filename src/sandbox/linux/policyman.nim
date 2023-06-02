@@ -18,10 +18,8 @@ proc policymanCreateAppropriateJail*(procType: ProcessType): Firejail =
              noRoot: true, 
              noSound: false, # Sound playback
              noVideo: false, # GStreamer
-             noShell: true,
              noX: false, # X11 (bleh)
              noNet: false, # IPC client
-             noIp: true,
              writables: false
     )
   elif procType == ptNetwork:
@@ -31,10 +29,8 @@ proc policymanCreateAppropriateJail*(procType: ProcessType): Firejail =
              noRoot: true,
              noSound: true,
              noVideo: true,
-             noShell: true,
              noX: true,
              noNet: false, # Sockets/IPC
-             noIp: false,   # Sockets/IPC
              writables: false
     )
   elif procType == ptHtmlParser or procType == ptCssParser:
@@ -44,10 +40,8 @@ proc policymanCreateAppropriateJail*(procType: ProcessType): Firejail =
              noRoot: true,
              noSound: true,
              noVideo: true,
-             noShell: true,
              noX: true,
              noNet: false, # IPC
-             noIp: true,
              writables: false
     )
   elif procType == ptBaliRuntime:
@@ -57,9 +51,7 @@ proc policymanCreateAppropriateJail*(procType: ProcessType): Firejail =
              noRoot: true,
              noSound: true,
              noVideo: true,
-             noShell: true,
              noX: true,
              noNet: false,
-             noIp: false,
              writables: false
     )

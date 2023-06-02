@@ -16,13 +16,13 @@ proc loadIcon*(ui: UI) {.inline.} =
   ui.renderer.setIcon(logo)
 
 proc blit*(ui: UI, surface: RenderImage) =
-  ui.layoutEngine.processLayout(surface)
+  ui.layoutEngine.draw(surface)
 
 proc init*(ui: UI) =
   proc iOnRender(window: Window, surface: RenderImage) =
     ui.blit(surface)
   
-  ui.layoutEngine.calculateLayout()
+  ui.layoutEngine.calculate()
 
   ui.loadIcon()
   ui.renderer.attachToRender(iOnRender)

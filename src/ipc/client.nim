@@ -2,6 +2,8 @@
   The IPC Client.
 
   This code is licensed under the MIT license
+
+  Authors: xTrayambak (xtrayambak at gmail dot com)
 ]#
 
 import netty, jsony, chronicles, constants, os, ../sandbox/processtypes
@@ -22,15 +24,24 @@ type
     handshakeCompleted*: bool
     alive*: bool
 
-proc addReceiver*(ipcClient: IPCClient, receiver: Receiver) =
+#[
+  Add a new listener for the "onMessage" event
+]#
+proc addReceiver*(ipcClient: IPCClient, receiver: Receiver) {.inline.} =
   ipcClient.receivers.add(receiver)
 
-proc send*[T](ipcClient: IPCClient, data: T) =
+#[
+  Send some JSON data to a client
+]#
+proc send*[T](ipcClient: IPCClient, data: T) {.inline.} =
   var dataConv = jsony.toJson(data)
   echo dataConv
   ipcClient.reactor.send(ipcClient.conn, dataConv)
 
-proc handshake*(ipcClient: IPCClient) =
+#[
+  Handshake with the IPC server
+]#
+proc handshake*(ipcClient: IPCClient) {.inline.} =
   info "[src/ipc/client.nim] Beginning handshake with IPC server"
   ipcClient.reactor.tick()
 
@@ -41,9 +52,16 @@ proc handshake*(ipcClient: IPCClient) =
     "brokerAffinitySignature": ipcClient.brokerSignature
   }.toTable)
 
-proc parse*(ipcClient: IPCClient, message: string): JsonNode =
+#[
+  Parse some JSON string into a JSONNode
+  TODO(xTrayambak): remove this as it is a one-liner and only adds useless overhead
+]#
+proc parse*(ipcClient: IPCClient, message: string): JsonNode {.inline.} =
   jsony.fromJson(message)
 
+#[
+  Process all messages the IPC server sends us
+]#
 proc processMessages*(ipcClient: IPCClient) =
   for msg in ipcClient.reactor.messages:
     var data = ipcClient.parse(msg.data)
@@ -78,16 +96,28 @@ proc processMessages*(ipcClient: IPCClient) =
       except ValueError:
         warn "[src/ipc/client.nim] IPC server sent malformed packet (is it a bug?)"
 
-proc heartbeat*(ipcClient: IPCClient) =
+#[
+  Tick the netty reactor and process new messages
+]#
+proc heartbeat*(ipcClient: IPCClient) {.inline.} =
   ipcClient.reactor.tick()
   ipcClient.processMessages()
 
-proc kill*(ipcClient: IPCClient) =
+#[
+  Kill the IPC server and inform the server as well
+]#
+proc kill*(ipcClient: IPCClient, silentDeath: bool = false) {.inline.} =
   info "[src/ipc/client.nim] IPC client is now shutting down"
-  ipcClient.send({"result": IPC_CLIENT_SHUTDOWN})
+  if not silentDeath:
+    ipcClient.send({"result": IPC_CLIENT_SHUTDOWN})
+  else:
+    warn "[src/ipc/client.nim] We'll die a silent death, without telling the IPC server."
   ipcClient.alive = false
 
-proc newIPCClient*(brokerSignature: string, port: int): IPCClient =
+#[
+  Create a new IPC client
+]#
+proc newIPCClient*(brokerSignature: string, port: int): IPCClient {.inline.} =
   var reactor = newReactor()
   var conn = reactor.connect("127.0.0.1", port)
 

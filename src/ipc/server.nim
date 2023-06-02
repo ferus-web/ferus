@@ -27,16 +27,28 @@ type
             # broker affinity         # process type # client reference
     clients*: TableRef[string, TableRef[ProcessType, Client]]
 
+#[
+  Instantiate a new client object -- this isn't a real client, just a representation
+  of what the server sees!
+]#
 proc newClient*(connection: Connection, 
                 pid: int, 
                 affinitySignature: string, 
-                role: ProcessType): Client =
+                role: ProcessType): Client {.inline.} =
   Client(connection: connection, pid: pid, affinitySignature: affinitySignature)
 
-proc addReceiver*(ipcServer: IPCServer, receiver: Receiver) =
+#[
+  Add a new "onMessage" event receiver
+]#
+proc addReceiver*(ipcServer: IPCServer, receiver: Receiver) {.inline.} =
   ipcServer.receivers.add(receiver)
 
-proc getClient*(ipcServer: IPCServer, affinitySignature: string, role: ProcessType): Client =
+#[
+  Try to find a client on the basis of its affinity signature, and process role
+]#
+proc getClient*(ipcServer: IPCServer, 
+                affinitySignature: string, 
+                role: ProcessType): Client {.inline.} =
   for affinity, clients in ipcServer.clients:
     if affinity == affinitySignature:
       for cRole, client in clients:
@@ -45,19 +57,44 @@ proc getClient*(ipcServer: IPCServer, affinitySignature: string, role: ProcessTy
 
   raise newException(ValueError, "No such client in affinity signature " & affinitySignature & " with role " & $role)
 
+#[
+  Send some JSON data to a connected and registered client
+]#
 proc send*[T](ipcServer: IPCServer, affinitySignature: string, 
-              role: ProcessType, data: T) =
-  var dataConv = jsony.toJson(data)
-  ipcServer.reactor.send(getClient(affinitySignature, role).connection, dataConv)
+              role: ProcessType, data: T) {.inline.} =
+  when defined(ferusUseVerboseLogging):
+    info "[src/ipc/server.nim] Sending packet", affSign = affinitySignature, role = $role 
+  ipcServer.reactor.send(
+    getClient(
+      affinitySignature, role
+    ).connection,
+    jsony.toJson(data)
+  )
 
-proc sendExplicit*[T](ipcServer: IPCServer, conn: Connection, data: T) =
+#[
+  Send some JSON data to an explicitly specified UDP connection, 
+  this should only be used during the handshake procedure.
+]#
+proc sendExplicit*[T](ipcServer: IPCServer, conn: Connection, data: T) {.inline.} =
+  when defined(ferusUseVerboseLogging):
+    info "[src/ipc/server.nim] Sending packet to explicit connection", address=$conn.address
   var dataConv = jsony.toJson(data)
   ipcServer.reactor.send(conn, dataConv)
 
-proc parse*(ipcServer: IPCServer, message: string): JsonNode =
+#[
+  Parse some data from a string into a JsonNode
+
+  TODO(xTrayambak): deprecate this, it's not a needed function and adds extra overhead
+]#
+proc parse*(ipcServer: IPCServer, message: string): JsonNode {.inline.} =
   jsony.fromJson(message)
 
-proc isConnected*(ipcServer: IPCServer, address: Address): bool =
+#[
+  Check if a particular address is connected and registered
+]#
+proc isConnected*(ipcServer: IPCServer, address: Address): bool {.inline.} =
+  # TODO(xTrayambak) parallelize this searching, it will provide huge boosts for 
+  # processMessages()
   for affinity, clients in ipcServer.clients:
     for clientRole, client in clients:
       if client.connection.address.port.int == address.port.int:
@@ -65,7 +102,11 @@ proc isConnected*(ipcServer: IPCServer, address: Address): bool =
 
   return false
 
-proc getClientByAddr*(ipcServer: IPCServer, address: Address): Client =
+#[
+  Get a client by their address
+]#
+proc getClientByAddr*(ipcServer: IPCServer, address: Address): Client {.inline.} =
+  # TODO(xTrayambak): same as above
   for affinity, clients in ipcServer.clients:
     for clientRole, client in clients:
       if client.connection.address.port.int == address.port.int:
@@ -73,6 +114,9 @@ proc getClientByAddr*(ipcServer: IPCServer, address: Address): Client =
 
   raise newException(ValueError, "getClientByAddr() failed")
 
+#[
+  Process all messages in the netty queue
+]#
 proc processMessages*(ipcServer: IPCServer) =
   for message in ipcServer.reactor.messages:
     var data = ipcServer.parse(message.data)
@@ -144,16 +188,29 @@ proc processMessages*(ipcServer: IPCServer) =
     let client = ipcServer.getClientByAddr(message.conn.address)
     for receivers in ipcServer.receivers:
       receivers(client, data)
-        
-proc heartbeat*(ipcServer: IPCServer) =
+
+#[
+  Tick the netty reactor and process all new messages
+]#
+proc heartbeat*(ipcServer: IPCServer) {.inline.} =
   ipcServer.reactor.tick()
   ipcServer.processMessages()
- 
-proc kill*(ipcServer: IPCServer) =
+
+#[
+  Kill the IPC server
+]#
+proc kill*(ipcServer: IPCServer) {.inline.} =
   info "[src/ipc/server.nim] IPC server is now shutting down"
   ipcServer.alive = false
 
-proc createReactor(port: int = IPC_SERVER_DEFAULT_PORT): tuple[reactor: Reactor, port: int] =
+#[
+  Create a reactor, except this will recursively try to find an 
+  unoccupied socket in case the default one is occupied.
+]#
+proc createReactor(port: int = IPC_SERVER_DEFAULT_PORT): tuple[
+  reactor: Reactor, 
+  port: int] {.inline.} =
+  # TODO(xTrayambak) try to parallelize this but it isn't necessary, no visible speedups will occur
   if port > 65536:
     fatal "[src/ipc/server.nim] Maximum port limit reached -- Ferus cannot instantiate. (all ports from 8080 to 65536 are occupied)"
     quit 1
@@ -167,7 +224,10 @@ proc createReactor(port: int = IPC_SERVER_DEFAULT_PORT): tuple[reactor: Reactor,
 
   return res
 
-proc newIPCServer*: IPCServer =
+#[
+  Create a new IPC server
+]#
+proc newIPCServer*: IPCServer {.inline.} =
   info "[src/ipc/server.nim] IPC server is now binding!", port=IPC_SERVER_DEFAULT_PORT
   var res = createReactor()
 
