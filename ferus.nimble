@@ -1,7 +1,7 @@
 # Package
 
 version       = "0.1.0"
-author        = "xTrayambak"
+author        = "xTrayambak and Ferus developers"
 description   = "A fast, independent and (hopefully) secure web browser written in Nim"
 license       = "MIT"
 srcDir        = "src"
@@ -25,7 +25,7 @@ requires "netty"
 requires "urlly"
 
 # Weave -- threading abstraction (ringabout's fork)
-requires "https://github.com/ringabout/weave"
+# requires "https://github.com/ringabout/weave"
 
 # opengl -- OpenGL bindings for Nim
 requires "opengl"
@@ -45,10 +45,10 @@ requires "taskpools"
 # ferushtml/2html5you -- next gen Ferus HTML parser (will put it on Nimble later)
 requires "https://github.com/xTrayambak/ferushtml"
 
-#[ Linux-specific modules
+# Linux-specific modules
 when defined(linux):
-  requires "firejail"
-]#
+  # Firejail -- sandboxing utility (xTrayambak's fork with fixes for new firejail versions)
+  requires "https://github.com/xTrayambak/nim-firejail"
 
 # Debug build (ferus + libferuscli)
 task debugBuild, "Build Ferus as a production package (debug)":
