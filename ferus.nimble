@@ -1,7 +1,7 @@
 # Package
 
 version       = "0.1.0"
-author        = "xTrayambak and Ferus developers"
+author        = "xTrayambak and Ferus authors"
 description   = "A fast, independent and (hopefully) secure web browser written in Nim"
 license       = "MIT"
 srcDir        = "src"
@@ -47,7 +47,6 @@ requires "https://github.com/xTrayambak/ferushtml"
 
 # Linux-specific modules
 when defined(linux):
-  # Firejail -- sandboxing utility (xTrayambak's fork with fixes for new firejail versions)
   requires "https://github.com/xTrayambak/nim-firejail"
 
 # Debug build (ferus + libferuscli)
