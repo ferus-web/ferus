@@ -2,6 +2,7 @@ import chronicles, strformat, times, osproc, taskpools,
        ../../rand,
        ../../ipc/server,
        ../../sandbox/processtypes,
+       threadpool,
        policyman, firejail
 
 # The higher the number, more the time taken to generate the string,
