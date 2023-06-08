@@ -93,6 +93,10 @@ proc processMessages*(ipcClient: IPCClient) =
         if status == IPC_SERVER_REQUEST_DECLINE_NOT_REGISTERED:
           fatal "[src/ipc/client.nim] We attempted to send a request without first registering! Abort."
           quit(1)
+        elif status == IPC_SERVER_REQUEST_TERMINATION:
+          fatal "[src/ipc/client.nim] Caught deadly magic number IPC_SERVER_REQUEST_TERMINATION; goodbye!"
+          quit(0)
+
       except ValueError:
         warn "[src/ipc/client.nim] IPC server sent malformed packet (is it a bug?)"
 
