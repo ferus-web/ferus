@@ -1,3 +1,8 @@
+# Docker file for running Ferus in an Ubuntu 23.10 container
+# Authors:
+# 
+# moigagoo (moigagoo at duck dot com)
+
 FROM ubuntu:mantic
 
 ENV DEBIAN_FRONTEND=noninteractive
