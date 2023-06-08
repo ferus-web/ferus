@@ -9,10 +9,12 @@ import math
 type 
   CSSFloat* = float
   CSSColor* = ref object of RootObj
-    r*: float64
-    g*: float64
-    b*: float64
-    a*: float64
+    r*: uint8
+    g*: uint8
+    b*: uint8
+    a*: uint8
+  CSSPixel* = ref object of RootObj
+    px*: uint8
 
 #[
   Determine if two CSSFloat(s) are nearly identical, only off by a few decimal places.
@@ -41,5 +43,8 @@ proc approxEqual*(cssf1, cssf2: CSSFloat): bool =
 template `~~`* (a, b: CSSFloat): bool =
   almostEqual(a, b)
 
-proc newCSSColor*(r: float64, g: float64, b: float64, a: float64): CSSColor =
+proc newCSSPixel*(px: uint8): CSSPixel =
+  CSSPixel(px: px)
+
+proc newCSSColor*(r, g, b, a: uint8): CSSColor =
   CSSColor(r: r, g: g, b: b, a: a)

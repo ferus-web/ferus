@@ -36,7 +36,6 @@ proc newRenderImage*(img: Image, dimensions: tuple[w, h: float32]): RenderImage 
     pos: (x: 0f, y: 0f), img: img, blurEnabled: false, 
     pType: ptImg, dimensions: dimensions
   )
-  echo "done"
 
 proc clear*(renderImage: RenderImage, clearColor: SomeColor = (r: 255, g: 255, b: 255, a: 255)) =
   renderImage.img.fill(clearColor)

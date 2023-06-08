@@ -18,7 +18,7 @@ type OrchestralClient* = ref object of RootObj
   clientLastUpdated*: float
   rendererLastUpdated*: float
 
-proc updateRenderer*(orchestral: OrchestralClient) =
+proc updateRenderer*(orchestral: OrchestralClient) {.inline.} =
   if orchestral.renderer.context.isNil:
     when defined(ferusUseVerboseLogging):
       warn "[src/orchestral/orchestral.nim] Scheduler was passed `nil` instead of src.renderer.render.Renderer; this function won't execute further to prevent a crash."
@@ -32,7 +32,7 @@ proc updateRenderer*(orchestral: OrchestralClient) =
   else:
     orchestral.rendererLastUpdated += 0.1f
 
-proc updateClient*(orchestral: OrchestralClient) =
+proc updateClient*(orchestral: OrchestralClient) {.inline.} =
   if orchestral.client.context.isNil:
     when defined(ferusUseVerboseLogging):
       warn "[src/orchestral/orchestral.nim] Scheduler was passed `nil` instead of src.ipc.client.Client; this function won't execute further to prevent a crash."
@@ -47,7 +47,7 @@ proc updateClient*(orchestral: OrchestralClient) =
   else:
     orchestral.clientLastUpdated += 0.1f
 
-proc update*(orchestral: OrchestralClient): bool =
+proc update*(orchestral: OrchestralClient): bool {.inline.} =
   orchestral.updateRenderer()
   orchestral.updateClient()
   
@@ -56,6 +56,8 @@ proc update*(orchestral: OrchestralClient): bool =
   else:
     false
 
-proc newOrchestralClient*(renderer: Renderer, client: IPCClient): OrchestralClient =
+proc newOrchestralClient*(renderer: Renderer, 
+                          client: IPCClient
+                        ): OrchestralClient {.inline.} =
   OrchestralClient(renderer: (cooldown: 0f, context: renderer), 
                    client: (cooldown: 8f, context: client))

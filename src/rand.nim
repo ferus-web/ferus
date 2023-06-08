@@ -44,7 +44,7 @@ var CHAR_SET = [
 info "[src/rand.nim] Randomizing Xoroshiro128+ initial state"
 randomize()
 
-proc getRandAlphabetSequence*(stop: int): string =
+proc getRandAlphabetSequence*(stop: int): string {.inline.} =
   var x = ""
   for i in 0..stop:
     shuffle(CHAR_SET)
@@ -52,10 +52,10 @@ proc getRandAlphabetSequence*(stop: int): string =
 
   x
 
-proc randint*(start: int, stop: int): int =
+proc randint*(start: int, stop: int): int {.inline.} =
   rand(start..stop)
 
-proc randints*(numIterations: int, start: int, stop: int): seq[int] =
+proc randints*(numIterations: int, start: int, stop: int): seq[int] {.inline.} =
   var
     x: seq[int] = @[]
 
@@ -64,12 +64,12 @@ proc randints*(numIterations: int, start: int, stop: int): seq[int] =
 
   x
 
-proc choice*[T](sequence: var openArray[T]): T =
+proc choice*[T](sequence: var openArray[T]): T {.inline.} =
   sample(sequence)
 
-proc shuffleSeq*[T](sequence: var openArray[T]) =
+proc shuffleSeq*[T](sequence: var openArray[T]) {.inline.} =
   shuffle(sequence)
 
 when not defined(ferusNoSecureRng):
-  proc secureRand*(numBytes: int): seq[byte] =
+  proc secureRand*(numBytes: int): seq[byte] {.inline.} =
     urandom(numBytes)

@@ -16,8 +16,7 @@ type
     ssFull
 
   LayoutNode* = ref object of RootObj
-    dom*: DOM
-
+    # dom*: DOM
     generated*: bool
     anonymous*: bool
     visible*: bool
@@ -27,11 +26,11 @@ type
   LayoutNodeWithBoxModelMetrics* = ref object of LayoutNode
     boxModelMetrics*: BoxModelMetrics
 
-proc newLayoutNode*(dom: DOM, 
+proc newLayoutNode*(
                     generated, anonymous, visible, childrenAreInline: bool,
                     selectionState: SelectionState
-                   ): bool {.inline.} =
-  LayoutNode(dom: dom, generated: generated, visible: visible, 
+                   ): LayoutNode {.inline.} =
+  LayoutNode(generated: generated, visible: visible, 
              childrenAreInline: childrenAreInline, 
              selectionState: selectionState)
 
@@ -40,7 +39,7 @@ proc newLayoutNodeWithBoxModelMetrics*(dom: DOM,
                                        childrenAreInline: bool, selectionState: SelectionState,
                                        boxModelMetrics: BoxModelMetrics
                                       ): LayoutNodeWithBoxModelMetrics {.inline.} =
-  LayoutNodeWithBoxModelMetrics(dom: dom, generated: generated, 
+  LayoutNodeWithBoxModelMetrics(generated: generated, 
                                 anonymous: anonymous, 
                                 childrenAreInline: childrenAreInline, 
                                 selectionState: selectionState, 

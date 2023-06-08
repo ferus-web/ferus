@@ -1,32 +1,33 @@
 import ../dom/dom, ../renderer/[render, primitives, fontmanager],
-       std/typetraits, chronicles
+       label, element, chronicles, tables
 
-type 
+type
   LayoutEngine* = ref object of RootObj
     dom*: DOM
     renderer*: Renderer
 
-    displayList*: seq[RenderPrimitive]
     fontManager: FontManager
-    layoutTree*: seq[int]
+    layoutTree*: seq[LayoutElement]
 
-proc draw*(layoutEngine: LayoutEngine, surface: RenderImage) =
-  return
+proc draw*(layoutEngine: LayoutEngine, surface: RenderImage) {.inline.} =
+  for drawable in layoutEngine.layoutTree:
+    drawable.draw(surface, (x: 4f, y: 4f))
 
 proc calculate*(layoutEngine: LayoutEngine) =
   info "[src/layout/layout.nim] Clearing display list and layout tree"
-  layoutEngine.displayList.reset()
   layoutEngine.layoutTree.reset()
 
   var font = layoutEngine.fontManager.loadFont("Default", "../data/IBMPlexSans-Regular.ttf")
-
-  layoutEngine.displayList.add(
-    newRenderText(
-      "Layout engine attempt #2", font, (w: 32f, h: 32f),
-      (x: 0f, y: 0f)
+  layoutEngine.layoutTree.add(
+    newLabel(
+      "HELLO",
+      layoutEngine.renderer,
+      layoutEngine.fontManager
     )
   )
 
 proc newLayoutEngine*(dom: DOM, renderer: Renderer): LayoutEngine =
-  LayoutEngine(dom: dom, renderer: renderer, displayList: @[], layoutTree: @[], 
-  fontManager: newFontManager())
+  LayoutEngine(
+    dom: dom, renderer: renderer, layoutTree: @[], 
+    fontManager: newFontManager()
+  )

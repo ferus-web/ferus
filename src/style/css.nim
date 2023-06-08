@@ -1,107 +1,112 @@
 #[
-  State-machine based CSS parser for Ferus
+  CSS parser
+  Ported from https://github.com/mbrubeck/robinson/blob/master/src/css.rs
 
   This code is licensed under the MIT license
+  
+  Authors: xTrayambak (xtrayambak at gmail dot com)
 ]#
-
-import std/tables
-import std/times
-
-import chronicles
-
-import rules/rules
-import ../../butterfly
+import butterfly, csstypes, algorithm, sugar, strutils
 
 type
-  CSSParserState* = enum                  # Example
-    psReadName,                        # myH1
-    psParseAttrName,                   #    color:
-    psParseAttrValue,                  #    rgba(234, 88, 126, .5);
-    psEndAttrib,
-    psBadAttrib,
-    psEndTag
+  Selector* = ref object of RootObj
+    tagName*: string
+    id*: string
+    class*: string
+
+  Declaration* = ref object of RootObj
+    name*: string
+    value*: auto # string, float32, CSSPixel, CSSColor
+
+  Rule* = ref object of RootObj
+    selectors*: seq[Selector]
+    declarations*: seq[Declaration]
+
+  Stylesheet* = ref object of RootObj
+    rules*: seq[Rule]
+
+  Specificity* = tuple[a, b, c: uint]
   
-  RuleSet* = TableRef[string, TableRef[string, Butterfly]]
-  CSSParser* = ref object of RootObj
-    state*: CSSParserState
+  Parser* = ref object of RootObj
+    idx*: int
+    source*: string
 
-proc isWhitespace*(c: char): bool =
-  c == ' ' or c == '\n' or c == '\t'
-                                               # ROOT   OBJ     ATTRS   ATTRNAME BUTTERFLY
-proc parse*(parser: CSSParser, input: string): RuleSet =
-  var
-    startTime = cpuTime()
-    elementName = ""
-    currentAttribName = ""
-    currentAttribValue = ""
-    attributes = newTable[string, TableRef[string, Butterfly]]()
+proc specificity*(selector: Selector): Specificity {.inline.} =
+  (
+    a: selector.id.len.uint,
+    b: selector.class.len.uint,
+    c: selector.tagName.len.uint
+  )
 
-  for c in input:
-    if isWhitespace(c):
-      continue
+proc consumeChar*(parser: Parser): char =
+  result = parser.source[parser.idx]
+  inc parser.idx
 
-    if parser.state == CSSParserState.psEndAttrib:
-      # compute butterfly payload
-      var data: string
-      try:
-        data = getCssTypes(currentAttribName) & "[" & currentAttribValue & "]"
-      except KeyError:
-        warn "[src/parsers/css.nim] No type in dictionary for this attribute! Defaulting to the good ol' string. (KeyError raised when trying to compare)", erroneousType=currentAttribName
-        data = "s[" & currentAttribValue & "]"
+proc nextChar*(parser: Parser): char =
+  parser.source[parser.idx]
 
-      attributes[elementName][currentAttribName] = newButterfly(data)
-      
-      currentAttribName.reset()
-      currentAttribValue.reset()
+proc eof*(parser: Parser): bool =
+  parser.idx >= parser.source.len
 
-      if c != '}':
-        parser.state = CSSParserState.psParseAttrName
-      else:
-        elementName.reset()
-        parser.state = CSSParserState.psEndTag
-        continue
+proc consumeWhile*(parser: Parser, conditional: proc(c: char): bool): string =
+  var res = ""
 
-    if parser.state == CSSParserState.psBadAttrib:
-      if c != '}':
-        parser.state = CSSParserState.psParseAttrName
-      else:
-        elementName.reset()
-        parser.state = CSSParserState.psEndTag
-        continue
+  while not parser.eof() and conditional(parser.nextChar()):
+    res = res & parser.nextChar()
 
-    if parser.state == CSSParserState.psEndTag:
-      parser.state = CSSParserState.psReadName
+  res
 
-    if c == '{' and parser.state != CSSParserState.psParseAttrName:
-      attributes[elementName] = newTable[string, Butterfly]()
-      parser.state = CSSParserState.psParseAttrName
-      continue
-    elif c != '{' and parser.state == CSSParserState.psReadName:
-      elementName = elementName & c
-    
-    if parser.state == CSSParserState.psParseAttrName:
-      if c != ':':
-        currentAttribName = currentAttribName & c
-      else:
-        parser.state = CSSParserState.psParseAttrValue
-        continue
+proc consumeWhitespace*(parser: Parser) =
+  discard parser.consumeWhile(
+    (c: char) => c == ' '
+  )
 
-    if parser.state == CSSParserState.psParseAttrValue:
-      if c == '}':
-        echo "[src/parsers/css.nim] Malformed CSS detected; expected attribute value but got '}' instead."
- 
-      if c != ';':
-        currentAttribValue = currentAttribValue & c
-      else:
-        if currentAttribValue.len < 1:
-          echo "[src/parsers/css.nim] No value provided for attribute, got ';' instead. This attribute will not be registered."
-          parser.state = CSSParserState.psBadAttrib
-        else:
-          parser.state = CSSParserState.psEndAttrib
-        continue
+proc validIdentifierChar(c: char): bool {.inline.} =
+  if c.toLowerAscii() in {'a'..'z'} or c in {'0'..'9'} or c == '-' or c == '_':
+    return true
 
-  info "[src/parsers/css.nim] Parsed CSS successfully!", timeMs=cpuTime() - startTime
-  attributes
+  return false
 
-proc newCSSParser*: CSSParser =
-  CSSParser(state: CSSParserState.psReadName)
+proc parseHexPair*(parser: Parser): uint8 =
+  let s = parser.source[parser.idx..parser.idx+2]
+  parser.idx += 2
+
+  parseUint(s)
+
+proc parseColor*(parser: Parser): CSSColor =
+  assert parser.consumeChar() == '#'
+  newCSSColor(
+    parser.parseHexPair(),
+    parser.parseHexPair(),
+    parser.parseHexPair(),
+    parser.parseHexPair()
+  )
+
+proc parseIdentifier*(parser: Parser): string =
+  parser.consumeWhile(
+    (c: char) => validIdentifierChar(c)
+  )
+
+proc isPx*(parser: Parser): bool =
+  case parser.parseIdentifier().toLowerAscii():
+    of "px": return true
+    else: return false
+
+proc parseF(c: char): bool {.inline.} =
+  if c in {'0'..'9'} or c == '.':
+    true
+  false
+
+proc parseFloat*(parser: Parser): float =
+  let s = parser.consumeWhile(
+    (c: char) => parseF(c)
+  )
+  parseFloat(s)
+
+proc parseValue*(parser: Parser): Butterfly =
+  var bfly: Butterfly
+  if parser.nextChar() in {'0'..'9'}:
+    bfly = newButterfly("")
+  return bfly
+
+proc parseSimpleSelector*()

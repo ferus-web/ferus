@@ -13,7 +13,7 @@ type SandboxedRenderer* = ref object of RootObj
   renderer*: Renderer
   ipcClient*: IPCClient
 
-proc startUI*(sandboxedRenderer: SandboxedRenderer, dom: DOM) =
+proc startUI*(sandboxedRenderer: SandboxedRenderer, dom: DOM) {.inline.} =
   var 
     ui = newUI(dom, sandboxedRenderer.renderer)
 

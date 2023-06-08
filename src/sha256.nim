@@ -107,7 +107,7 @@ type
   SHA384Digest* = array[0..47, uint8]
   SHA512Digest* = array[0..63, uint8]
 
-proc initSHA*(ctx: var SHA224) =
+proc initSHA*(ctx: var SHA224) {.inline.} =
   ctx.count[0] = 0
   ctx.count[1] = 0
   ctx.state[0] = 0xC1059ED8'u32
@@ -119,7 +119,7 @@ proc initSHA*(ctx: var SHA224) =
   ctx.state[6] = 0x64F98FA7'u32
   ctx.state[7] = 0xBEFA4FA4'u32
 
-proc initSHA*(ctx: var SHA256) =
+proc initSHA*(ctx: var SHA256) {.inline.} =
   ctx.count[0] = 0
   ctx.count[1] = 0
   ctx.state[0] = 0x6A09E667'u32
@@ -131,7 +131,7 @@ proc initSHA*(ctx: var SHA256) =
   ctx.state[6] = 0x1F83D9AB'u32
   ctx.state[7] = 0x5BE0CD19'u32
 
-proc initSHA*(ctx: var SHA384) =
+proc initSHA*(ctx: var SHA384) {.inline.} =
   ctx.count[0] = 0
   ctx.count[1] = 0
   ctx.state[0] = 0xCBBB9D5DC1059ED8'u64
@@ -143,7 +143,7 @@ proc initSHA*(ctx: var SHA384) =
   ctx.state[6] = 0xDB0C2E0D64F98FA7'u64
   ctx.state[7] = 0x47B5481DBEFA4FA4'u64
 
-proc initSHA*(ctx: var SHA512) =
+proc initSHA*(ctx: var SHA512) {.inline.} =
   ctx.count[0] = 0
   ctx.count[1] = 0
   ctx.state[0] = 0x6A09E667F3BCC908'u64
@@ -155,22 +155,22 @@ proc initSHA*(ctx: var SHA512) =
   ctx.state[6] = 0x1F83D9ABFB41BD6B'u64
   ctx.state[7] = 0x5BE0CD19137E2179'u64
 
-proc initSHA*[T](): T =
+proc initSHA*[T](): T {.inline.} =
   result.initSHA()
 
-proc GET_UINT32_BE(b: cstring, i: int): uint32 =
+proc GET_UINT32_BE(b: cstring, i: int): uint32 {.inline.} =
   var val = b
   bigEndian32(addr(result), addr(val[i]))
 
-proc PUT_UINT32_BE(n: uint32, b: var cstring, i: int) =
+proc PUT_UINT32_BE(n: uint32, b: var cstring, i: int) {.inline.} =
   var val = n
   bigEndian32(addr(b[i]), addr(val))
 
-proc GET_UINT64_BE(b: cstring, i: int): uint64 =
+proc GET_UINT64_BE(b: cstring, i: int): uint64 {.inline.} =
   var val = b
   bigEndian64(addr(result), addr(val[i]))
 
-proc PUT_UINT64_BE(n: uint64, b: var cstring, i: int) =
+proc PUT_UINT64_BE(n: uint64, b: var cstring, i: int) {.inline.} =
   var val = n
   bigEndian64(addr(b[i]), addr(val))
 

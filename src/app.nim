@@ -22,7 +22,7 @@ type FerusApplication* = ref object of RootObj
   dom*: DOM
   broker*: Broker
 
-proc processMsg*(app: FerusApplication, sender: Client, data: JSONNode) =
+proc processMsg*(app: FerusApplication, sender: Client, data: JSONNode) {.inline.} =
   if "result" in data:
     let result = data["result"]
 
@@ -63,14 +63,14 @@ proc init*(app: FerusApplication) =
 
   app.orchestral.server.context.addReceiver(get)
 
-proc initRenderer*(app: FerusApplication) =
+proc initRenderer*(app: FerusApplication) {.inline.} =
   app.broker.createNewProcess(ptRenderer)
 
-proc run*(app: FerusApplication) =
+proc run*(app: FerusApplication) {.inline.} =
   while true:
     app.orchestral.update()
 
-proc newFerusApplication*: FerusApplication =
+proc newFerusApplication*: FerusApplication {.inline.} =
   info "[src/app.nim] Ferus application layer is now starting"
 
   var

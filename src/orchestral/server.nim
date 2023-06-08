@@ -13,7 +13,7 @@ type OrchestralServer* = ref object of RootObj
 
   serverLastUpdated*: float
 
-proc updateServer*(orchestral: OrchestralServer) =
+proc updateServer*(orchestral: OrchestralServer) {.inline.} =
   if orchestral.server.context.isNil:
     warn "[src/orchestral/orchestral.nim] Scheduler was passed `nil` instead of src.ipc.client.Client; this function won't execute further to prevent a crash."
     return
@@ -28,11 +28,11 @@ proc updateServer*(orchestral: OrchestralServer) =
     # Ideally in the future this should be some non-constant incremental number
     orchestral.serverLastUpdated += 1f
 
-proc update*(orchestral: OrchestralServer) =
+proc update*(orchestral: OrchestralServer) {.inline.} =
   orchestral
     .updateServer()
 
-proc newOrchestralServer*(iserver: IPCServer): OrchestralServer =
+proc newOrchestralServer*(iserver: IPCServer): OrchestralServer {.inline.} =
   OrchestralServer(
     server: (cooldown: 8f, context: iserver)
   )

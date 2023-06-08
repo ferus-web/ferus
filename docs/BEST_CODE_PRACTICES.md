@@ -44,6 +44,10 @@ other than Nim). Only critical libraries such as GLFW (windowing) and
 OpenAL/miniaudio (audio, duh) are allowed as no such implementation exists in Nim
 that is as good as them yet.
 
+# Performance
+Try to use the fastest possible implementations of algorithms, if possible parallelize them.
+Always inline functions below 15 loc.
+
 # Pointers and Threads
 - Try to avoid pointers as if they're the plague, unless your hand is forced into them
 via an impure library/wrapper.

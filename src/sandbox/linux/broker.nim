@@ -24,7 +24,7 @@ proc createNewProcess*(broker: Broker, procType: ProcessType) =
     fmt" --ipc-server-port={broker.ipcServer.port}"
   let jail = policymanCreateAppropriateJail(procType)
 
-  discard tp.spawn jail.exec(cmd)
+  discard tp.spawn execCmd(cmd)
   info "[src/sandbox/linux/broker.nim] libferuscli launched!"
 
 proc newBroker*(ipcServer: IPCServer): Broker =

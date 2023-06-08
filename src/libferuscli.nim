@@ -11,14 +11,14 @@ import sandbox/processtypes,
   
 import chronicles
 
-proc getFlagAt(idx: int): string =
+proc getFlagAt(idx: int): string {.inline.} =
   if idx > paramCount():
     error "[src/libferuscli.nim] getFlagAt() failed, idx > os.paramCount()"
     quit()
 
   paramStr(idx).strip(chars = {'-', '-'}).toLowerAscii()
 
-proc clean(s: string): string =
+proc clean(s: string): string {.inline.} =
   var
     builder = ""
     canWriteArgNow = false

@@ -1,7 +1,6 @@
 import opengl, chronicles, 
        pixie, windy, 
-       boxy, weave, 
-       os, primitives
+       boxy, os, primitives
 
 const FERUS_RENDER_PIPELINE_NUMTHREADS {.intdefine.} = 4
 
@@ -19,7 +18,7 @@ type
     glRenderer*: string
     surface*: RenderImage
   
-proc setIcon*(renderer: Renderer, image: Image) =
+proc setIcon*(renderer: Renderer, image: Image) {.inline.} =
   # Ferus should only support 64x64 icons
   if not renderer.isNil:
     assert image.height == 64 and image.width == 64
@@ -51,26 +50,33 @@ proc onRender*(renderer: Renderer) =
   # Poll GLFW events
   pollEvents()
 
-proc drawText*(renderer: Renderer, text: string, 
+proc drawText*(renderer: Renderer, 
+               text: string, 
                pos: tuple[x: float32, y: float32], scale: tuple[w: float32, h: float32],
-               font: Font, surface: RenderImage) =
+               font: Font, surface: RenderImage,
+               halign = LeftAlign, valign = TopAlign,
+               wrap = false
+               ) {.inline.} =
   surface.img.fillText(
     font.typeset(
       text, 
-      vec2(pos.x, pos.y)
+      vec2(pos.x, pos.y),
+      halign, valign,
+      wrap
     ), 
     translate(
       vec2(scale.w, scale.h)
     )
   )
 
-proc blurImg*(renderer: Renderer, renderImg: RenderImage, strength: int = 2) =
+proc blurImg*(renderer: Renderer, renderImg: RenderImage, strength: int = 2) {.inline.} =
   if renderer.alive and not renderImg.blurEnabled:
     renderImg.blurEnabled = true
-
-    init(Weave)
-    spawn renderImg.img.blur(strength.float32)
-    exit(Weave)
+    
+    # TODO(xTrayambak) replace this with a parallelized recursive Gaussian blur
+    # OR replace it with a dual kawase blur, both are fast.
+    # This is NOT fast enough for real-time applications like Ferus!
+    renderImg.img.blur(strength.float32)
 
 proc onResize*(renderer: Renderer) =
   var
@@ -94,10 +100,10 @@ proc onResize*(renderer: Renderer) =
   renderer.width = width
   renderer.height = height
 
-proc attachToRender*(renderer: Renderer, fn: DrawListener) =
+proc attachToRender*(renderer: Renderer, fn: DrawListener) {.inline.} =
   renderer.drawListeners.add(fn)
 
-proc init*(renderer: Renderer) =
+proc init*(renderer: Renderer) {.inline.} =
   var
     glVersion = $cast[cstring](glGetString(GL_VERSION))
     glVendor = $cast[cstring](glGetString(GL_VENDOR))
