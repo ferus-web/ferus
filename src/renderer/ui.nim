@@ -9,6 +9,7 @@ import windy, pixie,
 type UI* = ref object of RootObj
   renderer*: Renderer
   layoutEngine*: LayoutEngine
+  backgroundColor*: ColorRGBA
 
 proc loadIcon*(ui: UI) {.inline.} =
   info "[src/renderer/ui.nim] Loading Ferus icon!"
@@ -16,6 +17,7 @@ proc loadIcon*(ui: UI) {.inline.} =
   ui.renderer.setIcon(logo)
 
 proc blit*(ui: UI, surface: RenderImage) =
+  surface.img.fill(ui.backgroundColor)
   ui.layoutEngine.draw(surface)
 
 proc init*(ui: UI) =
@@ -30,5 +32,6 @@ proc init*(ui: UI) =
 
 proc newUI*(dom: DOM, renderer: Renderer): UI =
   UI(renderer: renderer, 
-     layoutEngine: newLayoutEngine(dom, renderer)
+     layoutEngine: newLayoutEngine(dom, renderer),
+     backgroundColor: rgba(255, 255, 255, 255)
   )

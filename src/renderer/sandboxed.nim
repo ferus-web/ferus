@@ -3,9 +3,9 @@
 ]#
 import ../ipc/[client, constants],
        ../dom/dom,
-       ui, render, ../orchestral/client,
+       ui, render,
        ../layout/layout
-import std/[json, marshal, tables, strutils, os], chronicles
+import std/[json, marshal, tables, strutils, os], chronicles, pixie, ferushtml
 
 
 type SandboxedRenderer* = ref object of RootObj
@@ -19,6 +19,17 @@ proc startUI*(sandboxedRenderer: SandboxedRenderer, dom: DOM) {.inline.} =
 
   sandboxedRenderer.ui = ui
   sandboxedRenderer.ui.init()
+
+  # TODO(xTrayambak): this should be handled in a seperate file to prevent clutter
+  for attr in dom.document.root.findChildByTag("html").findChildByTag("body").attributes:
+    if attr.name.toLowerAscii() == "background-color":
+      let colorRgb = parseHtmlColor(attr.value.payload)
+      sandboxedRenderer.ui.backgroundColor = rgba(
+        colorRgb.r.uint8, 
+        colorRgb.g.uint8, 
+        colorRgb.b.uint8, 
+        255
+      )
 
 proc initialize*(sandboxedRenderer: SandboxedRenderer) =
   info "[src/renderer/sandboxed.nim] Request IPC server for DOM"

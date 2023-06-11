@@ -116,7 +116,7 @@ proc kill*(ipcClient: IPCClient, silentDeath: bool = false) {.inline.} =
     ipcClient.send({"result": IPC_CLIENT_SHUTDOWN})
   else:
     warn "[src/ipc/client.nim] We'll die a silent death, without telling the IPC server."
-  ipcClient.alive = false
+  # ipcClient.alive = false
 
 #[
   Create a new IPC client

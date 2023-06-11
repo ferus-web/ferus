@@ -34,5 +34,5 @@ proc update*(orchestral: OrchestralServer) {.inline.} =
 
 proc newOrchestralServer*(iserver: IPCServer): OrchestralServer {.inline.} =
   OrchestralServer(
-    server: (cooldown: 8f, context: iserver)
+    server: (cooldown: 2f, context: iserver)
   )

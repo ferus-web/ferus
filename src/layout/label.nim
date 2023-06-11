@@ -5,7 +5,10 @@
 
   Authors: xTrayambak (xtrayambak at gmail dot com)
 ]#
-import ../renderer/[primitives, render, fontmanager], box, node, aabb, element, pixie
+import ../renderer/[primitives, render, fontmanager], 
+       box, node, aabb, element, 
+       pixie,
+       std/[strutils]
 
 type Label* = ref object of LayoutElement
 
@@ -23,11 +26,13 @@ proc computeSize(textContent: string, font: Font): int {.inline.} =
 proc newLabel*(textContent: string, renderer: Renderer, fontMgr: FontManager): Label =
   let
     font = fontMgr.getFont("Default")
+    size = computeSize(textContent, font)
     prim = newRenderText(
       textContent,
       font,
-      (w: 64f, h: 64f), (x: 64f, y: 64f)
+      (w: 64f, h: 64f), (x: 0f, y: 0f)
     )
+
   Label(
     renderer: renderer,
     primitive: prim,
@@ -36,7 +41,7 @@ proc newLabel*(textContent: string, renderer: Renderer, fontMgr: FontManager): L
     ),
     box: newBox(
       newAABB(
-        prim.pos.x.int, prim.pos.y.int, computeSize(textContent, font), font.size.int
+        prim.pos.x.int, prim.pos.y.int, (font.size.int * textContent.len), font.size.int
       )
     )
   )
