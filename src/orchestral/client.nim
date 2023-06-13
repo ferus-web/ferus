@@ -3,10 +3,13 @@
   Just write your own, it will save you a lot more pain than copy pasting this garbage.
 
   This code is licensed under the MIT license
+
+  Authors: xTrayambak (xtrayambak at gmail dot com)
 ]#
 
 import ../renderer/render,
        ../ipc/client,
+       times,
        pixie,
        windy,
        chronicles
@@ -15,10 +18,12 @@ type OrchestralClient* = ref object of RootObj
   renderer*: tuple[cooldown: float32, context: Renderer] # The renderer context
   client*: tuple[cooldown: float32, context: IPCClient] # the IPC client
 
-  clientLastUpdated*: float
-  rendererLastUpdated*: float
+  clientLastUpdated*: float    # Time since IPC client got updated
+  rendererLastUpdated*: float  # Time since renderer got updated (only necessary for ptRenderer processes)
 
-proc updateRenderer*(orchestral: OrchestralClient) {.inline.} =
+  lastCpuTime*: float
+
+proc updateRenderer*(orchestral: OrchestralClient, delta: float) {.inline.} =
   if orchestral.renderer.context.isNil:
     when defined(ferusUseVerboseLogging):
       warn "[src/orchestral/orchestral.nim] Scheduler was passed `nil` instead of src.renderer.render.Renderer; this function won't execute further to prevent a crash."
@@ -30,9 +35,9 @@ proc updateRenderer*(orchestral: OrchestralClient) {.inline.} =
 
     orchestral.renderer.context.onRender()
   else:
-    orchestral.rendererLastUpdated += 0.1f
+    orchestral.rendererLastUpdated += delta
 
-proc updateClient*(orchestral: OrchestralClient) {.inline.} =
+proc updateClient*(orchestral: OrchestralClient, delta: float) {.inline.} =
   if orchestral.client.context.isNil:
     when defined(ferusUseVerboseLogging):
       warn "[src/orchestral/orchestral.nim] Scheduler was passed `nil` instead of src.ipc.client.Client; this function won't execute further to prevent a crash."
@@ -45,11 +50,14 @@ proc updateClient*(orchestral: OrchestralClient) {.inline.} =
     orchestral.client.context.heartbeat()
     orchestral.clientLastUpdated = 0f
   else:
-    orchestral.clientLastUpdated += 0.1f
+    orchestral.clientLastUpdated += 0.1f + delta
 
 proc update*(orchestral: OrchestralClient): bool {.inline.} =
-  orchestral.updateRenderer()
-  orchestral.updateClient()
+  let delta = cpuTime() - orchestral.lastCpuTime
+  orchestral.lastCpuTime = cpuTime()
+
+  orchestral.updateRenderer(delta)
+  orchestral.updateClient(delta)
   
   if not orchestral.renderer.context.isNil:
     orchestral.renderer.context.window.closeRequested
@@ -60,4 +68,4 @@ proc newOrchestralClient*(renderer: Renderer,
                           client: IPCClient
                         ): OrchestralClient {.inline.} =
   OrchestralClient(renderer: (cooldown: 0f, context: renderer), 
-                   client: (cooldown: 2f, context: client))
+                   client: (cooldown: 2f, context: client), lastCpuTime: cpuTime())

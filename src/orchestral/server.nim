@@ -6,14 +6,15 @@
 ]#
 
 import ../ipc/server,
-       chronicles
+       chronicles, times
 
 type OrchestralServer* = ref object of RootObj
   server*: tuple[cooldown: float32, context: IPCServer] # the IPC client
 
   serverLastUpdated*: float
+  lastCpuTime*: float
 
-proc updateServer*(orchestral: OrchestralServer) {.inline.} =
+proc updateServer*(orchestral: OrchestralServer, delta: float) {.inline.} =
   if orchestral.server.context.isNil:
     warn "[src/orchestral/orchestral.nim] Scheduler was passed `nil` instead of src.ipc.client.Client; this function won't execute further to prevent a crash."
     return
@@ -25,14 +26,16 @@ proc updateServer*(orchestral: OrchestralServer) {.inline.} =
     orchestral.server.context.heartbeat()
     orchestral.serverLastUpdated = 0f
   else:
-    # Ideally in the future this should be some non-constant incremental number
-    orchestral.serverLastUpdated += 1f
+    orchestral.serverLastUpdated += 1f + delta
 
-proc update*(orchestral: OrchestralServer) {.inline.} =
+proc update*(orchestral: OrchestralServer, delta: float) {.inline.} =
+  let delta = cpuTime() - orchestral.lastCpuTime
+  orchestral.lastCpuTime = 0f
   orchestral
-    .updateServer()
+    .updateServer(delta)
 
 proc newOrchestralServer*(iserver: IPCServer): OrchestralServer {.inline.} =
   OrchestralServer(
-    server: (cooldown: 2f, context: iserver)
+    server: (cooldown: 2f, context: iserver),
+    lastCpuTime: cpuTime()
   )
