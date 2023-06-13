@@ -21,8 +21,8 @@ proc getPos*(layoutEngine: LayoutEngine,
              lastNode: LayoutElement
             ): tuple[x, y: int] {.inline.} =
   (
-    x: lastNode.box.aabb.getRight(),
-    y: currNode.box.aabb.h - lastNode.box.aabb.getBottom()
+    x: lastNode.box.aabb.getRight() + 10,
+    y: lastNode.box.aabb.getBottom()
   )
 
 proc draw*(layoutEngine: LayoutEngine, 
@@ -68,7 +68,7 @@ proc calculate*(layoutEngine: LayoutEngine) =
       layoutEngine.fontManager
     )
   )
-  layoutEngine.layoutTree.add(
+  #[layoutEngine.layoutTree.add(
     newLabel(
       "HOWDY PLANET EARTH!",
       layoutEngine.renderer,
@@ -81,7 +81,7 @@ proc calculate*(layoutEngine: LayoutEngine) =
       layoutEngine.renderer,
       layoutEngine.fontManager
     )
-  )
+  )]#
 
 proc newLayoutEngine*(dom: DOM, 
                       renderer: Renderer
