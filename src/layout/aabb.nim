@@ -22,12 +22,12 @@ proc getBottom*(aabb: AABB): int {.inline.} =
   aabb.y
 
 proc getLeft*(aabb: AABB): int {.inline.} =
-  aabb.x + 10
+  aabb.x
 
 proc getRight*(aabb: AABB): int {.inline.} =
-  aabb.x + aabb.w + 10
+  aabb.x + aabb.w
 
-proc debugDraw*(aabb: AABB, surface: RenderImage) {.inline.} =
+proc debugDraw*(aabb: AABB, surface: RenderImage) =
   let context = newContext(surface.img)
   context.strokeStyle = "#FF5C00"
   context.lineWidth = 5
