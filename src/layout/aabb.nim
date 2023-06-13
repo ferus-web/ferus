@@ -22,10 +22,10 @@ proc getBottom*(aabb: AABB): int {.inline.} =
   aabb.y
 
 proc getLeft*(aabb: AABB): int {.inline.} =
-  aabb.x
+  aabb.x + 10
 
 proc getRight*(aabb: AABB): int {.inline.} =
-  aabb.x + aabb.w
+  aabb.x + aabb.w + 10
 
 proc debugDraw*(aabb: AABB, surface: RenderImage) {.inline.} =
   let context = newContext(surface.img)

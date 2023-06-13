@@ -20,17 +20,16 @@ proc getPos*(layoutEngine: LayoutEngine,
              currNode: LayoutElement,
              lastNode: LayoutElement
             ): tuple[x, y: int] {.inline.} =
-  echo lastNode.box.aabb.getBottom()
   (
     x: lastNode.box.aabb.getRight(),
-    y: currNode.box.aabb.h - lastNode.box.aabb.getTop()
+    y: currNode.box.aabb.h - lastNode.box.aabb.getBottom()
   )
 
-proc draw*(layoutEngine: LayoutEngine, surface: RenderImage) {.inline.} =
+proc draw*(layoutEngine: LayoutEngine, 
+          surface: RenderImage) {.inline.} =
   var last: LayoutElement
   
   for drawable in layoutEngine.layoutTree:
-
     if not last.isNil:
       let pos = layoutEngine.getPos(drawable, last)
 
@@ -45,8 +44,8 @@ proc draw*(layoutEngine: LayoutEngine, surface: RenderImage) {.inline.} =
         )
       )
     else:
-      #drawable.box.aabb.x = 0
-      #drawable.box.aabb.y = 0
+      drawable.box.aabb.x = 0
+      drawable.box.aabb.y = 0
       drawable.draw(
         surface, 
         (
@@ -76,8 +75,17 @@ proc calculate*(layoutEngine: LayoutEngine) =
       layoutEngine.fontManager
     )
   )
+  layoutEngine.layoutTree.add(
+    newLabel(
+      "GREETINGS, PLANET WITH LIFE!",
+      layoutEngine.renderer,
+      layoutEngine.fontManager
+    )
+  )
 
-proc newLayoutEngine*(dom: DOM, renderer: Renderer): LayoutEngine =
+proc newLayoutEngine*(dom: DOM, 
+                      renderer: Renderer
+                      ): LayoutEngine {.inline.} =
   var tiles: seq[tuple[x, y: uint]] = @[]
 
   LayoutEngine(

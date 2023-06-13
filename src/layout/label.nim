@@ -13,6 +13,8 @@ import ../renderer/[primitives, render, fontmanager],
 type Label* = ref object of LayoutElement
 
 method draw*(label: Label, surface: RenderImage, pos: tuple[x, y: float32]) =
+  label.box.aabb.x = label.primitive.pos.x.int
+  label.box.aabb.y = label.primitive.pos.y.int
   label.box.aabb.debugDraw(surface)
   label.renderer.drawText(
     label.primitive.content, 
@@ -30,7 +32,7 @@ proc newLabel*(textContent: string, renderer: Renderer, fontMgr: FontManager): L
     prim = newRenderText(
       textContent,
       font,
-      (w: 64f, h: 64f), (x: 0f, y: 0f)
+      (w: size.float32, h: 64f), (x: 0f, y: 0f)
     )
 
   Label(

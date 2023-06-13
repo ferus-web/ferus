@@ -47,12 +47,13 @@ proc onRender*(renderer: Renderer) =
   renderer.boxy.endFrame()
   renderer.window.swapBuffers()
   
-  # Poll GLFW events
+  # Poll windy events
   pollEvents()
 
 proc drawText*(renderer: Renderer, 
                text: string, 
-               pos: tuple[x: float32, y: float32], scale: tuple[w: float32, h: float32],
+               pos: tuple[x: float32, y: float32], 
+               scale: tuple[w: float32, h: float32],
                font: Font, surface: RenderImage,
                halign = LeftAlign, valign = TopAlign,
                wrap = false
@@ -60,12 +61,12 @@ proc drawText*(renderer: Renderer,
   surface.img.fillText(
     font.typeset(
       text, 
-      vec2(pos.x, pos.y),
+      vec2(scale.w, scale.h),
       halign, valign,
       wrap
     ), 
     translate(
-      vec2(scale.w, scale.h)
+      vec2(pos.x, pos.y)
     )
   )
 
