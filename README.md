@@ -1,7 +1,7 @@
 # Ferus -- a prototype web engine written in the Nim programming language
 Ferus is a small web rendering engine that is 100% independent (not based on WebKit, Blink or Gecko), fast, and (hopefully) secure. It aims to stand as an alternative to more popular web engines by providing full compatibility to how they work.\
 Ferus also stands for "Fast Engine (for) Rendering Ur Site", if you'd prefer that. :)\
-It currently stands at 2089 lines of code, and has process isolation, simple compositing, a WIP layout engine, an incomplete DOM and HTML/CSS parsers ready.
+It currently stands at 2519 lines of code, and has process isolation, simple compositing, a WIP layout engine, an incomplete DOM and HTML/CSS parsers ready.
 
 # Why? (Why not just make a WebKit/Blink browser?)
 There's plenty of reasons.
@@ -27,6 +27,7 @@ If you don't like Discord (for obvious reasons) then you can just make issues.
 - [X] Basic compositing
 - [X] Process isolation and sandboxing (Chromium style sandboxing)
 - [X] HTML5 (WHATWG) & CSS3 support
+- [ ] Layout
 - [ ] Hardware accelerated video decode
 - [ ] MV2-3 support (MV2 will never be deprecated here, once implemented)
 - [ ] Windows and MacOS builds
@@ -45,7 +46,7 @@ Anything beyond Nim 1.6 should do. Nimble is also required.
 ```bash
 $ git clone https://github.com/xTrayambak/ferus.git
 $ cd ferus
-$ nimble productionBuild # Package maintainers: use this, there is debugBuild, but it is only for Ferus developers
+$ nimble productionBuild # Package maintainers: use this, there is debugBuild, but it is only for Ferus developers and it produces bloated binaries
 $ cd bin
 $ ./ferus
 ```
@@ -54,7 +55,7 @@ To run Ferus in Docker:
 ```bash
 $ docker-compose build
 $ docker compose run ferus /bin/bash
-$ nimble debugBuild
+$ nimble productionBuild
 $ cd bin
 $ ./ferus
 ```
