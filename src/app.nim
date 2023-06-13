@@ -4,7 +4,12 @@
   This code is licensed under the MIT license
 ]#
 
-import chronicles, json, netty, ferushtml, tables, strutils
+import chronicles, json, netty, ferushtml
+import std/[
+  tables,
+  strutils,
+  marshal
+]
 import ipc/[
   server,
   constants
@@ -22,21 +27,60 @@ type FerusApplication* = ref object of RootObj
   dom*: DOM
   broker*: Broker
 
+#[ 
+  Handles magic number `IPC_CLIENT_NEEDS_DOM`,
+  provides the DOM to the renderer/layout process.
+]#
+proc serveDOM*(app: FerusApplication, sender: Client) {.inline.} =
+  info "[src/app.nim] Sending DOM to child"
+  app.orchestral.server.context.sendExplicit(sender.connection, {
+      "result": PACKET_TYPE_DOM.intToStr(),
+      "payload": app.dom.serialize()
+    }.toTable
+  )
+
+#[
+  Handles magic number `IPC_CLIENT_SHUTDOWN`,
+  sent by clients when they die properly (graceful crashes, lifetime ended)
+]#
+proc handleProcessShutdown*(app: FerusApplication, sender: Client) {.inline.} =
+  info "[src/app.nim] A client is shutting down!", affinitySignature=truncate(sender.affinitySignature, 32)
+  if sender.role == ptRenderer:
+    info "[src/app.nim] Since the renderer is shutting down, we have to die too. Adios!"
+    quit 0
+
+#[
+  Handles magic number `IPC_CLIENT_RESULT_HTML_PARSE`,
+  sent by the HTML parser children when they are parsing in response
+  to a `IPC_CLIENT_DO_HTML_PARSE` magic request.
+]#
+proc handleHTMLParseResult*(app: FerusApplication, sender: Client, data: JSONNode) {.inline.} =
+  if sender.role != ptHtmlParser:
+    warn "[src/app.nim] A non-HTML parser attempted to send a HTML document to us. Perhaps this process has been taken over, or is just malfunctioning."
+    return
+
+  if "payload" in data:
+    let payload = data["payload"].getStr()  
+    app.dom = newDOM(to[HTMLDocument](payload))
+  else:
+    warn "[src/app.nim] handleHTMLParseResult() cannot proceed as no payload was attached!"
+
+#[
+  Process all packets sent by child processes.
+]#
 proc processMsg*(app: FerusApplication, sender: Client, data: JSONNode) {.inline.} =
   if "result" in data:
     let result = data["result"]
 
-    if result.getInt() == IPC_CLIENT_NEEDS_DOM:
-      info "[src/app.nim] Sending DOM to child"
-      app.orchestral.server.context.sendExplicit(sender.connection, {
-        "result": PACKET_TYPE_DOM.intToStr(),
-        "payload": app.dom.serialize()
-      }.toTable)
-    elif result.getInt() == IPC_CLIENT_SHUTDOWN:
-      info "[src/app.nim] A client is shutting down!", affinitySignature=truncate(sender.affinitySignature, 32), role=processTypeToString(sender.role)
-      if sender.role == ptRenderer:
-        info "[src/app.nim] Since the renderer is shutting down, we have to die too. Adios!"
-        quit 0
+    case result.getInt():
+      of IPC_CLIENT_NEEDS_DOM: 
+        app.serveDOM(sender)
+      of IPC_CLIENT_SHUTDOWN:
+        app.handleProcessShutdown(sender)
+      of IPC_CLIENT_RESULT_HTML_PARSE:
+        app.handleHTMLParseResult(sender, data)
+      else:
+        warn "[src/app.nim] Ignoring unimplemented protocol magic number.", protoNum=result
 
 proc init*(app: FerusApplication) =
   proc get(sender: Client, data: JSONNode) =
@@ -48,7 +92,7 @@ proc init*(app: FerusApplication) =
       <title>Hi</title>
     </head>
     <body>
-      <p1>Hi</p2>
+      <p1>Hi</p1>
     </body>
   </html>
   """
