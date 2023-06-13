@@ -60,4 +60,4 @@ proc newOrchestralClient*(renderer: Renderer,
                           client: IPCClient
                         ): OrchestralClient {.inline.} =
   OrchestralClient(renderer: (cooldown: 0f, context: renderer), 
-                   client: (cooldown: 8f, context: client))
+                   client: (cooldown: 2f, context: client))
