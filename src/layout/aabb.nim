@@ -32,37 +32,45 @@ proc debugDraw*(aabb: AABB, surface: RenderImage) =
   context.strokeStyle = "#FF5C00"
   context.lineWidth = 5
 
-  # Top left to top right
-  context.strokeSegment(
-    segment(
-      vec2(aabb.getLeft().float32, aabb.getTop().float32),
-      vec2(aabb.getRight().float32, aabb.getTop().float32)
+  when defined(ferusAabbDrawRect):
+   context.fillRect(
+      rect(
+        vec2(aabb.x.float32, aabb.y.float32),
+        vec2(aabb.w.float32, aabb.h.float32)      
+      )
     )
-  )
+  else:
+    # Top left to top right
+    context.strokeSegment(
+      segment(
+        vec2(aabb.getLeft().float32, aabb.getTop().float32),
+        vec2(aabb.getRight().float32, aabb.getTop().float32)
+      )
+    )
 
-  # Bottom left to bottom right
-  context.strokeSegment(
-    segment(
-      vec2(aabb.getLeft().float32, aabb.getBottom().float32),
-      vec2(aabb.getRight().float32, aabb.getBottom().float32)
+    # Bottom left to bottom right
+    context.strokeSegment(
+      segment(
+        vec2(aabb.getLeft().float32, aabb.getBottom().float32),
+        vec2(aabb.getRight().float32, aabb.getBottom().float32)
+      )
     )
-  )
 
-  # Top left to bottom left
-  context.strokeSegment(
-    segment(
-      vec2(aabb.getLeft().float32, aabb.getTop().float32),
-      vec2(aabb.getLeft().float32, aabb.getBottom().float32)
+    # Top left to bottom left
+    context.strokeSegment(
+      segment(
+        vec2(aabb.getLeft().float32, aabb.getTop().float32),
+        vec2(aabb.getLeft().float32, aabb.getBottom().float32)
+      )
     )
-  )
 
-  # Top right to bottom right
-  context.strokeSegment(
-    segment(
-      vec2(aabb.getRight().float32, aabb.getTop().float32),
-      vec2(aabb.getRight().float32, aabb.getBottom().float32)
+    # Top right to bottom right
+    context.strokeSegment(
+      segment(
+        vec2(aabb.getRight().float32, aabb.getTop().float32),
+        vec2(aabb.getRight().float32, aabb.getBottom().float32)
+      )
     )
-  )
 
 proc collidesWith*(aabb1, aabb2: AABB): bool {.inline.} =
   aabb1.x < aabb2.x + aabb2.w and

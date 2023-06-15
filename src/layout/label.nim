@@ -13,8 +13,9 @@ import ../renderer/[primitives, render, fontmanager],
 type Label* = ref object of LayoutElement
 
 method draw*(label: Label, surface: RenderImage, pos: tuple[x, y: float32]) =
-  label.box.aabb.x = label.primitive.pos.x.int
-  label.box.aabb.y = label.primitive.pos.y.int
+  #label.box.aabb.x = label.primitive.pos.x.int
+  #label.box.aabb.y = label.primitive.pos.y.int
+
   label.box.aabb.debugDraw(surface)
   label.renderer.drawText(
     label.primitive.content, 
@@ -25,10 +26,11 @@ method draw*(label: Label, surface: RenderImage, pos: tuple[x, y: float32]) =
 proc computeSize(textContent: string, font: Font): int {.inline.} =
   (font.size.int * textContent.len)
 
-proc newLabel*(textContent: string, renderer: Renderer, fontMgr: FontManager): Label =
+proc newLabel*(textContent: string, renderer: Renderer, 
+              fontMgr: FontManager, sizeInc: int = 0): Label =
   let
     font = fontMgr.getFont("Default")
-    size = computeSize(textContent, font)
+    size = computeSize(textContent, font) + sizeInc
     prim = newRenderText(
       textContent,
       font,
@@ -43,7 +45,8 @@ proc newLabel*(textContent: string, renderer: Renderer, fontMgr: FontManager): L
     ),
     box: newBox(
       newAABB(
-        prim.pos.x.int, prim.pos.y.int, (font.size.int * textContent.len), font.size.int
+        prim.pos.x.int, prim.pos.y.int, 
+        (font.size.int * textContent.len), font.size.int
       )
     )
   )

@@ -20,9 +20,13 @@ proc getPos*(layoutEngine: LayoutEngine,
              currNode: LayoutElement,
              lastNode: LayoutElement
             ): tuple[x, y: int] {.inline.} =
+  echo "lastNode's bottom: " & $(lastNode.box.aabb.getBottom() + 8)
+  echo "currNode's height: " & $(currNode.box.aabb.h)
+  echo "currNode's top: " & $(currNode.box.aabb.getTop())
+  echo "lastNode's top: " & $(lastNode.box.aabb.getTop())
   (
-    x: lastNode.box.aabb.getRight() + 10,
-    y: lastNode.box.aabb.getBottom()
+    x: 0,#lastNode.box.aabb.getRight() + 8,
+    y: lastNode.box.aabb.getBottom() + 8
   )
 
 proc draw*(layoutEngine: LayoutEngine, 
@@ -74,14 +78,14 @@ proc calculate*(layoutEngine: LayoutEngine) =
       layoutEngine.renderer,
       layoutEngine.fontManager
     )
-  )
+  )]#
   layoutEngine.layoutTree.add(
     newLabel(
       "GREETINGS, PLANET WITH LIFE!",
       layoutEngine.renderer,
       layoutEngine.fontManager
     )
-  )]#
+  )
 
 proc newLayoutEngine*(dom: DOM, 
                       renderer: Renderer
