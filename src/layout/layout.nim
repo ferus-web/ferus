@@ -20,12 +20,8 @@ proc getPos*(layoutEngine: LayoutEngine,
              currNode: LayoutElement,
              lastNode: LayoutElement
             ): tuple[x, y: int] {.inline.} =
-  echo "lastNode's bottom: " & $(lastNode.box.aabb.getBottom() + 8)
-  echo "currNode's height: " & $(currNode.box.aabb.h)
-  echo "currNode's top: " & $(currNode.box.aabb.getTop())
-  echo "lastNode's top: " & $(lastNode.box.aabb.getTop())
   (
-    x: 0,#lastNode.box.aabb.getRight() + 8,
+    x: lastNode.box.aabb.getRight() + 8,
     y: lastNode.box.aabb.getBottom() + 8
   )
 
