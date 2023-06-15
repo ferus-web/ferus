@@ -48,5 +48,6 @@ proc newLabel*(textContent: string, renderer: Renderer,
         prim.pos.x.int, prim.pos.y.int, 
         (font.size.int * textContent.len), font.size.int
       )
-    )
+    ),
+    breaksLine: false
   )

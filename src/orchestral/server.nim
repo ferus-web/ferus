@@ -28,7 +28,7 @@ proc updateServer*(orchestral: OrchestralServer, delta: float) {.inline.} =
   else:
     orchestral.serverLastUpdated += 1f + delta
 
-proc update*(orchestral: OrchestralServer, delta: float) {.inline.} =
+proc update*(orchestral: OrchestralServer) {.inline.} =
   let delta = cpuTime() - orchestral.lastCpuTime
   orchestral.lastCpuTime = 0f
   orchestral

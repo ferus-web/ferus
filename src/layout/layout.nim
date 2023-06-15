@@ -1,5 +1,5 @@
 import ../dom/dom, ../renderer/[render, primitives, fontmanager],
-       label, element, aabb, chronicles, tables
+       label, breakline, element, aabb, chronicles, tables
 
 const LAYOUT_TILE_SIZE = 64 # px
 type
@@ -20,9 +20,16 @@ proc getPos*(layoutEngine: LayoutEngine,
              currNode: LayoutElement,
              lastNode: LayoutElement
             ): tuple[x, y: int] {.inline.} =
+  var x: int = lastNode.box.aabb.getRight()
+  var y: int = 0
+
+  if lastNode.breaksLine:
+    x = 0
+    y = lastNode.box.aabb.getBottom() + 32
+
   (
-    x: lastNode.box.aabb.getRight() + 8,
-    y: lastNode.box.aabb.getBottom() + 8
+    x: x,
+    y: y
   )
 
 proc draw*(layoutEngine: LayoutEngine, 
@@ -74,6 +81,11 @@ proc calculate*(layoutEngine: LayoutEngine) =
       layoutEngine.renderer,
       layoutEngine.fontManager
     )
+  )]#
+  #[layoutEngine.layoutTree.add(
+    newBreakline(
+      layoutEngine.renderer
+    )  
   )]#
   layoutEngine.layoutTree.add(
     newLabel(

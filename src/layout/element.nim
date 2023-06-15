@@ -13,6 +13,7 @@ type
     node*: LayoutNode
     primitive*: RenderPrimitive
     renderer*: Renderer
+    breaksLine*: bool
 
 method draw*(layoutElement: LayoutElement, 
              surface: RenderImage, 
@@ -23,6 +24,8 @@ method draw*(layoutElement: LayoutElement,
 proc newLayoutElement*(box: Box, 
                        node: LayoutNode, 
                        primitive: RenderPrimitive,
-                       renderer: Renderer): LayoutElement {.inline.} =
+                       renderer: Renderer, 
+                       breaksLine: bool = true
+                      ): LayoutElement {.inline.} =
   LayoutElement(box: box, node: node, primitive: primitive, 
-                renderer: renderer)
+                renderer: renderer, breaksLine: breaksLine)

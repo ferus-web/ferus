@@ -35,7 +35,6 @@ proc addReceiver*(ipcClient: IPCClient, receiver: Receiver) {.inline.} =
 ]#
 proc send*[T](ipcClient: IPCClient, data: T) {.inline.} =
   var dataConv = jsony.toJson(data)
-  echo dataConv
   ipcClient.reactor.send(ipcClient.conn, dataConv)
 
 #[
