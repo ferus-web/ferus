@@ -21,7 +21,7 @@ proc main(filename: string) =
     quit 1
 
   var app = newFerusApplication()
-  app.init()
+  app.init(filename)
   app.initRenderer()
   app.run()
 
