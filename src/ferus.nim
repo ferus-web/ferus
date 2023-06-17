@@ -2,12 +2,13 @@ import std/strformat
 import chronicles
 import utils/build
 import app
+import cligen
 
 proc userExit {.noconv.} =
   info "[src/ferus.nim] User-triggered exit occured, goodbye world!"
   quit 0
 
-proc main =
+proc main(filename: string) =
   setControlCHook(userExit)
   info fmt"[src/ferus.nim] Ferus {getVersion()} starting up!!"
 
@@ -25,4 +26,4 @@ proc main =
   app.run()
 
 when isMainModule:
-  main()
+  dispatch main
