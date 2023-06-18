@@ -16,7 +16,9 @@ method draw*(label: Label, surface: RenderImage, pos: tuple[x, y: float32]) =
   #label.box.aabb.x = label.primitive.pos.x.int
   #label.box.aabb.y = label.primitive.pos.y.int
 
-  label.box.aabb.debugDraw(surface)
+  when defined(ferusLayoutDrawAABB):
+    label.box.aabb.debugDraw(surface)
+  
   label.renderer.drawText(
     label.primitive.content, 
     pos, label.primitive.dimensions,

@@ -82,28 +82,23 @@ proc processMsg*(app: FerusApplication, sender: Client, data: JSONNode) {.inline
       else:
         warn "[src/app.nim] Ignoring unimplemented protocol magic number.", protoNum=result
 
-proc init*(app: FerusApplication) =
+proc init*(app: FerusApplication, file: string) =
   proc get(sender: Client, data: JSONNode) =
     app.processMsg(sender, data)
 
-  let x = """
-  <html>
-    <head>
-      <title>Hi</title>
-    </head>
-    <body>
-      <p1>Hi</p1>
-    </body>
-  </html>
-  """
+  let x = readFile(file)
   
   info "[src/app.nim] Creating DOM! (main process)"
   var htmlParser = newHTMLParser()
+  var elem = htmlParser.parse(x)
+  echo elem.dump()
   var doc = htmlParser.parseToDocument(x)
+  echo "NOW DUMPING"
+  echo doc.root.dump()
 
   app.dom = newDOM(doc)
 
-  echo app.dom.document.dump()
+  echo app.dom.document.root.dump()
 
   app.orchestral.server.context.addReceiver(get)
 

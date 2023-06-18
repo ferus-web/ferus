@@ -1,5 +1,5 @@
 import ../dom/dom, ../renderer/[render, primitives, fontmanager],
-       label, breakline, element, aabb, chronicles, tables
+       label, breakline, element, aabb, handler/handler, chronicles, std/tables
 
 const LAYOUT_TILE_SIZE = 64 # px
 type
@@ -68,32 +68,7 @@ proc calculate*(layoutEngine: LayoutEngine) =
   layoutEngine.layoutTree.reset()
 
   var font = layoutEngine.fontManager.loadFont("Default", "../data/IBMPlexSans-Regular.ttf")
-  layoutEngine.layoutTree.add(
-    newLabel(
-      "HELLO WORLD!",
-      layoutEngine.renderer,
-      layoutEngine.fontManager
-    )
-  )
-  #[layoutEngine.layoutTree.add(
-    newLabel(
-      "HOWDY PLANET EARTH!",
-      layoutEngine.renderer,
-      layoutEngine.fontManager
-    )
-  )]#
-  #[layoutEngine.layoutTree.add(
-    newBreakline(
-      layoutEngine.renderer
-    )  
-  )]#
-  layoutEngine.layoutTree.add(
-    newLabel(
-      "GREETINGS, PLANET WITH LIFE!",
-      layoutEngine.renderer,
-      layoutEngine.fontManager
-    )
-  )
+  parseDOM(layoutEngine.dom, layoutEngine.renderer, layoutEngine.fontManager, layoutEngine.layoutTree)
 
 proc newLayoutEngine*(dom: DOM, 
                       renderer: Renderer
