@@ -8,7 +8,8 @@ import chronicles, json, netty, ferushtml
 import std/[
   tables,
   strutils,
-  marshal
+  marshal,
+  os
 ]
 import ipc/[
   server,
@@ -38,6 +39,18 @@ proc serveDOM*(app: FerusApplication, sender: Client) {.inline.} =
       "payload": app.dom.serialize()
     }.toTable
   )
+
+proc loadFile*(app: FerusApplication, file: string) =
+  if not fileExists(file):
+    warn "[src/app.nim] loadFile() failed: fileExists() returned false"
+    app.loadFile("../data/pages/file-not-found.html")
+    return
+
+  var 
+    htmlParser = newHTMLParser()
+    document = htmlParser.parseToDocument(readFile(file))
+
+  app.dom = newDOM(document)
 
 #[
   Handles magic number `IPC_CLIENT_SHUTDOWN`,
@@ -86,17 +99,7 @@ proc init*(app: FerusApplication, file: string) =
   proc get(sender: Client, data: JSONNode) =
     app.processMsg(sender, data)
 
-  let x = readFile(file)
-  
-  info "[src/app.nim] Creating DOM! (main process)"
-  var htmlParser = newHTMLParser()
-  var elem = htmlParser.parse(x)
-  echo elem.dump()
-  var doc = htmlParser.parseToDocument(x)
-  echo "NOW DUMPING"
-  echo doc.root.dump()
-
-  app.dom = newDOM(doc)
+  app.loadFile(file)
 
   echo app.dom.document.root.dump()
 

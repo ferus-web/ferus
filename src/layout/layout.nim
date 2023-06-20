@@ -46,8 +46,8 @@ proc draw*(layoutEngine: LayoutEngine,
       drawable.draw(
         surface, 
         (
-          x: pos.x.float32,
-          y: pos.y.float32
+          x: pos.x.float32 + drawable.primitive.sizeInc.float32,
+          y: pos.y.float32 + drawable.primitive.sizeInc.float32
         )
       )
     else:

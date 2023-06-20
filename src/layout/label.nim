@@ -36,7 +36,8 @@ proc newLabel*(textContent: string, renderer: Renderer,
     prim = newRenderText(
       textContent,
       font,
-      (w: size.float32, h: 64f), (x: 0f, y: 0f)
+      (w: size.float32, h: 64f), (x: 0f, y: 0f),
+      sizeInc
     )
 
   Label(
@@ -48,7 +49,7 @@ proc newLabel*(textContent: string, renderer: Renderer,
     box: newBox(
       newAABB(
         prim.pos.x.int, prim.pos.y.int, 
-        (font.size.int * textContent.len), font.size.int
+        size, font.size.int
       )
     ),
     breaksLine: false
