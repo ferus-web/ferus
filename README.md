@@ -14,7 +14,8 @@ There's plenty of reasons.
 The answer is: no website. All websites are written either\
 a) in an extremely shoddy fashion by a developer who's salary is a bag of puff corns\
 b) some atrocious JavaScript (bleh) framework that generates HTML \
-Only simple HTML documents that are written 100% accurately following all specs can render as of right now. There are plans of plugging `libtidy` into the ferushtml soon so that basically the worst-of-the-worst sites\
+Only simple HTML documents that are written 100% accurately following all specs can render 
+as of right now. There are plans of plugging `libtidy` into the ferushtml pipeline soon so that basically the worst-of-the-worst sites\
 can load.
 
 # Contributions

@@ -1,7 +1,6 @@
 import ../dom/dom, ../renderer/[render, primitives, fontmanager],
        label, breakline, element, aabb, handler/handler, chronicles, std/tables
 
-const LAYOUT_TILE_SIZE = 64 # px
 type
   LayoutEngine* = ref object of RootObj
     dom*: DOM
@@ -9,12 +8,6 @@ type
 
     fontManager: FontManager
     layoutTree*: seq[LayoutElement]
-
-    tiles*: seq[
-      tuple[
-        x, y: uint
-      ]
-    ]
 
 proc getPos*(layoutEngine: LayoutEngine, 
              currNode: LayoutElement,
@@ -46,8 +39,8 @@ proc draw*(layoutEngine: LayoutEngine,
       drawable.draw(
         surface, 
         (
-          x: pos.x.float32 + drawable.primitive.sizeInc.float32,
-          y: pos.y.float32 + drawable.primitive.sizeInc.float32
+          x: pos.x.float32,
+          y: pos.y.float32
         )
       )
     else:
@@ -73,9 +66,7 @@ proc calculate*(layoutEngine: LayoutEngine) =
 proc newLayoutEngine*(dom: DOM, 
                       renderer: Renderer
                       ): LayoutEngine {.inline.} =
-  var tiles: seq[tuple[x, y: uint]] = @[]
-
   LayoutEngine(
     dom: dom, renderer: renderer, layoutTree: @[], 
-    fontManager: newFontManager(), tiles: tiles
+    fontManager: newFontManager()
   )

@@ -46,7 +46,7 @@ proc loadFile*(app: FerusApplication, file: string) =
     app.loadFile("../data/pages/file-not-found.html")
     return
 
-  var 
+  var
     htmlParser = newHTMLParser()
     document = htmlParser.parseToDocument(readFile(file))
 

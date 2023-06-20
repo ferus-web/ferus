@@ -36,8 +36,7 @@ proc newLabel*(textContent: string, renderer: Renderer,
     prim = newRenderText(
       textContent,
       font,
-      (w: size.float32, h: 64f), (x: 0f, y: 0f),
-      sizeInc
+      (w: size.float32, h: 64f), (x: 0f, y: 0f)
     )
 
   Label(

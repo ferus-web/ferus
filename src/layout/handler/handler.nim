@@ -11,7 +11,6 @@ import ../../dom/dom,
 
 proc parseDOM*(dom: DOM, renderer: Renderer, fontMgr: FontManager, layoutTree: var seq[LayoutElement]) =
  for child in dom.document.root.findChildByTag("html").findChildByTag("body").children:
-  echo child.tag
   if child.tag == "p":
    layoutTree.add(
     newLabel(

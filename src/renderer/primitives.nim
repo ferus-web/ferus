@@ -27,8 +27,6 @@ type
     # What render primitive this is since they all derive from the same class
     pType*: PrimitiveType
 
-    sizeInc*: int
-
   RenderImage* = ref object of RenderPrimitive
 
   RenderText* = ref object of RenderPrimitive
@@ -43,5 +41,8 @@ proc clear*(renderImage: RenderImage, clearColor: SomeColor = (r: 255, g: 255, b
   renderImage.img.fill(clearColor)
 
 proc newRenderText*(text: string, font: Font, dimensions: tuple[w, h: float32],
-                    pos: tuple[x, y: float32], sizeInc: int = 0): RenderText =
-  RenderText(content: text, font: font, dimensions: dimensions, pos: pos, pType: ptText, sizeInc: sizeInc)
+                    pos: tuple[x, y: float32]): RenderText =
+  RenderText(content: text, font: font, 
+            dimensions: dimensions, pos: pos, 
+            pType: ptText
+  )
