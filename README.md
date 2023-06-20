@@ -11,7 +11,9 @@ There's plenty of reasons.
 - A side-aim, if you can call it that, is to increase the popularity of the Nim programming language. Seriously, it's awesome!
 
 # How much of the web can it render right now?
-The answer is: no website. All websites are written either\a) in an extremely shoddy fashion by a developer who's salary is a bag of puff corns or\b) some atrocious JavaScript (bleh) framework that generates HTML
+The answer is: no website. All websites are written either\
+a) in an extremely shoddy fashion by a developer who's salary is a bag of puff corns or\
+b) some atrocious JavaScript (bleh) framework that generates HTML
 Only simple HTML documents that are written 100% accurately following all specs can render as of right now. There are plans of plugging `libtidy` into the ferushtml soon so that basically the worst-of-the-worst sites\
 can load.
 
@@ -19,7 +21,7 @@ can load.
 Please read the best code practices in the documentation and follow basic human etiquette.
 Helping out is more than appreciated!
 
-You can join the Discord server for more in-depth discussion on Ferus: https://discord.gg/Cz5uRWsR
+You can join the Discord server for more in-depth discussion on Ferus: https://discord.gg/Cz5uRWsR\
 If you don't like Discord (for obvious reasons) then you can just make issues.
 
 # Aim
