@@ -51,5 +51,5 @@ proc newLabel*(textContent: string, renderer: Renderer,
         size, font.size.int
       )
     ),
-    breaksLine: false
+    breaksLine: true
   )
