@@ -3,6 +3,8 @@
   Just write your own, it will save you a lot more pain than copy pasting this garbage.
 
   This code is licensed under the MIT license
+
+  Authors: xTrayambak (xtrayambak at gmail dot com)
 ]#
 
 import ../ipc/server,
@@ -16,13 +18,10 @@ type OrchestralServer* = ref object of RootObj
 
 proc updateServer*(orchestral: OrchestralServer, delta: float) {.inline.} =
   if orchestral.server.context.isNil:
-    warn "[src/orchestral/orchestral.nim] Scheduler was passed `nil` instead of src.ipc.client.Client; this function won't execute further to prevent a crash."
+    warn "[src/orchestral/server.nim] Scheduler was passed `nil` instead of src.ipc.client.Client; this function won't execute further to prevent a crash."
     return
 
   if orchestral.serverLastUpdated >= orchestral.server.cooldown:
-    when defined(ferusUseVerboseLogging):
-      info "[src/orchestral/orchestral.nim] Updating IPC server state!"
-
     orchestral.server.context.heartbeat()
     orchestral.serverLastUpdated = 0f
   else:

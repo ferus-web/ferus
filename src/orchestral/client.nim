@@ -25,27 +25,21 @@ type OrchestralClient* = ref object of RootObj
 
 proc updateRenderer*(orchestral: OrchestralClient, delta: float) {.inline.} =
   if orchestral.renderer.context.isNil:
-    when defined(ferusUseVerboseLogging):
-      warn "[src/orchestral/orchestral.nim] Scheduler was passed `nil` instead of src.renderer.render.Renderer; this function won't execute further to prevent a crash."
+    warn "[src/orchestral/orchestral.nim] Scheduler was passed `nil` instead of src.renderer.render.Renderer; this function won't execute further to prevent a crash."
     return
 
   if orchestral.rendererLastUpdated >= orchestral.renderer.cooldown:
-    when defined(ferusUseVerboseLogging):
-      info "[src/orchestral/orchestral.nim] Updating renderer state!"
-
     orchestral.renderer.context.onRender()
   else:
     orchestral.rendererLastUpdated += delta
 
 proc updateClient*(orchestral: OrchestralClient, delta: float) {.inline.} =
   if orchestral.client.context.isNil:
-    when defined(ferusUseVerboseLogging):
-      warn "[src/orchestral/orchestral.nim] Scheduler was passed `nil` instead of src.ipc.client.Client; this function won't execute further to prevent a crash."
+    warn "[src/orchestral/orchestral.nim] Scheduler was passed `nil` instead of src.ipc.client.Client; this function won't execute further to prevent a crash."
     return
 
   if orchestral.clientLastUpdated >= orchestral.client.cooldown:
-    when defined(ferusUseVerboseLogging):
-      info "[src/orchestral/orchestral.nim] Updating IPC client state!"
+    # info "[src/orchestral/orchestral.nim] Updating IPC client state!"
 
     orchestral.client.context.heartbeat()
     orchestral.clientLastUpdated = 0f
