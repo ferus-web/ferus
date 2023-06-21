@@ -30,18 +30,6 @@ proc getBinFormat =
 
 proc isDebugBuild*: bool =
   when defined(debug):
-    true
+    return true
 
-  false
-
-proc useVerboseLogging*: bool =
-  when defined(ferusUseVerboseLogging):
-    true
-
-  false
-
-proc isDangerBuild*: bool =
-  when defined(danger):
-    true
-
-  false
+  return false
