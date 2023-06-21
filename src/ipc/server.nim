@@ -77,7 +77,7 @@ proc send*[T](ipcServer: IPCServer, affinitySignature: string,
 ]#
 proc sendExplicit*[T](ipcServer: IPCServer, conn: Connection, data: T) {.inline.} =
   when defined(ferusUseVerboseLogging):
-    info "[src/ipc/server.nim] Sending packet to explicit connection", address=$conn.address
+    info "[src/ipc/server.nim] Sending packet to explicit connection"
   var dataConv = jsony.toJson(data)
   ipcServer.reactor.send(conn, dataConv)
 
@@ -94,7 +94,7 @@ proc parse*(ipcServer: IPCServer, message: string): JsonNode {.inline.} =
 ]#
 proc isConnected*(ipcServer: IPCServer, address: Address): bool {.inline.} =
   # TODO(xTrayambak) parallelize this searching, it will provide huge boosts for 
-  # processMessages()
+  # processMessages() with lots of tabs/processes
   for affinity, clients in ipcServer.clients:
     for clientRole, client in clients:
       if client.connection.address.port.int == address.port.int:
@@ -119,6 +119,8 @@ proc getClientByAddr*(ipcServer: IPCServer, address: Address): Client {.inline.}
 ]#
 proc processMessages*(ipcServer: IPCServer) =
   for message in ipcServer.reactor.messages:
+    when defined(ferusUseVerboseLogging):
+      info "[src/ipc/server.nim] Got packet from client (compile without -d:ferusUseVerboseLogging to disable this)", dataConv=message.data
     var data = ipcServer.parse(message.data)
 
     if not ipcServer.isConnected(message.conn.address):

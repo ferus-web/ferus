@@ -36,6 +36,8 @@ proc addReceiver*(ipcClient: IPCClient, receiver: Receiver) {.inline.} =
 proc send*[T](ipcClient: IPCClient, data: T) {.inline.} =
   var dataConv = jsony.toJson(data)
   ipcClient.reactor.send(ipcClient.conn, dataConv)
+  when defined(ferusUseVerboseLogging):
+    info "[src/ipc/client.nim] Sent packet to server (compile without -d:ferusUseVerboseLogging to disable this)", dataConv=dataConv
 
 #[
   Handshake with the IPC server
@@ -52,52 +54,57 @@ proc handshake*(ipcClient: IPCClient) {.inline.} =
   }.toTable)
 
 #[
-  Parse some JSON string into a JSONNode
-  TODO(xTrayambak): remove this as it is a one-liner and only adds useless overhead
+  Process one message, processMessages() calls this in a parallelized fashion
 ]#
-proc parse*(ipcClient: IPCClient, message: string): JsonNode {.inline.} =
-  jsony.fromJson(message)
+proc processMessage*(ipcClient: IPCClient, data: JSONNode) =    
+  # Handshake handler
+  if "status" in data and not ipcClient.handshakeCompleted:
+    try:
+      let status = data["status"]
+                .getStr()
+                .parseInt()
+      if status == IPC_SERVER_HANDSHAKE_ACCEPTED:
+        info "[src/ipc/client.nim] We have been accepted by the IPC server!"
+        ipcClient.handshakeCompleted = true
+      else:
+        warn "[src/ipc/client.nim] We have been declined access by the IPC server.", errCode=status
+        quit(1)
+    except ValueError:
+      warn "[src/ipc/client.nim] IPC server sent malformed packet (is it a bug?)"
+
+  # Other packets
+  if "status" in data and ipcClient.handshakeCompleted:
+    try:
+      let status = data["status"]
+                .getStr()
+                .parseInt()
+
+      if status == IPC_SERVER_REQUEST_DECLINE_NOT_REGISTERED:
+        fatal "[src/ipc/client.nim] We attempted to send a request without first registering! Abort."
+        quit(1)
+      elif status == IPC_SERVER_REQUEST_TERMINATION:
+        fatal "[src/ipc/client.nim] Caught deadly magic number IPC_SERVER_REQUEST_TERMINATION; goodbye!"
+        quit(0)
+
+    except ValueError:
+      warn "[src/ipc/client.nim] IPC server sent malformed packet (is it a bug?)"
 
 #[
-  Process all messages the IPC server sends us
+  Process the entire message queue (in parallel by default)  
 ]#
-proc processMessages*(ipcClient: IPCClient) =
-  for msg in ipcClient.reactor.messages:
-    var data = ipcClient.parse(msg.data)
-    for receiver in ipcClient.receivers:
-      receiver(data)
-    
-    # Handshake handler
-    if "status" in data and not ipcClient.handshakeCompleted:
-      try:
-        let status = data["status"]
-                  .getStr()
-                  .parseInt()
-        if status == IPC_SERVER_HANDSHAKE_ACCEPTED:
-          info "[src/ipc/client.nim] We have been accepted by the IPC server!"
-          ipcClient.handshakeCompleted = true
-        else:
-          warn "[src/ipc/client.nim] We have been declined access by the IPC server.", errCode=status
-          quit(1)
-      except ValueError:
-        warn "[src/ipc/client.nim] IPC server sent malformed packet (is it a bug?)"
-
-    # Other packets
-    if "status" in data and ipcClient.handshakeCompleted:
-      try:
-        let status = data["status"]
-                  .getStr()
-                  .parseInt()
-
-        if status == IPC_SERVER_REQUEST_DECLINE_NOT_REGISTERED:
-          fatal "[src/ipc/client.nim] We attempted to send a request without first registering! Abort."
-          quit(1)
-        elif status == IPC_SERVER_REQUEST_TERMINATION:
-          fatal "[src/ipc/client.nim] Caught deadly magic number IPC_SERVER_REQUEST_TERMINATION; goodbye!"
-          quit(0)
-
-      except ValueError:
-        warn "[src/ipc/client.nim] IPC server sent malformed packet (is it a bug?)"
+proc processMessages*(ipcClient: IPCClient) {.inline.} =
+  when defined(ferusNoParallelIPC):
+    for msg in ipcClient.reactor.messages:
+      let data = jsony.fromJson(msg.data)
+      for receiver in ipcClient.receivers:
+        receiver(data)
+      ipcClient.processMessage(data)
+  else:
+    for msg in ipcClient.reactor.messages:
+      let data = jsony.fromJson(msg.data)
+      for receiver in ipcClient.receivers:
+        receiver(data)
+      ipcClient.processMessage(data)
 
 #[
   Tick the netty reactor and process new messages
@@ -112,6 +119,7 @@ proc heartbeat*(ipcClient: IPCClient) {.inline.} =
 proc kill*(ipcClient: IPCClient, silentDeath: bool = false) {.inline.} =
   info "[src/ipc/client.nim] IPC client is now shutting down"
   if not silentDeath:
+    ipcClient.heartbeat()
     ipcClient.send({"result": IPC_CLIENT_SHUTDOWN})
   else:
     warn "[src/ipc/client.nim] We'll die a silent death, without telling the IPC server."
