@@ -54,6 +54,7 @@ Anything beyond Nim 1.6 should do. Nimble is also required.
 ```bash
 $ git clone https://github.com/xTrayambak/ferus.git
 $ cd ferus
+$ nimble install # Ignore the error
 $ nimble productionBuild # Package maintainers: use this, there is debugBuild, but it is only for Ferus developers and it produces bloated binaries
 $ cd bin
 $ ./ferus
@@ -63,6 +64,7 @@ To run Ferus in Docker:
 ```bash
 $ docker-compose build
 $ docker compose run ferus /bin/bash
+$ nimble install # Ignore the error
 $ nimble productionBuild
 $ cd bin
 $ ./ferus
