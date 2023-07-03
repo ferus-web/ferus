@@ -14,6 +14,7 @@ type
     primitive*: RenderPrimitive
     renderer*: Renderer
     breaksLine*: bool
+    centered*: bool
 
 method draw*(layoutElement: LayoutElement, 
              surface: RenderImage, 
@@ -25,7 +26,8 @@ proc newLayoutElement*(box: Box,
                        node: LayoutNode, 
                        primitive: RenderPrimitive,
                        renderer: Renderer, 
-                       breaksLine: bool = true
+                       breaksLine: bool = true,
+                       centered: bool = false
                       ): LayoutElement {.inline.} =
   LayoutElement(box: box, node: node, primitive: primitive, 
-                renderer: renderer, breaksLine: breaksLine)
+                renderer: renderer, breaksLine: breaksLine, centered: centered)

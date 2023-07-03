@@ -41,11 +41,13 @@ proc onRender*(renderer: Renderer) =
     fn(renderer.window, surface)
 
   # Just render the image to the screen
-  renderer.boxy.addImage("surface", surface.img)
-  renderer.boxy.beginFrame(renderer.window.size)
-  renderer.boxy.drawImage("surface", vec2(0, 0))
-  renderer.boxy.endFrame()
-  renderer.window.swapBuffers()
+
+  if renderer.width > 1 and renderer.height > 1:
+    renderer.boxy.addImage("surface", surface.img)
+    renderer.boxy.beginFrame(renderer.window.size)
+    renderer.boxy.drawImage("surface", vec2(0, 0))
+    renderer.boxy.endFrame()
+    renderer.window.swapBuffers()
   
   # Poll windy events
   pollEvents()
@@ -69,6 +71,12 @@ proc drawText*(renderer: Renderer,
       vec2(pos.x, pos.y)
     )
   )
+
+proc drawImage*(
+  renderer: Renderer, 
+  image: Image
+) {.inline.} =
+  renderer.surface.img.draw(image)
 
 proc blurImg*(renderer: Renderer, renderImg: RenderImage, strength: int = 2) {.inline.} =
   if renderer.alive and not renderImg.blurEnabled:

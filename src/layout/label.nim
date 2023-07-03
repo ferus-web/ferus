@@ -29,7 +29,9 @@ proc computeSize(textContent: string, font: Font): int {.inline.} =
   (font.size.int * textContent.len)
 
 proc newLabel*(textContent: string, renderer: Renderer, 
-              fontMgr: FontManager, sizeInc: int = 0): Label =
+              fontMgr: FontManager, sizeInc: int = 0,
+              centered: bool = true
+              ): Label =
   let
     font = fontMgr.getFont("Default")
     size = computeSize(textContent, font) + sizeInc
@@ -51,5 +53,6 @@ proc newLabel*(textContent: string, renderer: Renderer,
         size, font.size.int
       )
     ),
-    breaksLine: true
+    breaksLine: true,
+    centered: centered
   )

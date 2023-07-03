@@ -1,4 +1,5 @@
-# This is the Ferus code of conduct. It has nothing unique to it. Just the basic blabber.
+# This is the Ferus code of conduct. 
+It has nothing unique to it. Just the basic blabber.
 
 # Don't make racist, sexist, misogynistic or androgynistic remarks towards anyone.
 Ferus hardly has anything to call a "community" yet but still, even with the 2 or 3 people that track the progress, please don't fight like this.
@@ -6,7 +7,7 @@ Ferus hardly has anything to call a "community" yet but still, even with the 2 o
 # No politics are allowed.
 Ferus is intended to display webpages, execute JavaScript and other stuff web browsers do. That's it. \
 It is NOT supposed to tell you about how right wingers are the epitome of evil or how left wingers make a country weak. \
-No discourse may be based on regional, or global politics. And ABSOLUTELY NO commits or changes must be made in relation to any events. \
+No discourse may be based on regional, or global politics. And ABSOLUTELY NO commits or changes must be made in relation to any events.
 
 # Be respectful
 Respect others boundaries, and when you feel they are uncomfortable continuining the conversation, look back at if you did anything

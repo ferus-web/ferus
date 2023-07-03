@@ -60,7 +60,10 @@ proc calculate*(layoutEngine: LayoutEngine) =
   info "[src/layout/layout.nim] Clearing display list and layout tree"
   layoutEngine.layoutTree.reset()
 
-  var font = layoutEngine.fontManager.loadFont("Default", "../data/IBMPlexSans-Regular.ttf")
+  var font = layoutEngine.fontManager.loadFont(
+    "Default", 
+    "../data/fonts/IBMPlexSans-Regular.ttf"
+  )
   parseDOM(layoutEngine.dom, layoutEngine.renderer, layoutEngine.fontManager, layoutEngine.layoutTree)
 
 proc newLayoutEngine*(dom: DOM, 

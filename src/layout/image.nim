@@ -13,11 +13,12 @@ type LayoutImage* = ref object of LayoutElement
 
 method draw*(layoutImg: LayoutImage, surface: RenderImage, pos: tuple[x, y: float32]) =
  layoutImg.box.aabb.debugDraw(surface)
+ layoutImg.renderer.drawImage(layoutImg.primitive.img)
 
 proc newLayoutImage*(image: Image, renderer: Renderer): LayoutImage = 
  let
   prim = newRenderImage(
-   image, image.width, image.height
+   image, (w: image.width.float32, h: image.height.float32)
   )
   aabb = newAABB(
    prim.pos.x.int, prim.pos.y.int,

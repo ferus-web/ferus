@@ -20,6 +20,7 @@ import utils/miscutils
 import dom/dom
 import sandbox/processtypes
 import orchestral/server
+import net/fetch
 when defined(linux):
   import sandbox/linux/broker
 
@@ -39,6 +40,32 @@ proc serveDOM*(app: FerusApplication, sender: Client) {.inline.} =
       "payload": app.dom.serialize()
     }.toTable
   )
+
+proc loadURL*(app: FerusApplication, url: string) =
+  let 
+    fetcher = newNetworkFetcher()
+    response = fetcher.get(url)
+    code = response.code
+    body = response.body
+
+  if code == 200:
+    var
+      htmlParser = newHTMLParser()
+      document = htmlParser.parseToDocument(body)
+
+    app.dom = newDOM(document)
+  else:
+    case code:
+      of 404:
+        error "[src/app.nim] Server could not find the requested resource."
+      of 418:
+        error "[src/app.nim] Unfortunately, the server does not want to brew coffee for us today. Bummer :("
+      of 505:
+        error "[src/app.nim] HTTP protocol version not supported."
+      of 429:
+        error "[src/app.nim] We have been rate limited."
+      else:
+        error "[src/app.nim] An unhandled non-successful error code.", code=code
 
 proc loadFile*(app: FerusApplication, file: string) =
   if not fileExists(file):
@@ -95,11 +122,9 @@ proc processMsg*(app: FerusApplication, sender: Client, data: JSONNode) {.inline
       else:
         warn "[src/app.nim] Ignoring unimplemented protocol magic number.", protoNum=result
 
-proc init*(app: FerusApplication, file: string) =
+proc init*(app: FerusApplication) =
   proc get(sender: Client, data: JSONNode) =
     app.processMsg(sender, data)
-
-  app.loadFile(file)
 
   echo app.dom.document.root.dump()
 

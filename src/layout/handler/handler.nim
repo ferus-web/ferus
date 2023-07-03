@@ -5,8 +5,10 @@ import ../../dom/dom,
        ../label,
        ../breakline,
        ../element,
+       ../image,
       ../../renderer/[primitives, render, fontmanager],
       std/strutils,
+      pixie,
       ferushtml
 
 proc parseDOM*(dom: DOM, renderer: Renderer, fontMgr: FontManager, layoutTree: var seq[LayoutElement]) =
@@ -28,3 +30,12 @@ proc parseDOM*(dom: DOM, renderer: Renderer, fontMgr: FontManager, layoutTree: v
      child.textContent, renderer, fontMgr, 256
     )
    )
+  elif child.tag == "img":
+    layoutTree.add(
+     newLayoutImage(
+      readImage(
+       child.getAttrByName("src").value.payload
+      ),
+      renderer
+     )
+    )

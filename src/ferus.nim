@@ -1,3 +1,11 @@
+#[
+  The entrypoint to the Ferus browser.
+
+  This code is licensed under the MIT license
+
+  Author(s): xTrayambak (xtrayambak at gmail dot com)
+]#
+
 import std/strformat
 import chronicles
 import utils/build
@@ -8,7 +16,7 @@ proc userExit {.noconv.} =
   info "[src/ferus.nim] User-triggered exit occured, goodbye world!"
   quit 0
 
-proc main(filename: string) =
+proc main(filename: string = "", url: string = "") =
   setControlCHook(userExit)
   info fmt"[src/ferus.nim] Ferus {getVersion()} starting up!!"
 
@@ -21,7 +29,16 @@ proc main(filename: string) =
     quit 1
 
   var app = newFerusApplication()
-  app.init(filename)
+  if filename.len > 0:
+    app.loadFile(filename)
+  else:
+    if url.len > 0:
+      app.loadURL(url)
+    else:
+      fatal "[src/ferus.nim] Neither a URL nor a filename was provided."
+      quit 1
+
+  app.init()
   app.initRenderer()
   app.run()
 
