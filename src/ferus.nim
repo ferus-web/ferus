@@ -33,7 +33,9 @@ proc main(filename: string = "", url: string = "") =
     app.loadFile(filename)
   else:
     if url.len > 0:
-      app.loadURL(url)
+      if not app.loadURL(url):
+        fatal "[src/ferus.nim] Could not load URL."
+        quit 1
     else:
       fatal "[src/ferus.nim] Neither a URL nor a filename was provided."
       quit 1

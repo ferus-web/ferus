@@ -41,7 +41,20 @@ proc serveDOM*(app: FerusApplication, sender: Client) {.inline.} =
     }.toTable
   )
 
-proc loadURL*(app: FerusApplication, url: string) =
+proc handleHTTPCode*(app: FerusApplication, code: int) =
+  case code:
+    of 404:
+      error "[src/app.nim] Server could not find the requested resource."
+    of 418:
+      error "[src/app.nim] Unfortunately, the server does not want to brew coffee for us today. Bummer :("
+    of 505:
+      error "[src/app.nim] HTTP protocol version not supported."
+    of 429:
+      error "[src/app.nim] We have been rate limited."
+    else:
+      error "[src/app.nim] An unhandled non-successful error code.", code=code
+
+proc loadURL*(app: FerusApplication, url: string): bool =
   let 
     fetcher = newNetworkFetcher()
     response = fetcher.get(url)
@@ -54,18 +67,10 @@ proc loadURL*(app: FerusApplication, url: string) =
       document = htmlParser.parseToDocument(body)
 
     app.dom = newDOM(document)
+    return true
   else:
-    case code:
-      of 404:
-        error "[src/app.nim] Server could not find the requested resource."
-      of 418:
-        error "[src/app.nim] Unfortunately, the server does not want to brew coffee for us today. Bummer :("
-      of 505:
-        error "[src/app.nim] HTTP protocol version not supported."
-      of 429:
-        error "[src/app.nim] We have been rate limited."
-      else:
-        error "[src/app.nim] An unhandled non-successful error code.", code=code
+    app.handleHTTPError(code)
+    return false
 
 proc loadFile*(app: FerusApplication, file: string) =
   if not fileExists(file):
@@ -125,7 +130,6 @@ proc processMsg*(app: FerusApplication, sender: Client, data: JSONNode) {.inline
 proc init*(app: FerusApplication) =
   proc get(sender: Client, data: JSONNode) =
     app.processMsg(sender, data)
-
   echo app.dom.document.root.dump()
 
   app.orchestral.server.context.addReceiver(get)
