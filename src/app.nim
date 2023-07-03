@@ -41,7 +41,7 @@ proc serveDOM*(app: FerusApplication, sender: Client) {.inline.} =
     }.toTable
   )
 
-proc handleHTTPCode*(app: FerusApplication, code: int) =
+proc handleHTTPError*(app: FerusApplication, code: int) =
   case code:
     of 404:
       error "[src/app.nim] Server could not find the requested resource."
@@ -71,6 +71,19 @@ proc loadURL*(app: FerusApplication, url: string): bool =
   else:
     app.handleHTTPError(code)
     return false
+
+proc handleHTTPCode*(app: FerusApplication, code: int) =
+  case code:
+    of 404:
+      error "[src/app.nim] Server could not find the requested resource."
+    of 418:
+      error "[src/app.nim] Unfortunately, the server does not want to brew coffee for us today. Bummer :("
+    of 505:
+      error "[src/app.nim] HTTP protocol version not supported."
+    of 429:
+      error "[src/app.nim] We have been rate limited."
+    else:
+      error "[src/app.nim] An unhandled non-successful error code.", code=code
 
 proc loadFile*(app: FerusApplication, file: string) =
   if not fileExists(file):

@@ -6,3 +6,6 @@ requests it via the IPC pipeline command [-65526].
 
 In order to minimize overhead, the rendering process is also responsible for
 reflow and layout.
+
+# Warning
+Anything here is subject to change as we continue work on the ferusgfx backend
