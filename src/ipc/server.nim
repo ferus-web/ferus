@@ -21,7 +21,7 @@ type
     role*: ProcessType
     affinitySignature*: string
 
-  Receiver* = proc(sender: Client, jsonNode: JSONNode)
+  Receiver* = proc(sender: Client, jsonNode: JSONNode) {.gcsafe.}
 
   IPCServer* = ref object of RootObj
     reactor*: Reactor
@@ -121,7 +121,7 @@ proc getClientByAddr*(ipcServer: IPCServer, address: Address): Client {.inline.}
 #[
   Process a message
 ]#
-proc processMessage*(ipcServer: IPCServer, message: Message) =
+proc processMessage*(ipcServer: IPCServer, message: Message) {.gcsafe.} =
   when defined(ferusUseVerboseLogging):
     info "[src/ipc/server.nim] Got packet from client (compile without -d:ferusUseVerboseLogging to disable this)", dataConv=message.data
   var data = ipcServer.parse(message.data)
@@ -189,26 +189,22 @@ proc processMessage*(ipcServer: IPCServer, message: Message) =
           ipcServer.sendExplicit(message.conn, {
             "status": IPC_SERVER_REQUEST_DECLINE_NOT_REGISTERED.intToStr()
           }.toTable)
+
+  let client = ipcServer.getClientByAddr(message.conn.address)
+  for receiver in ipcServer.receivers:
+    receiver(client, data)
  
 proc processMessages*(ipcServer: IPCServer) {.inline.} =
   when defined(ferusNoParallelIPC):
     for msg in ipcServer.reactor.messages:
       let 
         data = jsony.fromJson(msg.data)
-        client = ipcServer.getClientByAddr(message.conn.address)
-    
-      for receiver in ipcServer.receivers:
-        receiver(client, data)
 
       ipcServer.processMessage(msg)
   else:    
     for msg in ipcServer.reactor.messages:
       let 
         data = jsony.fromJson(msg.data)
-        client = ipcServer.getClientByAddr(message.conn.address)
-      
-      for receiver in ipcServer.receivers:
-        receiver(client, data)
 
       parallel:
         spawn ipcServer.processMessage(msg)

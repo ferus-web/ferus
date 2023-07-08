@@ -36,7 +36,6 @@ proc calculate*(layoutEngine: LayoutEngine) =
 
   parseGridTemplateColumns layoutEngine.gridTemplate, 0'ux 32'ux
   parseGridTemplateRows layoutEngine.gridTemplate, 33'ux 33'ux
-  layoutEngine.gridTemplate.justifyItems = CxStretch
 
   info "[src/layout/layout.nim] Computing layout"
   layoutEngine.gridTemplate.computeNodeLayout(
@@ -55,8 +54,8 @@ proc newLayoutEngine*(dom: DOM,
     parent = LayoutNode(
       box: uiBox(
         0, 0,
-        4*(gridTemplate.columns().len().float - 1),
-        4*(gridTemplate.rows().len().float - 1)
+        60*(gridTemplate.columns().len().float - 1),
+        33*(gridTemplate.rows().len().float - 1)
       )
     )
 

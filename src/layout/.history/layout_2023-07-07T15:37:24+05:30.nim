@@ -23,20 +23,16 @@ proc calculate*(layoutEngine: LayoutEngine) =
   layoutEngine.layoutTree.reset()
 
   var font = layoutEngine.fontManager.loadFont(
-    "Default",
+    "Default", 
     "../data/fonts/IBMPlexSans-Regular.ttf"
   )
   parseDOM(
-    layoutEngine.dom,
-    layoutEngine.renderer,
-    layoutEngine.fontManager,
+    layoutEngine.dom, 
+    layoutEngine.renderer, 
+    layoutEngine.fontManager, 
     layoutEngine.layoutTree,
     layoutEngine.parent
   )
-
-  parseGridTemplateColumns layoutEngine.gridTemplate, 0'ux 32'ux
-  parseGridTemplateRows layoutEngine.gridTemplate, 33'ux 33'ux
-  layoutEngine.gridTemplate.justifyItems = CxStretch
 
   info "[src/layout/layout.nim] Computing layout"
   layoutEngine.gridTemplate.computeNodeLayout(
@@ -55,8 +51,8 @@ proc newLayoutEngine*(dom: DOM,
     parent = LayoutNode(
       box: uiBox(
         0, 0,
-        4*(gridTemplate.columns().len().float - 1),
-        4*(gridTemplate.rows().len().float - 1)
+        60*(gridTemplate.columns().len().float - 1),
+        33*(gridTemplate.rows().len().float - 1)
       )
     )
 

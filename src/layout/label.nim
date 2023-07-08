@@ -6,53 +6,30 @@
   Authors: xTrayambak (xtrayambak at gmail dot com)
 ]#
 import ../renderer/[primitives, render, fontmanager], 
-       box, node, aabb, element, 
+       node, cssgrid,
        pixie,
        std/[strutils]
 
-type Label* = ref object of LayoutElement
+type Label* = ref object of LayoutNode
+  textContent*: string
+  font*: string
 
-method draw*(label: Label, surface: RenderImage, pos: tuple[x, y: float32]) =
-  #label.box.aabb.x = label.primitive.pos.x.int
-  #label.box.aabb.y = label.primitive.pos.y.int
-
-  when defined(ferusLayoutDrawAABB):
-    label.box.aabb.debugDraw(surface)
-  
-  label.renderer.drawText(
-    label.primitive.content, 
-    pos, label.primitive.dimensions,
-    label.primitive.font, surface
+method draw*(label: Label, context: Context) =
+  context.font = label.font
+  #label.context.fillColor(rgba(255, 255, 255, 255))
+  echo "X: " & $label.box.Rect.x
+  echo "Y: " & $label.box.Rect.y
+  context.fillText(label.textContent, 
+    label.box.Rect.x, 
+    label.box.Rect.y
   )
 
-proc computeSize(textContent: string, font: Font): int {.inline.} =
-  (font.size.int * textContent.len)
+proc computeSize(textContent: string): tuple[rows, columns: int] =
+  (rows: 1, columns: 1)
 
-proc newLabel*(textContent: string, renderer: Renderer, 
-              fontMgr: FontManager, sizeInc: int = 0,
-              centered: bool = true
-              ): Label =
-  let
-    font = fontMgr.getFont("Default")
-    size = computeSize(textContent, font) + sizeInc
-    prim = newRenderText(
-      textContent,
-      font,
-      (w: size.float32, h: 64f), (x: 0f, y: 0f)
-    )
-
+proc newLabel*(textContent: string, parent: GridNode, font: string): Label =
   Label(
-    renderer: renderer,
-    primitive: prim,
-    node: newLayoutNode(
-      true, false, true, false, ssNone 
-    ),
-    box: newBox(
-      newAABB(
-        prim.pos.x.int, prim.pos.y.int, 
-        size, font.size.int
-      )
-    ),
-    breaksLine: true,
-    centered: centered
+    textContent: textContent,
+    parent: parent,
+    font: font
   )
