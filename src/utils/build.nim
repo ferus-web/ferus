@@ -52,7 +52,7 @@ proc getHostOS*: string =
 proc getCompileDate*: string =
   CompileDate
 
-proc getBinFormat =
+proc getBinFormat*: BinFormat =
   when defined(win32): return bfWin32
   when defined(win64): return bfWin64
   when defined(linux): return bfLinux
