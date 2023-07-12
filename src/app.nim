@@ -4,7 +4,7 @@
   This code is licensed under the MIT license
 ]#
 
-import chronicles, json, netty, ferushtml
+import chronicles, json, ferushtml
 import std/[
   tables,
   strutils,
