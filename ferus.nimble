@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.0"
+version       = "0.1.1"
 author        = "xTrayambak and Ferus authors"
 description   = "A fast, independent and (hopefully) secure web browser written in Nim"
 license       = "MIT"
