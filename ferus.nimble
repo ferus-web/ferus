@@ -60,6 +60,9 @@ requires "https://github.com/xTrayambak/ferusgfx"
 # pretty -- pretty printer for exploring data structures
 requires "pretty"
 
+# curly -- efficient multithreaded curl bindings
+requires "curly"
+
 # Linux-specific modules
 when defined(linux):
   requires "https://github.com/xTrayambak/nim-firejail"
