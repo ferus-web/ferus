@@ -55,8 +55,8 @@ proc newLayoutEngine*(dom: DOM,
     parent = LayoutNode(
       box: uiBox(
         0, 0,
-        4*(gridTemplate.columns().len().float - 1),
-        4*(gridTemplate.rows().len().float - 1)
+        renderer.width.float32,
+        renderer.height.float32
       )
     )
 
