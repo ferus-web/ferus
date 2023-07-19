@@ -72,3 +72,4 @@ $ ./ferus
 
 # Attributions
 [SHA256 implementation](https://github.com/jangko/nimSHA2/)
+[QuickJS Nim Bindings](https://git.sr.ht/~bptato/chawan/)

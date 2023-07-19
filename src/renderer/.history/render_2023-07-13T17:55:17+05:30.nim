@@ -1,5 +1,5 @@
-import opengl, chronicles,
-       ferusgfx, windy,
+import opengl, chronicles, 
+       ferusgfx, windy, 
        boxy, primitives
 
 const FERUS_RENDER_PIPELINE_NUMTHREADS {.intdefine.} = 4
@@ -7,7 +7,7 @@ const FERUS_RENDER_PIPELINE_NUMTHREADS {.intdefine.} = 4
 type
   DrawListener* = proc(window: Window, surface: RenderImage)
   ResizeListener* = proc(width, height: int)
-  Renderer* = ref object of RenderPipeline
+  Renderer* = ref object of RootObj
     window*: Window
     drawListeners*: seq[DrawListener]
     width*: int
@@ -18,6 +18,8 @@ type
     glVendor*: string
     glRenderer*: string
 
+    scene*: Scene
+ 
 proc setIcon*(renderer: Renderer, image: Image) {.inline.} =
   # Ferus should only support 64x64 icons
   if not renderer.isNil:
@@ -27,6 +29,11 @@ proc setIcon*(renderer: Renderer, image: Image) {.inline.} =
     warn "[src/renderer/render.nim] setIcon() failed as renderer has not yet been initialized."
 
 proc onRender*(renderer: Renderer) =
+  let
+    surface = renderer.surface
+
+  surface.img.fill(rgba(255, 255, 255, 255))
+
   # Clear the screen
   glClear(GL_COLOR_BUFFER_BIT or GL_DEPTH_BUFFER_BIT)
   glClearColor(0f, 0.5f, 0.5f, 1f)
@@ -35,8 +42,8 @@ proc onRender*(renderer: Renderer) =
   for fn in renderer.drawListeners:
     fn(renderer.window, surface)
 
-  # Tell the ferusgfx pipeline to draw the scene
-  renderer.dispatch()
+  # Tell ferusgfx to draw the scene
+  renderer.compositor.composite()
 
   # Poll windy events
   pollEvents()
@@ -110,10 +117,7 @@ proc init*(renderer: Renderer) {.inline.} =
   renderer.glVersion = glVersion
   renderer.glVendor = glVendor
   renderer.glRenderer = glRenderer
-
-  info "[src/renderer/render.nim] Initializing ferusgfx canvas"
-  renderer.canvas = newCanvas(renderer.width, renderer.height)
-
+ 
 proc newRenderer*(height, width: int): Renderer =
   info "[src/renderer/render.nim] Instantiating renderer"
   loadExtensions()
@@ -123,19 +127,13 @@ proc newRenderer*(height, width: int): Renderer =
   window.title = "Ferus"
   
   info "[src/renderer/render.nim] Renderer initialized"
-  var renderer = Renderer(
-    window: window, 
-    width: width, 
-    height: height,
-    drawListeners: @[],
-    resizeListeners: @[],
-    alive: true,
-
-    scenes: @[],
-    current: 0
-  )
-
-    
+  var renderer = Renderer(window: window, width: width, height: height, 
+                          boxy: newBoxy(), alive: true, 
+                          surface: newRenderImage(
+                            newImage(width, height), 
+                            (w: width.float32, h: height.float32)
+                          )
+                  )
   proc iOnResize() =
     renderer.onResize()
 

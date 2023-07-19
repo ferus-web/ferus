@@ -1,25 +1,32 @@
 #[
- DOM parser, turns HTMLElement(s) into LayoutElement(s)
+ DOM parser, turns HTMLElement(s) into LayoutNode(s)
+
+ This code is licensed under the MIT license
+
+ Authors: xTrayambak (xtrayambak at gmail dot com)
 ]#
 import ../../dom/dom, 
        ../label,
-       ../breakline,
-       ../element,
-       ../image,
+       ../node,
+       #../breakline,
+       #../element,
+       #../image,
       ../../renderer/[primitives, render, fontmanager],
       std/strutils,
+      cssgrid,
       pixie,
       ferushtml
 
-proc parseDOM*(dom: DOM, renderer: Renderer, fontMgr: FontManager, layoutTree: var seq[LayoutElement]) =
+proc parseDOM*(dom: DOM, renderer: Renderer, fontMgr: FontManager, layoutTree: var seq[LayoutNode], parent: GridNode) =
  for child in dom.document.root.findChildByTag("html").findChildByTag("body").children:
   if child.tag == "p":
    layoutTree.add(
     newLabel(
-     child.textContent, renderer, fontMgr
+     child.textContent, parent, 
+     fontMgr.getFontPath("Default")
     )
    )
-  elif child.tag == "br":
+  #[elif child.tag == "br":
    layoutTree.add(
     newBreakline(renderer)
    )
@@ -38,4 +45,4 @@ proc parseDOM*(dom: DOM, renderer: Renderer, fontMgr: FontManager, layoutTree: v
       ),
       renderer
      )
-    )
+    )]#

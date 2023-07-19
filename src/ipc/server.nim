@@ -1,12 +1,16 @@
+{.experimental.}
+
 #[
   The IPC Server.
 
   This code is licensed under the MIT license
 ]#
 
-import netty, jsony, chronicles, json, constants, os, tables,
-       strutils,
-       ../sandbox/processtypes
+import std/[os, json, tables, threadpool], 
+      constants,
+      chronicles, jsony, netty,
+      strutils,
+      ../sandbox/processtypes
 
 const FERUS_IPC_SERVER_NUMTHREADS {.intdefine.} = 2
 
@@ -17,7 +21,7 @@ type
     role*: ProcessType
     affinitySignature*: string
 
-  Receiver* = proc(sender: Client, jsonNode: JSONNode)
+  Receiver* = proc(sender: Client, jsonNode: JSONNode) {.gcsafe.}
 
   IPCServer* = ref object of RootObj
     reactor*: Reactor
@@ -115,65 +119,64 @@ proc getClientByAddr*(ipcServer: IPCServer, address: Address): Client {.inline.}
   raise newException(ValueError, "getClientByAddr() failed")
 
 #[
-  Process all messages in the netty queue
+  Process a message
 ]#
-proc processMessages*(ipcServer: IPCServer) =
-  for message in ipcServer.reactor.messages:
-    when defined(ferusUseVerboseLogging):
-      info "[src/ipc/server.nim] Got packet from client (compile without -d:ferusUseVerboseLogging to disable this)", dataConv=message.data
-    var data = ipcServer.parse(message.data)
+proc processMessage*(ipcServer: IPCServer, message: Message) {.gcsafe.} =
+  when defined(ferusUseVerboseLogging):
+    info "[src/ipc/server.nim] Got packet from client (compile without -d:ferusUseVerboseLogging to disable this)", dataConv=message.data
+  var data = ipcServer.parse(message.data)
 
-    if not ipcServer.isConnected(message.conn.address):
-      info "[src/ipc/server.nim] New potential IPC client connected!", address=message.conn.address
-      var 
-        role: ProcessType
-        brokerAffinitySignature: string
+  if not ipcServer.isConnected(message.conn.address):
+    info "[src/ipc/server.nim] New potential IPC client connected!", address=message.conn.address
+    var 
+      role: ProcessType
+      brokerAffinitySignature: string
 
-      if "status" in data:
-        let status = data["status"]
-          .getStr()
-          .parseInt()
+    if "status" in data:
+      let status = data["status"]
+        .getStr()
+        .parseInt()
 
-        if status == IPC_CLIENT_HANDSHAKE:
-          info "[src/ipc/server.nim] New IPC client wants to handshake!"
+      if status == IPC_CLIENT_HANDSHAKE:
+        info "[src/ipc/server.nim] New IPC client wants to handshake!"
           
-          # Process role
-          if "role" notin data:
-            warn "[src/ipc/server.nim] IPC client attempted to handshake without describing process role"
-            ipcServer.sendExplicit(message.conn, {"handshakeResult": IPC_SERVER_HANDSHAKE_FAILED_EMPTY_ROLE_KEY}.toTable)
+        # Process role
+        if "role" notin data:
+          warn "[src/ipc/server.nim] IPC client attempted to handshake without describing process role"
+          ipcServer.sendExplicit(message.conn, {"handshakeResult": IPC_SERVER_HANDSHAKE_FAILED_EMPTY_ROLE_KEY}.toTable)
+          return
+        else:
+          try:
+            role = data["role"]
+              .getInt()
+              .intToProcessType()
+
+          except ValueError:
+            warn "[src/ipc/server.nim] IPC client sent invalid role key"
+            ipcServer.sendExplicit(message.conn, {"handshakeResult": IPC_SERVER_HANDSHAKE_FAILED_INVALID_ROLE_KEY}.toTable)
             return
-          else:
-            try:
-              role = data["role"]
-                .getInt()
-                .intToProcessType()
 
-            except ValueError:
-              warn "[src/ipc/server.nim] IPC client sent invalid role key"
-              ipcServer.sendExplicit(message.conn, {"handshakeResult": IPC_SERVER_HANDSHAKE_FAILED_INVALID_ROLE_KEY}.toTable)
-              return
+        # Process broker affinity signature
+        if "brokerAffinitySignature" notin data:
+          warn "[src/ipc/server.nim] IPC client attempted to handshake without a broker affinity signature"
+          ipcServer.sendExplicit(message.conn, {"handshakeResult": IPC_SERVER_HANDSHAKE_FAILED_NO_BROKER_AFFINITY}.toTable)
+          return
+        else:
+          brokerAffinitySignature = data["brokerAffinitySignature"].getStr()
 
-          # Process broker affinity signature
-          if "brokerAffinitySignature" notin data:
-            warn "[src/ipc/server.nim] IPC client attempted to handshake without a broker affinity signature"
-            ipcServer.sendExplicit(message.conn, {"handshakeResult": IPC_SERVER_HANDSHAKE_FAILED_NO_BROKER_AFFINITY}.toTable)
-            return
-          else:
-            brokerAffinitySignature = data["brokerAffinitySignature"].getStr()
+        ipcServer.sendExplicit(message.conn, {
+          "status": IPC_SERVER_HANDSHAKE_ACCEPTED.intToStr(),
+          "serverPid": getCurrentProcessId().intToStr()
+        }.toTable)
 
-          ipcServer.sendExplicit(message.conn, {
-            "status": IPC_SERVER_HANDSHAKE_ACCEPTED.intToStr(),
-            "serverPid": getCurrentProcessId().intToStr()
-          }.toTable)
-
-          ipcServer.clients[brokerAffinitySignature] = newTable[ProcessType, Client]()
-          ipcServer.clients[brokerAffinitySignature][role] = newClient(
-            message.conn, 
-            data["clientPid"].getStr().parseInt(), 
-            brokerAffinitySignature,
-            role
-          )
-          info "[src/ipc/server.nim] IPC client registered!", clientPid = data["clientPid"].getStr().parseInt()
+        ipcServer.clients[brokerAffinitySignature] = newTable[ProcessType, Client]()
+        ipcServer.clients[brokerAffinitySignature][role] = newClient(
+          message.conn, 
+          data["clientPid"].getStr().parseInt(), 
+          brokerAffinitySignature,
+          role
+        )
+        info "[src/ipc/server.nim] IPC client registered!", clientPid = data["clientPid"].getStr().parseInt()
     else:
       if "status" in data:
         let status = data["status"]
@@ -186,10 +189,25 @@ proc processMessages*(ipcServer: IPCServer) =
           ipcServer.sendExplicit(message.conn, {
             "status": IPC_SERVER_REQUEST_DECLINE_NOT_REGISTERED.intToStr()
           }.toTable)
+
+  let client = ipcServer.getClientByAddr(message.conn.address)
+  for receiver in ipcServer.receivers:
+    receiver(client, data)
  
-    let client = ipcServer.getClientByAddr(message.conn.address)
-    for receivers in ipcServer.receivers:
-      receivers(client, data)
+proc processMessages*(ipcServer: IPCServer) {.inline.} =
+  when defined(ferusNoParallelIPC):
+    for msg in ipcServer.reactor.messages:
+      let 
+        data = jsony.fromJson(msg.data)
+
+      ipcServer.processMessage(msg)
+  else:    
+    for msg in ipcServer.reactor.messages:
+      let 
+        data = jsony.fromJson(msg.data)
+
+      parallel:
+        spawn ipcServer.processMessage(msg)
 
 #[
   Tick the netty reactor and process all new messages

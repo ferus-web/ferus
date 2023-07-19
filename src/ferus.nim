@@ -19,8 +19,11 @@ proc userExit {.noconv.} =
 proc main(filename: string = "", url: string = "") =
   setControlCHook(userExit)
   info fmt"[src/ferus.nim] Ferus {getVersion()} starting up!!"
+  info fmt"[src/ferus.nim] Compiled using {$getCompilerType()}; compiled on {getCompileDate()}"
+  info fmt"[src/ferus.nim] Architecture: {getArchitecture()}"
+  info fmt"[src/ferus.nim] Host OS: {getHostOS()}"
 
-  when defined(windows) or defined(mac):
+  when getHostOS() in @["windows", "macosx"]:
     fatal "[src/ferus.nim] We're extremely sorry, but we do not support Windows and Mac as of yet due to how complicated their security and sandboxing APIs are. We will NOT ship a broken, unstable and unsafe Ferus until confirmed to be up-to-par. Thank you for 'trying' out Ferus, though. :)"
     quit 1
 
@@ -33,7 +36,9 @@ proc main(filename: string = "", url: string = "") =
     app.loadFile(filename)
   else:
     if url.len > 0:
-      app.loadURL(url)
+      if not app.loadURL(url):
+        fatal "[src/ferus.nim] Could not load URL."
+        quit 1
     else:
       fatal "[src/ferus.nim] Neither a URL nor a filename was provided."
       quit 1

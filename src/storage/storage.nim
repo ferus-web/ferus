@@ -44,3 +44,17 @@ proc newStorage*: Storage =
   cache: newTable[string, string](), 
   data: newTable[string, string]()
  )
+
+proc loadStorage*: Storage =
+ let deserializedCache = open(
+  getCacheDir() & "/ferus/" & "FERUS_CACHE"
+ ).readFile().fromJson[TableRef[string, string]]()
+ defer:
+  fatal "[src/storage/storage.nim] loadStorage(): failed to open cache file!"
+  file.close()
+  quit 1
+
+ Storage(
+  cache: deserializedCache,
+  # TODO(xTrayambak): work on storage
+ )

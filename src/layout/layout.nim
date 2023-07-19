@@ -1,5 +1,6 @@
 import ../dom/dom, ../renderer/[render, primitives, fontmanager],
-       label, breakline, element, aabb, handler/handler, chronicles, std/tables
+       label, node, handler/handler, chronicles,
+       pixie, std/tables, cssgrid, pretty
 
 type
   LayoutEngine* = ref object of RootObj
@@ -7,69 +8,60 @@ type
     renderer*: Renderer
 
     fontManager: FontManager
-    layoutTree*: seq[LayoutElement]
+    layoutTree*: seq[LayoutNode]
 
-proc getPos*(layoutEngine: LayoutEngine, 
-             currNode: LayoutElement,
-             lastNode: LayoutElement
-            ): tuple[x, y: int] {.inline.} =
-  var x: int = lastNode.box.aabb.getRight()
-  var y: int = 0
+    parent*: LayoutNode
+    gridTemplate*: GridTemplate
 
-  if lastNode.breaksLine:
-    x = 0
-    y = lastNode.box.aabb.getBottom() + 32
-
-  (
-    x: x,
-    y: y
-  )
-
-proc draw*(layoutEngine: LayoutEngine, 
+proc draw*(layoutEngine: LayoutEngine,
           surface: RenderImage) {.inline.} =
-  var last: LayoutElement
-  
-  for drawable in layoutEngine.layoutTree:
-    if not last.isNil:
-      let pos = layoutEngine.getPos(drawable, last)
-
-      drawable.box.aabb.x = pos.x
-      drawable.box.aabb.y = pos.y
-
-      drawable.draw(
-        surface, 
-        (
-          x: pos.x.float32,
-          y: pos.y.float32
-        )
-      )
-    else:
-      drawable.box.aabb.x = 0
-      drawable.box.aabb.y = 0
-      drawable.draw(
-        surface, 
-        (
-          x: 0f, 
-          y: 0f
-        )
-      )
-    
-    last = drawable
+  for layoutNode in layoutEngine.layoutTree:
+    layoutNode.draw(newContext(surface.img))
 
 proc calculate*(layoutEngine: LayoutEngine) =
   info "[src/layout/layout.nim] Clearing display list and layout tree"
   layoutEngine.layoutTree.reset()
 
   var font = layoutEngine.fontManager.loadFont(
-    "Default", 
+    "Default",
     "../data/fonts/IBMPlexSans-Regular.ttf"
   )
-  parseDOM(layoutEngine.dom, layoutEngine.renderer, layoutEngine.fontManager, layoutEngine.layoutTree)
+  parseDOM(
+    layoutEngine.dom,
+    layoutEngine.renderer,
+    layoutEngine.fontManager,
+    layoutEngine.layoutTree,
+    layoutEngine.parent
+  )
 
-proc newLayoutEngine*(dom: DOM, 
+  parseGridTemplateColumns layoutEngine.gridTemplate, 0'ux 32'ux
+  parseGridTemplateRows layoutEngine.gridTemplate, 33'ux 33'ux
+  layoutEngine.gridTemplate.justifyItems = CxStretch
+
+  info "[src/layout/layout.nim] Computing layout"
+  layoutEngine.gridTemplate.computeNodeLayout(
+    layoutEngine.parent,
+    layoutEngine.layoutTree
+  )
+
+proc newLayoutEngine*(dom: DOM,
                       renderer: Renderer
                       ): LayoutEngine {.inline.} =
+  info "[src/layout/layout.nim] Initializing layout engine -- creating grid template and root layout node."
+  var
+    gridTemplate = newGridTemplate()
+    # gridTemplate.autoFlow = grRow
+
+    parent = LayoutNode(
+      box: uiBox(
+        0, 0,
+        renderer.width.float32,
+        renderer.height.float32
+      )
+    )
+
   LayoutEngine(
     dom: dom, renderer: renderer, layoutTree: @[], 
-    fontManager: newFontManager()
+    fontManager: newFontManager(),
+    parent: parent, gridTemplate: gridTemplate
   )

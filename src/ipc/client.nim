@@ -1,3 +1,4 @@
+{.experimental.}
 #[
   The IPC Client.
 
@@ -7,7 +8,7 @@
 ]#
 
 import netty, jsony, chronicles, constants, os, ../sandbox/processtypes
-import std/[tables, json, strutils]
+import std/[tables, json, strutils, threadpool]
 
 type
   Receiver* = proc(jsonNode: JSONNode)
@@ -56,7 +57,7 @@ proc handshake*(ipcClient: IPCClient) {.inline.} =
 #[
   Process one message, processMessages() calls this in a parallelized fashion
 ]#
-proc processMessage*(ipcClient: IPCClient, data: JSONNode) =    
+proc processMessage*(ipcClient: IPCClient, data: JSONNode) {.gcsafe.} =    
   # Handshake handler
   if "status" in data and not ipcClient.handshakeCompleted:
     try:
@@ -104,7 +105,9 @@ proc processMessages*(ipcClient: IPCClient) {.inline.} =
       let data = jsony.fromJson(msg.data)
       for receiver in ipcClient.receivers:
         receiver(data)
-      ipcClient.processMessage(data)
+
+      parallel:
+        spawn ipcClient.processMessage(data)
 
 #[
   Tick the netty reactor and process new messages

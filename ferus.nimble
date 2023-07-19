@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.0"
+version       = "0.1.1"
 author        = "xTrayambak and Ferus authors"
 description   = "A fast, independent and (hopefully) secure web browser written in Nim"
 license       = "MIT"
@@ -51,6 +51,18 @@ requires "cligen"
 # curly -- curl helper
 requires "curly"
 
+<<<<<<< HEAD
+=======
+# cssgrid -- css grid layout engine
+requires "cssgrid"
+
+# ferusgfx -- graphics pipeline
+requires "https://github.com/xTrayambak/ferusgfx"
+
+# pretty -- pretty printer for exploring data structures
+requires "pretty"
+
+>>>>>>> experimental
 # Linux-specific modules
 when defined(linux):
   requires "https://github.com/xTrayambak/nim-firejail"

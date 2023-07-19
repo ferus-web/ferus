@@ -1,46 +1,22 @@
 #[
-  Basic layout node
+ Layout node
 
-  This code is licensed under the MIT license
-  
-  Authors: xTrayambak (xtrayambak at gmail dot com) 
+ This code is licensed under the MIT license
+
+ Authors: xTrayambak (xtrayambak at gmail dot com)
 ]#
-import ../dom/dom, boxmodelmetrics
+import cssgrid, pixie
 
-type
-  SelectionState* = enum
-    ssNone
-    ssStart
-    ssEnd
-    ssStartAndEnd
-    ssFull
+type LayoutNode* = ref object of RootObj
+ box*: UIBox
+ parent*: LayoutNode
+ gridItem*: GridItem
 
-  LayoutNode* = ref object of RootObj
-    # dom*: DOM
-    generated*: bool
-    anonymous*: bool
-    visible*: bool
-    childrenAreInline*: bool
-    selectionState*: SelectionState
+method draw*(layoutNode: LayoutNode, context: Context) {.base.} =
+ return
 
-  LayoutNodeWithBoxModelMetrics* = ref object of LayoutNode
-    boxModelMetrics*: BoxModelMetrics
+proc getRect*(layoutNode: LayoutNode): Rect =
+ layoutNode.box.Rect
 
-proc newLayoutNode*(
-                    generated, anonymous, visible, childrenAreInline: bool,
-                    selectionState: SelectionState
-                   ): LayoutNode {.inline.} =
-  LayoutNode(generated: generated, visible: visible, 
-             childrenAreInline: childrenAreInline, 
-             selectionState: selectionState)
-
-proc newLayoutNodeWithBoxModelMetrics*(dom: DOM, 
-                                       generated, anonymous, visible, 
-                                       childrenAreInline: bool, selectionState: SelectionState,
-                                       boxModelMetrics: BoxModelMetrics
-                                      ): LayoutNodeWithBoxModelMetrics {.inline.} =
-  LayoutNodeWithBoxModelMetrics(generated: generated, 
-                                anonymous: anonymous, 
-                                childrenAreInline: childrenAreInline, 
-                                selectionState: selectionState, 
-                                boxModelMetrics: boxModelMetrics)
+proc newLayoutNode*(parent: GridNode): LayoutNode =
+ LayoutNode(parent: parent, box: parent.box, gridItem: newGridItem())
