@@ -51,8 +51,6 @@ requires "cligen"
 # curly -- curl helper
 requires "curly"
 
-<<<<<<< HEAD
-=======
 # cssgrid -- css grid layout engine
 requires "cssgrid"
 
@@ -62,7 +60,6 @@ requires "https://github.com/xTrayambak/ferusgfx"
 # pretty -- pretty printer for exploring data structures
 requires "pretty"
 
->>>>>>> experimental
 # Linux-specific modules
 when defined(linux):
   requires "https://github.com/xTrayambak/nim-firejail"
