@@ -22,7 +22,7 @@ can load.
 Please read the best code practices in the documentation and follow basic human etiquette.
 Helping out is more than appreciated!
 
-You can join the Discord server for more in-depth discussion on Ferus: https://discord.gg/Cz5uRWsR \
+You can join the Discord server for more in-depth discussion on Ferus: https://discord.gg/RC9JgUF3dv \
 If you don't like Discord (for obvious reasons) then you can just make issues.
 
 # Aim
