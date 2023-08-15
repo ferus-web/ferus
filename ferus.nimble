@@ -42,8 +42,8 @@ requires "urlly"
 # nim-taskpools -- Thread task pools
 requires "taskpools"
 
-# ferushtml/2html5you -- next gen Ferus HTML parser (will put it on Nimble later)
-requires "https://github.com/xTrayambak/ferushtml"
+# chame -- mostly WHATWG compliant replacement for ferushtml
+requires "https://git.sr.ht/~bptato/chame"
 
 # cligen -- CLI parser
 requires "cligen"
