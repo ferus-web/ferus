@@ -15,12 +15,7 @@ There's plenty of reasons.
 - A side-aim, if you can call it that, is to increase the popularity of the Nim programming language. Seriously, it's awesome!
 
 # How much of the web can it render right now?
-The answer is: no website. All websites are written either\
-a) in an extremely shoddy fashion by a developer who's salary is a bag of puff corns\
-b) some atrocious JavaScript (bleh) framework that generates HTML \
-Only simple HTML documents that are written 100% accurately following all specs can render 
-as of right now. There are plans of plugging `libtidy` into the ferushtml pipeline soon so that basically the worst-of-the-worst sites\
-can load.
+The answer is: not a whole bunch. The HTML parser is quite compliant (thanks to bptato's excellent work!) but the layout engine is far from complete. 
 
 # Contributions
 Please read the best code practices in the documentation and follow basic human etiquette.
@@ -38,8 +33,9 @@ If you don't like Discord (for obvious reasons) then you can just make issues.
 - [X] Basic CSS parser
 - [X] Basic compositing
 - [X] Process isolation and sandboxing (Chromium style sandboxing)
-- [X] HTML5 (WHATWG) & CSS3 support
+- [ ] HTML5 support
 - [ ] Layout
+- [ ] CSS3 support
 - [ ] Hardware accelerated video decode
 - [ ] MV2-3 support (MV2 will never be deprecated here, once implemented)
 - [ ] Windows and MacOS builds
