@@ -23,8 +23,11 @@ proc createNewProcess*(broker: Broker, procType: ProcessType) =
     fmt" --ipc-server-port={broker.ipcServer.port}"
   let jail = policymanCreateAppropriateJail(procType)
 
-  # Perhaps we should re-enable sandboxing soon?
-  discard tp.spawn execCmd(cmd)
+  when defined(debug):
+    discard tp.spawn execCmd(cmd)
+  else:
+    discard tp.spawn jail.exec(cmd)
+
   info "[src/sandbox/linux/broker.nim] libferuscli launched!"
 
 proc newBroker*(ipcServer: IPCServer): Broker =
