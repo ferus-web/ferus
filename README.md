@@ -1,3 +1,7 @@
+# layout-v2: reinventing the wheel for 23 quadrillion'th time for Ferus!
+This does not compile right now (atleast I think). I'm going to get block layout working sooner or later.
+I'd basically stopped working on Ferus for over a week partially because my exams are approaching and there'll be little to no progress in the remains of August and September. Yep. Sad.
+
 # Ferus -- a prototype web engine written in the Nim programming language
 Ferus is a small web rendering engine that is 100% independent (not based on WebKit, Blink or Gecko), fast, and (hopefully) secure. It aims to stand as an alternative to more popular web engines by providing full compatibility to how they work.\
 Ferus also stands for "Fast Engine (for) Rendering Ur Site", if you'd prefer that. :)\
