@@ -118,6 +118,51 @@ proc getClientByAddr*(ipcServer: IPCServer, address: Address): Client {.inline.}
 
   raise newException(ValueError, "getClientByAddr() failed")
 
+proc handleUnknownConn*(ipcServer: IPCServer, message: Message) =
+  let data = fromJson(message.data)
+
+  var
+    role: ProcessType
+    brokerAffinitySignature: string
+
+  # Process role
+  if "role" notin data:
+    warn "[src/ipc/server.nim] IPC client attempted to handshake without describing process role"
+    ipcServer.sendExplicit(message.conn, {"handshakeResult": IPC_SERVER_HANDSHAKE_FAILED_EMPTY_ROLE_KEY}.toTable)
+    return
+  else:
+    try:
+      role = data["role"]
+        .getInt()
+        .intToProcessType()
+
+    except ValueError:
+      warn "[src/ipc/server.nim] IPC client sent invalid role key"
+      ipcServer.sendExplicit(message.conn, {"handshakeResult": IPC_SERVER_HANDSHAKE_FAILED_INVALID_ROLE_KEY}.toTable)
+      return
+
+    # Process broker affinity signature
+    if "brokerAffinitySignature" notin data:
+      warn "[src/ipc/server.nim] IPC client attempted to handshake without a broker affinity signature"
+      ipcServer.sendExplicit(message.conn, {"handshakeResult": IPC_SERVER_HANDSHAKE_FAILED_NO_BROKER_AFFINITY}.toTable)
+      return
+    else:
+      brokerAffinitySignature = data["brokerAffinitySignature"].getStr()
+
+    ipcServer.sendExplicit(message.conn, {
+      "status": IPC_SERVER_HANDSHAKE_ACCEPTED.intToStr(),
+      "serverPid": getCurrentProcessId().intToStr()
+    }.toTable)
+
+    ipcServer.clients[brokerAffinitySignature] = newTable[ProcessType, Client]()
+    ipcServer.clients[brokerAffinitySignature][role] = newClient(
+      message.conn, 
+      data["clientPid"].getStr().parseInt(), 
+      brokerAffinitySignature,
+      role
+    )
+    info "[src/ipc/server.nim] IPC client registered!", clientPid = data["clientPid"].getStr().parseInt()
+
 #[
   Process a message
 ]#
@@ -126,85 +171,36 @@ proc processMessage*(ipcServer: IPCServer, message: Message) {.gcsafe.} =
     info "[src/ipc/server.nim] Got packet from client (compile without -d:ferusUseVerboseLogging to disable this)", dataConv=message.data
   var data = ipcServer.parse(message.data)
 
-  if not ipcServer.isConnected(message.conn.address):
-    info "[src/ipc/server.nim] New potential IPC client connected!", address=message.conn.address
-    var 
-      role: ProcessType
-      brokerAffinitySignature: string
-
-    if "status" in data:
-      let status = data["status"]
-        .getStr()
-        .parseInt()
-
-      if status == IPC_CLIENT_HANDSHAKE:
-        info "[src/ipc/server.nim] New IPC client wants to handshake!"
-          
-        # Process role
-        if "role" notin data:
-          warn "[src/ipc/server.nim] IPC client attempted to handshake without describing process role"
-          ipcServer.sendExplicit(message.conn, {"handshakeResult": IPC_SERVER_HANDSHAKE_FAILED_EMPTY_ROLE_KEY}.toTable)
-          return
-        else:
-          try:
-            role = data["role"]
-              .getInt()
-              .intToProcessType()
-
-          except ValueError:
-            warn "[src/ipc/server.nim] IPC client sent invalid role key"
-            ipcServer.sendExplicit(message.conn, {"handshakeResult": IPC_SERVER_HANDSHAKE_FAILED_INVALID_ROLE_KEY}.toTable)
-            return
-
-        # Process broker affinity signature
-        if "brokerAffinitySignature" notin data:
-          warn "[src/ipc/server.nim] IPC client attempted to handshake without a broker affinity signature"
-          ipcServer.sendExplicit(message.conn, {"handshakeResult": IPC_SERVER_HANDSHAKE_FAILED_NO_BROKER_AFFINITY}.toTable)
-          return
-        else:
-          brokerAffinitySignature = data["brokerAffinitySignature"].getStr()
-
-        ipcServer.sendExplicit(message.conn, {
-          "status": IPC_SERVER_HANDSHAKE_ACCEPTED.intToStr(),
-          "serverPid": getCurrentProcessId().intToStr()
-        }.toTable)
-
-        ipcServer.clients[brokerAffinitySignature] = newTable[ProcessType, Client]()
-        ipcServer.clients[brokerAffinitySignature][role] = newClient(
-          message.conn, 
-          data["clientPid"].getStr().parseInt(), 
-          brokerAffinitySignature,
-          role
-        )
-        info "[src/ipc/server.nim] IPC client registered!", clientPid = data["clientPid"].getStr().parseInt()
-    else:
-      if "status" in data:
-        let status = data["status"]
-          .getStr()
-          .parseInt()
-        
-        # trying to access data without a registration.
-        if status != IPC_CLIENT_HANDSHAKE:
-          warn "[src/ipc/server.nim] Something attempted to connect without proper registration -- possibly a misconfigured fuzzer or a goofy little program trying to use this port for something completely different!"
-          ipcServer.sendExplicit(message.conn, {
-            "status": IPC_SERVER_REQUEST_DECLINE_NOT_REGISTERED.intToStr()
-          }.toTable)
-
   let client = ipcServer.getClientByAddr(message.conn.address)
   for receiver in ipcServer.receivers:
     receiver(client, data)
  
 proc processMessages*(ipcServer: IPCServer) {.inline.} =
+  var 
+    messages = deepCopy ipcServer.reactor.messages
+    toDel: seq[int] = @[]
+  
+  # FIXME: Work, PLEASE JUST WORK. I'M CREATING TWO GOD DAMNED SEQUENCES JUST TO MAKE YOU WORK.
+  # PLEASE. WORK.
+  for i, msg in messages:
+    if not ipcServer.isConnected(msg.conn.address):
+      info "[src/ipc/server.nim] New potential IPC client connected!", address=msg.conn.address
+
+      ipcServer.handleUnknownConn(msg)
+      toDel.add(i)
+
+  for delete in toDel:
+    messages.del(delete)
+
   when defined(ferusNoParallelIPC):
-    for msg in ipcServer.reactor.messages:
-      let 
-        data = jsony.fromJson(msg.data)
+    # Who knew parallelizing something that depends on itself for data is bad? :P
+    for msg in messages:
+      let data = jsony.fromJson(msg.data)
 
       ipcServer.processMessage(msg)
   else:    
-    for msg in ipcServer.reactor.messages:
-      let 
-        data = jsony.fromJson(msg.data)
+    for msg in messages:
+      let data = jsony.fromJson(msg.data)
 
       parallel:
         spawn ipcServer.processMessage(msg)
