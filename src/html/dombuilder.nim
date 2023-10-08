@@ -1,5 +1,7 @@
-import std/[streams, options, tables], chronicles, chame,
-      urlly
+import std/[streams, options, tables], chronicles, 
+       chame/[htmlparser, tags],
+       chakasu/charset,
+       ferus_sanchar
 
 type
   Node* = ref object of RootObj
@@ -115,6 +117,47 @@ func isHostIncludingInclusiveAncestor(a, b: Node): bool =
       return true
     b = b.parentNode
 
+proc remove*(node: Node, suppressObservers: bool) =
+  let parent = node.parentNode
+  assert parent != nil
+  assert node.index != -1
+  #TODO live ranges
+  #TODO NodeIterator
+  for i in node.index ..< parent.childList.len - 1:
+    parent.childList[i] = parent.childList[i + 1]
+    parent.childList[i].index = i
+  parent.childList.setLen(parent.childList.len - 1)
+  # node.parentNode.invalidateCollections()
+  node.parentNode = nil
+  # node.parentElement = nil
+  node.root = nil
+  node.index = -1
+
+proc insert*(parent, node, before: Node) =
+  let nodes = if node.nodeType == DOCUMENT_FRAGMENT_NODE: node.childList
+  else: @[node]
+  let count = nodes.len
+  if count == 0:
+    return
+  if node.nodeType == DOCUMENT_FRAGMENT_NODE:
+    for i in countdown(node.childList.high, 0):
+      node.childList[i].remove(true)
+    #TODO tree mutation record
+  if before != nil:
+    #TODO live ranges
+    discard
+  #[if parent.nodeType == ELEMENT_NODE:
+    Element(parent).invalid = true]#
+  #[for node in nodes:
+    insertNode(parent, node, before)]#
+
+proc moveChildren(builder: DOMBuilder[Node], fromNode, toNode: Node) =
+  var tomove = fromNode.childList
+  for node in tomove:
+    node.remove(suppressObservers = true)
+  for child in tomove:
+    toNode.insert(child, nil)
+
 func hasPreviousSibling(node: Node, nodeType: NodeType): bool =
   for n in node.parentNode.childList:
     if n == node:
@@ -223,6 +266,7 @@ proc newFerusDOMBuilder(): FerusDOMBuilder =
     insertBefore: insertBefore,
     insertText: insertText,
     remove: remove,
+    moveChildren: moveChildren,
     addAttrsIfMissing: addAttrsIfMissing,
   )
 
@@ -232,7 +276,6 @@ proc parseHTML*(inputStream: Stream,
   let opts = HTML5ParserOpts[Node](
     isIframeSrcdoc: false,
     scripting: false,
-    canReinterpret: canReinterpret,
     charsets: charsets
   )
   parseHTML(inputStream, builder, opts)

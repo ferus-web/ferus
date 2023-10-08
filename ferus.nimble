@@ -21,9 +21,6 @@ requires "jsony"
 # Netty -- low latency reliable UDP implementation
 requires "netty"
 
-# Urlly -- URL parser (I have no clue if it's 100% WHATWG compliant)
-requires "urlly"
-
 # Weave -- threading abstraction (ringabout's fork)
 # requires "https://github.com/ringabout/weave"
 
@@ -36,23 +33,11 @@ requires "windy"
 # boxy -- using pixie to render to an OpenGL context
 requires "boxy"
 
-# urlly -- URL parser
-requires "urlly"
-
 # nim-taskpools -- Thread task pools
 requires "taskpools"
 
-# chame -- mostly WHATWG compliant replacement for ferushtml
-requires "https://git.sr.ht/~bptato/chame"
-
 # cligen -- CLI parser
 requires "cligen"
-
-# curly -- curl helper
-requires "curly"
-
-# cssgrid -- css grid layout engine
-requires "cssgrid"
 
 # ferusgfx -- graphics pipeline
 requires "https://github.com/xTrayambak/ferusgfx"
@@ -60,8 +45,14 @@ requires "https://github.com/xTrayambak/ferusgfx"
 # pretty -- pretty printer for exploring data structures
 requires "pretty"
 
-# curly -- efficient multithreaded curl bindings
-requires "curly"
+# ferus-sanchar -- new networking stack for ferus + URL parser
+requires "https://github.com/xTrayambak/ferus_sanchar"
+
+# chame -- HTML5 parser
+requires "https://git.sr.ht/~bptato/chame"
+
+# chakasu -- encoding stuff
+requires "https://git.sr.ht/~bptato/chakasu"
 
 # Linux-specific modules
 when defined(linux):

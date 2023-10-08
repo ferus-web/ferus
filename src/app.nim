@@ -4,7 +4,7 @@
   This code is licensed under the MIT license
 ]#
 
-import chronicles, json, ferushtml
+import chronicles, json
 import std/[
   tables,
   strutils,
@@ -15,18 +15,20 @@ import ipc/[
   server,
   constants
 ]
-
 import utils/miscutils
-import dom/dom
+import dom/[dom]
+import html/[dombuilder]
 import sandbox/processtypes
 import orchestral/server
-import net/fetch
+import ferus_sanchar
 when defined(linux):
   import sandbox/linux/broker
 
 type FerusApplication* = ref object of RootObj
   orchestral*: OrchestralServer
   dom*: DOM
+  httpClient*: HTTPClient
+  urlParser*: URLParser
   broker*: Broker
 
 #[ 
@@ -55,22 +57,21 @@ proc handleHTTPError*(app: FerusApplication, code: int) =
       error "[src/app.nim] An unhandled non-successful error code.", code=code
 
 proc loadURL*(app: FerusApplication, url: string): bool =
-  let 
-    fetcher = newNetworkFetcher()
-    response = fetcher.get(url)
-    code = response.code
-    body = response.body
+  proc handler(conn: Connection, resp: Response) =
+    if resp.code == 200:
+      var
+        document = parseHTML(resp.body)
 
-  if code == 200:
-    var
-      htmlParser = newHTMLParser()
-      document = htmlParser.parseToDocument(body)
+      app.dom = newDOM(document)
+    else:
+      app.handleHTTPError(resp.code)
 
-    app.dom = newDOM(document)
-    return true
-  else:
-    app.handleHTTPError(code)
-    return false
+  app.httpClient.fetch(
+    app.urlParser.parse(url),
+    handler
+  )
+
+  return true
 
 proc handleHTTPCode*(app: FerusApplication, code: int) =
   case code:
@@ -91,9 +92,7 @@ proc loadFile*(app: FerusApplication, file: string) =
     app.loadFile("../data/pages/file-not-found.html")
     return
 
-  var
-    htmlParser = newHTMLParser()
-    document = htmlParser.parseToDocument(readFile(file))
+  var document = parseHTML(readFile(file))
 
   app.dom = newDOM(document)
 
@@ -119,7 +118,7 @@ proc handleHTMLParseResult*(app: FerusApplication, sender: Client, data: JSONNod
 
   if "payload" in data:
     let payload = data["payload"].getStr()  
-    app.dom = newDOM(to[HTMLDocument](payload))
+    app.dom = newDOM(to[Document](payload))
   else:
     warn "[src/app.nim] handleHTMLParseResult() cannot proceed as no payload was attached!"
 
@@ -143,7 +142,6 @@ proc processMsg*(app: FerusApplication, sender: Client, data: JSONNode) {.inline
 proc init*(app: FerusApplication) =
   proc get(sender: Client, data: JSONNode) =
     app.processMsg(sender, data)
-  echo app.dom.document.root.dump()
 
   app.orchestral.server.context.addReceiver(get)
 
@@ -162,4 +160,10 @@ proc newFerusApplication*: FerusApplication {.inline.} =
     orchestral = newOrchestralServer(iserver)
     broker = newBroker(iserver)
 
-  FerusApplication(orchestral: orchestral, broker: broker, dom: nil)
+  FerusApplication(
+    orchestral: orchestral, 
+    broker: broker,
+    httpClient: newHTTPClient(),
+    urlParser: newURLParser(),
+    dom: nil
+  )

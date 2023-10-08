@@ -11,6 +11,7 @@ import chronicles
 import utils/build
 import app
 import cligen
+import mrityu/mrityu
 
 proc userExit {.noconv.} =
   info "[src/ferus.nim] User-triggered exit occured, goodbye world!"

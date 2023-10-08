@@ -1,5 +1,5 @@
 #[
- Storage utility
+ Storage utility, not to be confused with src/webstorage
 ]#
 import std/[os, tables], jsony, chronicles
 

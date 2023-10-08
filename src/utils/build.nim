@@ -3,7 +3,7 @@
 
   This code is licensed under the MIT license
 ]#
-
+{.warning[UnreachableCode]: off.}
 const NimblePkgVersion {.strdefine.} = "0.1.0"
 
 type
@@ -65,3 +65,4 @@ proc isDebugBuild*: bool =
     return true
 
   return false
+{.warning[UnreachableCode]: on.}

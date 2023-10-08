@@ -3,8 +3,7 @@
 ]#
 import ../ipc/[client, constants],
        ../dom/dom,
-       ui, render, windy,
-       ../layout/layout
+       ui, render, windy
 import std/[json, marshal, tables, strutils, os], chronicles, pixie, ferushtml
 
 
@@ -20,14 +19,14 @@ proc startUI*(sandboxedRenderer: SandboxedRenderer, dom: DOM) {.inline.} =
   sandboxedRenderer.ui = ui
   sandboxedRenderer.ui.init()
 
-  for child in dom.document.root.findChildByTag("html").findChildByTag("head").children:
+  #[ for child in dom.document.root.findChildByTag("html").findChildByTag("head").children:
     if child.tag.toLowerAscii() == "title":
-      sandboxedRenderer.renderer.window.title = "Ferus — " & child.textContent
+      sandboxedRenderer.renderer.window.title = "Ferus — " & child.textContent ]#
 
   # TODO(xTrayambak): this should be handled in a seperate file to prevent clutter
-  for attr in dom.document.root.findChildByTag("html").findChildByTag("body").attributes:
+  #[ for attr in dom.document.root.findChildByTag("html").findChildByTag("body").attributes:
     if attr.name.toLowerAscii() == "background-color":
-      sandboxedRenderer.ui.backgroundColor = parseHtmlColor(attr.value.payload).rgba
+      sandboxedRenderer.ui.backgroundColor = parseHtmlColor(attr.value.payload).rgba ]#
 
 proc initialize*(sandboxedRenderer: SandboxedRenderer) =
   info "[src/renderer/sandboxed.nim] Request IPC server for DOM"
