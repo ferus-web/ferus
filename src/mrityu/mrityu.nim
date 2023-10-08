@@ -19,10 +19,20 @@ type CrashReason* = enum
   crUnhandledException
   crIOError
 
-proc genMrityu*(rng: RNG, reason: CrashReason): string =
-  var genericLog = fmt"""
+proc genMrityu*(reason: CrashReason): string =
+  var rng: RNG
+  if reason != crOutOfMem:
+    # Minimize memory allocations when the crash is related to OOM
+    rng = newRNG()
+  
+  var genericLog = """
 [FERUS CRASH REPORT]
-# {rng.choice(CRASH_MESSAGES, genAlgo=rngLehmer64)}
+"""
+
+  if reason != crOutOfMem:
+    genericLog &= fmt"# {rng.choice(CRASH_MESSAGES, genAlgo=rngLehmer64)}"
+
+  genericLog &= fmt"""
 Ferus Version: {NimblePkgVersion}
 Compile Time: {CompileDate} {CompileTime}
 Host OS: {hostOS}
@@ -49,11 +59,11 @@ Free/Unoccupied Memory: {getFreeMem()}
   genericLog
 
 proc mrityuInit*(reason: CrashReason, writeToStdout: bool = true) =
+  # Perform a full collection, hopefully enough for our allocations.
+  GC_fullCollect()
   # TODO: since this also covers OOM errors, should we be allocating more memory for a crash
   # log? Real confusing stuff.
-  let
-    rng = newRNG()
-    msg = genMrityu(rng, reason)
+  let msg = genMrityu(reason)
 
   if writeToStdout:
     echo msg
