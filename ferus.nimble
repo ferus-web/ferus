@@ -36,8 +36,13 @@ requires "windy"
 # boxy -- using pixie to render to an OpenGL context
 requires "boxy"
 
+<<<<<<< HEAD
 # urlly -- URL parser
 requires "urlly"
+=======
+# vmath -- vectors
+requires "vmath"
+>>>>>>> 16dd206 ((fix) work with new ferus-sanchar API)
 
 # nim-taskpools -- Thread task pools
 requires "taskpools"
@@ -55,13 +60,24 @@ requires "curly"
 requires "cssgrid"
 
 # ferusgfx -- graphics pipeline
-requires "https://github.com/xTrayambak/ferusgfx"
+requires "https://github.com/ferus-web/ferusgfx"
 
 # pretty -- pretty printer for exploring data structures
 requires "pretty"
 
+<<<<<<< HEAD
 # curly -- efficient multithreaded curl bindings
 requires "curly"
+=======
+# ferus-sanchar -- new networking stack for ferus + URL parser
+requires "https://github.com/ferus-web/ferus_sanchar"
+
+# chame -- HTML5 parser
+requires "https://git.sr.ht/~bptato/chame"
+
+# chakasu -- encoding stuff
+requires "https://git.sr.ht/~bptato/chakasu"
+>>>>>>> 16dd206 ((fix) work with new ferus-sanchar API)
 
 # Linux-specific modules
 when defined(linux):

@@ -4,7 +4,11 @@
   This code is licensed under the MIT license
 ]#
 
+<<<<<<< HEAD
 import chronicles, json, ferushtml
+=======
+import chronicles, json, pretty
+>>>>>>> 16dd206 ((fix) work with new ferus-sanchar API)
 import std/[
   tables,
   strutils,
@@ -27,6 +31,11 @@ when defined(linux):
 type FerusApplication* = ref object of RootObj
   orchestral*: OrchestralServer
   dom*: DOM
+<<<<<<< HEAD
+=======
+  httpClient*: SancharHTTPClient
+  urlParser*: URLParser
+>>>>>>> 16dd206 ((fix) work with new ferus-sanchar API)
   broker*: Broker
 
 #[ 
@@ -55,6 +64,7 @@ proc handleHTTPError*(app: FerusApplication, code: int) =
       error "[src/app.nim] An unhandled non-successful error code.", code=code
 
 proc loadURL*(app: FerusApplication, url: string): bool =
+<<<<<<< HEAD
   let 
     fetcher = newNetworkFetcher()
     response = fetcher.get(url)
@@ -71,6 +81,19 @@ proc loadURL*(app: FerusApplication, url: string): bool =
   else:
     app.handleHTTPError(code)
     return false
+=======
+  let resp = app.httpClient.fetch(app.urlParser.parse(url))
+
+  if resp.code == 200:
+    var
+      document = parseHTML(resp.body)
+
+    app.dom = newDOM(document)
+  else:
+    app.handleHTTPError(resp.code)
+
+  return true
+>>>>>>> 16dd206 ((fix) work with new ferus-sanchar API)
 
 proc handleHTTPCode*(app: FerusApplication, code: int) =
   case code:
@@ -91,9 +114,15 @@ proc loadFile*(app: FerusApplication, file: string) =
     app.loadFile("../data/pages/file-not-found.html")
     return
 
+<<<<<<< HEAD
   var
     htmlParser = newHTMLParser()
     document = htmlParser.parseToDocument(readFile(file))
+=======
+  var document = parseHTML(readFile(file))
+  echo "eeeee"
+  print document
+>>>>>>> 16dd206 ((fix) work with new ferus-sanchar API)
 
   app.dom = newDOM(document)
 
@@ -162,4 +191,14 @@ proc newFerusApplication*: FerusApplication {.inline.} =
     orchestral = newOrchestralServer(iserver)
     broker = newBroker(iserver)
 
+<<<<<<< HEAD
   FerusApplication(orchestral: orchestral, broker: broker, dom: nil)
+=======
+  FerusApplication(
+    orchestral: orchestral, 
+    broker: broker,
+    httpClient: newSancharHTTPClient(),
+    urlParser: newURLParser(),
+    dom: nil
+  )
+>>>>>>> 16dd206 ((fix) work with new ferus-sanchar API)
