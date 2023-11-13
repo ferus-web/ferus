@@ -1,14 +1,22 @@
 import windy, pixie, 
-       chronicles,
+       chronicles, pretty,
        tables,
        render,
        primitives,
        ../dom/dom,
+<<<<<<< HEAD
        ../layout/layout
 
 type UI* = ref object of RootObj
   renderer*: Renderer
   layoutEngine*: LayoutEngine
+=======
+       ../layout/[processor, aabb, node]
+
+type UI* = ref object of RootObj
+  renderer*: Renderer
+  layout*: LayoutProcessor
+>>>>>>> 5576c29 ((fix) some stuff)
   backgroundColor*: ColorRGBA
 
 proc loadIcon*(ui: UI) {.inline.} =
@@ -24,7 +32,16 @@ proc init*(ui: UI) =
   proc iOnRender(window: Window, surface: RenderImage) =
     ui.blit(surface)
   
+<<<<<<< HEAD
   ui.layoutEngine.calculate()
+=======
+  ui.layout.nodes.add(
+    newLayoutNode("p", lnkGeneric, AABB(x: 0, y: 0, w: 16, h: 16))
+  )
+  ui.layout.calculate()
+
+  print ui.layout
+>>>>>>> 5576c29 ((fix) some stuff)
 
   ui.loadIcon()
   ui.renderer.attachToRender(iOnRender)

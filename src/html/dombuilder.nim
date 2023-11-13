@@ -1,5 +1,12 @@
+<<<<<<< HEAD
 import std/[streams, options, tables], chronicles, chame,
       urlly
+=======
+import std/[streams, options, tables], chronicles, 
+       chame/[htmlparser, tags],
+       chakasu/charset,
+       ferus_sanchar/url
+>>>>>>> 5576c29 ((fix) some stuff)
 
 type
   Node* = ref object of RootObj

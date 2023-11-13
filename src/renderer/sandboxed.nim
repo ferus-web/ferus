@@ -3,9 +3,14 @@
 ]#
 import ../ipc/[client, constants],
        ../dom/dom,
+<<<<<<< HEAD
        ui, render, windy,
        ../layout/layout
 import std/[json, marshal, tables, strutils, os], chronicles, pixie, ferushtml
+=======
+       ui, render, windy
+import std/[json, marshal, tables, strutils, os], chronicles, pixie
+>>>>>>> 5576c29 ((fix) some stuff)
 
 
 type SandboxedRenderer* = ref object of RootObj
@@ -43,6 +48,11 @@ proc initialize*(sandboxedRenderer: SandboxedRenderer) =
         info "[src/renderer/sandboxed.nim] Received DOM; layout engine start!"
         var dom = to[DOM](data["payload"].getStr())
         sandboxedRenderer.startUI(dom)
+      else:
+        warn "[src/renderer/sandboxed.nim] IPC server did not give us a packet with PACKET_TYPE_DOM."
+    else:
+      warn "[src/renderer/sandboxed.nim] IPC server did not return proper DOM data."
+      echo $data
      
   sandboxedRenderer.ipcClient.addReceiver(domRecv)
 
