@@ -91,18 +91,22 @@ proc processMessage*(ipcClient: IPCClient, data: JSONNode) {.gcsafe.} =
       warn "[src/ipc/client.nim] IPC server sent malformed packet (is it a bug?)"
 
 #[
-  Process the entire message queue (in parallel by default)  
+  Process the entire message queue
 ]#
 proc processMessages*(ipcClient: IPCClient) {.inline.} =
+  if ipcClient.reactor.messages.len > 0:
+    echo "process scheisse: " & $ipcClient.reactor.messages.len
   when defined(ferusNoParallelIPC):
     for msg in ipcClient.reactor.messages:
       let data = jsony.fromJson(msg.data)
+      echo pretty data
       for receiver in ipcClient.receivers:
         receiver(data)
       ipcClient.processMessage(data)
   else:
     for msg in ipcClient.reactor.messages:
       let data = jsony.fromJson(msg.data)
+      echo pretty data
       for receiver in ipcClient.receivers:
         receiver(data)
 

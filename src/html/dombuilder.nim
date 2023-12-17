@@ -1,12 +1,7 @@
-<<<<<<< HEAD
-import std/[streams, options, tables], chronicles, chame,
-      urlly
-=======
 import std/[streams, options, tables], chronicles, 
        chame/[htmlparser, tags],
        chakasu/charset,
        ferus_sanchar/url
->>>>>>> 5576c29 ((fix) some stuff)
 
 type
   Node* = ref object of RootObj
@@ -139,6 +134,13 @@ func hasNextSibling(node: Node, nodeType: NodeType): bool =
       return true
   return false
 
+proc moveChildren(builder: DOMBuilder[Node], fromNode, toNode: Node) =
+  var tomove = fromNode.childList
+  # for node in tomove:
+    # node.remove(suppressObservers = true)
+  # for child in tomove:
+    # toNode.insert(child, nil)
+
 # WARNING the ordering of the arguments in the standard is whack so this
 # doesn't match that
 func preInsertionValidity*(parent, node, before: Node): bool =
@@ -215,7 +217,7 @@ proc addAttrsIfMissing(builder: DOMBuilder[Node], element: Node,
     if k notin element.attrs:
       element.attrs[k] = v
 
-proc newFerusDOMBuilder(): FerusDOMBuilder =
+proc newFerusDOMBuilder*: FerusDOMBuilder =
   let document = Document(nodeType: DOCUMENT_NODE)
   return FerusDOMBuilder(
     document: document,
@@ -231,33 +233,6 @@ proc newFerusDOMBuilder(): FerusDOMBuilder =
     insertText: insertText,
     remove: remove,
     addAttrsIfMissing: addAttrsIfMissing,
+    moveChildren: moveChildren
   )
 
-proc parseHTML*(inputStream: Stream,
-    charsets: seq[Charset] = @[], canReinterpret = true): Document =
-  let builder = newFerusDOMBuilder()
-  let opts = HTML5ParserOpts[Node](
-    isIframeSrcdoc: false,
-    scripting: false,
-    canReinterpret: canReinterpret,
-    charsets: charsets
-  )
-  parseHTML(inputStream, builder, opts)
-  return Document(builder.document)
-
-proc parseHTML*(
-  inputStream: string, 
-  charsets: seq[Charset] = @[], 
-  canReinterpret = true
-): Document =
-  let builder = newFerusDOMBuilder()
-  let opts = HTML5ParserOpts[Node](
-    isIframeSrcdoc: false,
-    scripting: false,
-    canReinterpret: canReinterpret,
-    charsets: charsets
-  )
-  parseHTML(
-    newStringStream(inputStream),
-    builder, opts
-  )

@@ -1,14 +1,31 @@
-#[
-  Basic wrapper around chame
+import std/[tables, streams]
+import chakasu/[charset, decoderstream], chame/[tags, htmlparser], dombuilder
 
-  Authors: xTrayambak (xtrayambak at gmail dot com)
-]#
-import std/[charset, decoderstream], chame, chronicles
+proc parseHTML*(inputStream: Stream,
+    charsets: seq[Charset] = @[], canReinterpret = true): Document =
+  let builder = newFerusDOMBuilder()
+  let opts = HTML5ParserOpts[Node](
+    isIframeSrcdoc: false,
+    scripting: false,
+    canReinterpret: canReinterpret,
+    charsets: charsets
+  )
+  parseHTML(inputStream, builder, opts)
+  return Document(builder.document)
 
 proc parseHTML*(
-  src: string,
-  isIframeSrcDoc: bool = false,
-  scriptingEnabled: bool = true,
-  canReinterpret: bool = false,
-  charsets: seq[Charsets] = @[]
-)
+  inputStream: string, 
+  charsets: seq[Charset] = @[], 
+  canReinterpret = true
+): Document =
+  let builder = newFerusDOMBuilder()
+  let opts = HTML5ParserOpts[Node](
+    isIframeSrcdoc: false,
+    scripting: false,
+    canReinterpret: canReinterpret,
+    charsets: charsets
+  )
+  parseHTML(
+    newStringStream(inputStream),
+    builder, opts
+  )

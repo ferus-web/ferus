@@ -4,11 +4,7 @@
   This code is licensed under the MIT license
 ]#
 
-<<<<<<< HEAD
-import chronicles, json, ferushtml
-=======
 import chronicles, json, pretty
->>>>>>> 16dd206 ((fix) work with new ferus-sanchar API)
 import std/[
   tables,
   strutils,
@@ -22,20 +18,18 @@ import ipc/[
 
 import utils/miscutils
 import dom/dom
-import sandbox/processtypes
-import orchestral/server
 import net/fetch
+import sandbox/processtypes
+import html/[dombuilder, html]
+import orchestral/server
+import ferus_sanchar/url
 when defined(linux):
   import sandbox/linux/broker
 
 type FerusApplication* = ref object of RootObj
   orchestral*: OrchestralServer
   dom*: DOM
-<<<<<<< HEAD
-=======
-  httpClient*: SancharHTTPClient
   urlParser*: URLParser
->>>>>>> 16dd206 ((fix) work with new ferus-sanchar API)
   broker*: Broker
 
 #[ 
@@ -64,25 +58,21 @@ proc handleHTTPError*(app: FerusApplication, code: int) =
       error "[src/app.nim] An unhandled non-successful error code.", code=code
 
 proc loadURL*(app: FerusApplication, url: string): bool =
-<<<<<<< HEAD
-  let 
-    fetcher = newNetworkFetcher()
+  let
+    fetcher = newNetworkFetcher(app.broker.ipcServer, app.broker)
     response = fetcher.get(url)
     code = response.code
     body = response.body
 
   if code == 200:
-    var
-      htmlParser = newHTMLParser()
-      document = htmlParser.parseToDocument(body)
+    let document = parseHtml(body)
 
     app.dom = newDOM(document)
     return true
   else:
     app.handleHTTPError(code)
     return false
-=======
-  let resp = app.httpClient.fetch(app.urlParser.parse(url))
+  let resp = fetcher.get(url)
 
   if resp.code == 200:
     var
@@ -93,7 +83,6 @@ proc loadURL*(app: FerusApplication, url: string): bool =
     app.handleHTTPError(resp.code)
 
   return true
->>>>>>> 16dd206 ((fix) work with new ferus-sanchar API)
 
 proc handleHTTPCode*(app: FerusApplication, code: int) =
   case code:
@@ -114,15 +103,9 @@ proc loadFile*(app: FerusApplication, file: string) =
     app.loadFile("../data/pages/file-not-found.html")
     return
 
-<<<<<<< HEAD
-  var
-    htmlParser = newHTMLParser()
-    document = htmlParser.parseToDocument(readFile(file))
-=======
   var document = parseHTML(readFile(file))
   echo "eeeee"
   print document
->>>>>>> 16dd206 ((fix) work with new ferus-sanchar API)
 
   app.dom = newDOM(document)
 
@@ -148,7 +131,7 @@ proc handleHTMLParseResult*(app: FerusApplication, sender: Client, data: JSONNod
 
   if "payload" in data:
     let payload = data["payload"].getStr()  
-    app.dom = newDOM(to[HTMLDocument](payload))
+    app.dom = newDOM(to[Document](payload))
   else:
     warn "[src/app.nim] handleHTMLParseResult() cannot proceed as no payload was attached!"
 
@@ -172,7 +155,6 @@ proc processMsg*(app: FerusApplication, sender: Client, data: JSONNode) {.inline
 proc init*(app: FerusApplication) =
   proc get(sender: Client, data: JSONNode) =
     app.processMsg(sender, data)
-  echo app.dom.document.root.dump()
 
   app.orchestral.server.context.addReceiver(get)
 
@@ -191,14 +173,8 @@ proc newFerusApplication*: FerusApplication {.inline.} =
     orchestral = newOrchestralServer(iserver)
     broker = newBroker(iserver)
 
-<<<<<<< HEAD
-  FerusApplication(orchestral: orchestral, broker: broker, dom: nil)
-=======
   FerusApplication(
     orchestral: orchestral, 
     broker: broker,
-    httpClient: newSancharHTTPClient(),
-    urlParser: newURLParser(),
-    dom: nil
+    urlParser: newURLParser()
   )
->>>>>>> 16dd206 ((fix) work with new ferus-sanchar API)

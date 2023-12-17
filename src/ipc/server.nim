@@ -28,6 +28,7 @@ type
     port*: int
     alive*: bool
     receivers*: seq[Receiver]
+    affinityHooks*: seq[tuple[signature: string, fn: proc(client: Client)]]
             # broker affinity         # process type # client reference
     clients*: TableRef[string, TableRef[ProcessType, Client]]
 
@@ -67,7 +68,7 @@ proc getClient*(ipcServer: IPCServer,
 proc send*[T](ipcServer: IPCServer, affinitySignature: string, 
               role: ProcessType, data: T) {.inline.} =
   when defined(ferusUseVerboseLogging):
-    info "[src/ipc/server.nim] Sending packet", affSign = affinitySignature, role = $role 
+    info "[src/ipc/server.nim] Sending packet (compile without -d:ferusUseVerboseLogging to disable this)", affSign = affinitySignature, role = $role, data = $data
   ipcServer.reactor.send(
     getClient(
       affinitySignature, role
@@ -81,9 +82,12 @@ proc send*[T](ipcServer: IPCServer, affinitySignature: string,
 ]#
 proc sendExplicit*[T](ipcServer: IPCServer, conn: Connection, data: T) {.inline.} =
   when defined(ferusUseVerboseLogging):
-    info "[src/ipc/server.nim] Sending packet to explicit connection"
+    warn "[src/ipc/server.nim] Sending packet to explicit connection (compile without -d:ferusUseVerboseLogging to disable this)", data = $data
   var dataConv = jsony.toJson(data)
   ipcServer.reactor.send(conn, dataConv)
+
+proc onClientWithAffinity*(ipcServer: IPCServer, signature: string, fn: proc(client: Client)) =
+  ipcServer.affinityHooks.add((signature: signature, fn: fn))
 
 #[
   Parse some data from a string into a JsonNode
@@ -121,6 +125,8 @@ proc getClientByAddr*(ipcServer: IPCServer, address: Address): Client {.inline.}
 proc handleUnknownConn*(ipcServer: IPCServer, message: Message) =
   let data = fromJson(message.data)
 
+  var notifyFn: proc(client: Client)
+
   var
     role: ProcessType
     brokerAffinitySignature: string
@@ -149,6 +155,11 @@ proc handleUnknownConn*(ipcServer: IPCServer, message: Message) =
     else:
       brokerAffinitySignature = data["brokerAffinitySignature"].getStr()
 
+      for hook in ipcServer.affinityHooks:
+        if hook[0] == brokerAffinitySignature:
+          assert notifyFn == nil
+          notifyFn = hook[1]
+
     ipcServer.sendExplicit(message.conn, {
       "status": IPC_SERVER_HANDSHAKE_ACCEPTED.intToStr(),
       "serverPid": getCurrentProcessId().intToStr()
@@ -161,6 +172,10 @@ proc handleUnknownConn*(ipcServer: IPCServer, message: Message) =
       brokerAffinitySignature,
       role
     )
+
+    if notifyFn != nil:
+      notifyFn(ipcServer.clients[brokerAffinitySignature][role])
+
     info "[src/ipc/server.nim] IPC client registered!", clientPid = data["clientPid"].getStr().parseInt()
 
 #[

@@ -36,13 +36,8 @@ requires "windy"
 # boxy -- using pixie to render to an OpenGL context
 requires "boxy"
 
-<<<<<<< HEAD
-# urlly -- URL parser
-requires "urlly"
-=======
 # vmath -- vectors
 requires "vmath"
->>>>>>> 16dd206 ((fix) work with new ferus-sanchar API)
 
 # nim-taskpools -- Thread task pools
 requires "taskpools"
@@ -65,10 +60,6 @@ requires "https://github.com/ferus-web/ferusgfx"
 # pretty -- pretty printer for exploring data structures
 requires "pretty"
 
-<<<<<<< HEAD
-# curly -- efficient multithreaded curl bindings
-requires "curly"
-=======
 # ferus-sanchar -- new networking stack for ferus + URL parser
 requires "https://github.com/ferus-web/ferus_sanchar"
 
@@ -77,7 +68,6 @@ requires "https://git.sr.ht/~bptato/chame"
 
 # chakasu -- encoding stuff
 requires "https://git.sr.ht/~bptato/chakasu"
->>>>>>> 16dd206 ((fix) work with new ferus-sanchar API)
 
 # Linux-specific modules
 when defined(linux):
@@ -99,11 +89,7 @@ task quickdebug, "Build and run debug version of Ferus":
 task buildLibferuscli, "Only re-compile libferuscli":
   echo "WARNING: You are partially recompiling libferuscli, this is intended to make development compilation fast. If you are looking to run Ferus, the commands are either nimble debugBuild or nimble productionBuild"
   exec "nim c -o:bin/libferuscli src/libferuscli.nim"
-  withDir "bin":
-    exec "./ferus"
 
 task buildFerusApp, "Only re-compile Ferus app":
   echo "WARNING: You are partially recompiling Ferus, this is intended to make development compilation fast. If you are looking to run Ferus, the commands are either nimble debugBuild or nimble productionBuild"
   exec "nim c -o:bin/ferus src/ferus.nim"
-  withDir "bin":
-    exec "./ferus"

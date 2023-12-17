@@ -9,21 +9,17 @@
 ]#
 
 import std/[tables, marshal]
-
-import ferushtml
+import chame/tags
+import ../html/dombuilder
 
 type DOM* = ref object of RootObj
-  document*: HTMLDocument
-  style*: TableRef[string, TableRef[string, HTMLButterfly]]
+  document*: Document
 
 proc serialize*(dom: DOM): string =
   $$dom
 
-proc getDocument*(dom: DOM): HTMLDocument {.inline.} =
+proc getDocument*(dom: DOM): Document {.inline.} =
   dom.document
 
-proc push*(dom: DOM, elem: HTMLElement) {.inline.} =
-  dom.document.root.push(elem)
-
-proc newDOM*(document: HTMLDocument): DOM {.inline.} =
-    DOM(document: document, style: newTable[string, TableRef[string, HTMLButterfly]]())
+proc newDOM*(document: Document): DOM {.inline.} =
+    DOM(document: document)

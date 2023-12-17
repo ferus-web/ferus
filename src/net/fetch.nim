@@ -1,26 +1,28 @@
 #[
- Content fetcher using cURL
-
- It'd be great to replace this with a native in-house
- Nim solution soon.
+ Content fetcher using ferus_sanchar
 ]#
-import curly, chronicles
+import ../ipc/server, 
+       ferus_sanchar, chronicles
 
-type
- NetworkFetcher* = ref object of RootObj
-  pool: CurlPool
+import ../sandbox/processtypes
 
-proc get*(netFetch: NetworkFetcher, url: string): tuple[code: int, body: string] =
- info "[src/net/fetch.nim] cURL pool now fetching resource!", resUrl=url
- try:
-  let resp = netFetch.pool.get(url)
+when defined(linux):
+  import ../sandbox/linux/broker
 
-  return (code: resp.code, body: resp.body)
- except CatchableError:
-  warn "[src/net/fetch.nim] Could not connect to server."
-  return (code: -65536, body: "")
+type NetworkFetcher* = ref object of RootObj
+  server*: IPCServer
+  broker*: Broker
 
-proc newNetworkFetcher*: NetworkFetcher =
- NetworkFetcher(
-  pool: newCurlPool(1)
+proc get*(netFetch: NetworkFetcher, url: string): SancharResponse =
+ info "[src/net/fetch.nim] Spawning network worker!", url=url
+ let signature = netFetch.broker.genSignature()
+ netFetch.broker.spawnNewWorker(signature, ptNetwork)
+
+ netFetch.server.onClientWithAffinity(
+   signature,
+   proc(client: Client) =
+     info "[src/net/fetch.nim] Network worker got registered!"
  )
+
+proc newNetworkFetcher*(server: IPCServer, broker: Broker): NetworkFetcher =
+  NetworkFetcher(server: server, broker: broker)

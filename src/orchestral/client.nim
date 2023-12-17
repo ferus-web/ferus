@@ -29,7 +29,7 @@ proc updateRenderer*(orchestral: OrchestralClient, delta: float) {.inline.} =
     return
 
   if orchestral.rendererLastUpdated >= orchestral.renderer.cooldown:
-    orchestral.renderer.context.onRender()
+    orchestral.renderer.context.render()
   else:
     orchestral.rendererLastUpdated += delta
 
@@ -39,8 +39,6 @@ proc updateClient*(orchestral: OrchestralClient, delta: float) {.inline.} =
     return
 
   if orchestral.clientLastUpdated >= orchestral.client.cooldown:
-    # info "[src/orchestral/orchestral.nim] Updating IPC client state!"
-
     orchestral.client.context.heartbeat()
     orchestral.clientLastUpdated = 0f
   else:

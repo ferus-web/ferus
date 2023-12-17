@@ -2,6 +2,7 @@ import chronicles, strformat, times, osproc, taskpools,
        ../../rand,
        ../../ipc/server,
        ../../sandbox/processtypes,
+       firejail,
        policyman
 
 # The higher the number, more the time taken to generate the string,
@@ -20,17 +21,40 @@ proc createNewProcess*(broker: Broker, procType: ProcessType) =
     fmt" --role={processTypeToString(procType)}" & 
     fmt" --unix-time-at-launch={epochTime().int}" &
     fmt" --broker-affinity-signature={broker.signature}" &
-    fmt" --ipc-server-port={broker.ipcServer.port}"
+    fmt" --ipc-server-port={broker.ipcServer.port}" &
+    fmt" --is-worker=true"
   let jail = policymanCreateAppropriateJail(procType)
 
-  when defined(debug):
+  when not defined(release):
     discard tp.spawn execCmd(cmd)
   else:
     discard tp.spawn jail.exec(cmd)
 
   info "[src/sandbox/linux/broker.nim] libferuscli launched!"
 
+proc spawnNewWorker*(broker: Broker, affinitySignature: string, procType: ProcessType) =
+  info "[src/sandbox/linux/broker.nim] Broker is spawning new worker/temporary process!"
+  let cmd = "./libferuscli" &
+    fmt" --role={processTypeToString(ptNetwork)}" &
+    fmt" --unix-time-at-launch={epochTime().int}" &
+    fmt" --broker-affinity-signature={affinitySignature}" &
+    fmt" --ipc-server-port={broker.ipcServer.port}" &
+    fmt" --is-worker=true"
+
+  let jail = policymanCreateAppropriateJail(procType)
+
+  when not defined(release):
+    discard tp.spawn execCmd(cmd)
+  else:
+    discard tp.spawn jail.exec(cmd)
+
+proc genSignature*(broker: Broker): string =
+  result = getRandAlphabetSequence(FERUS_BROKER_ALPHABET_SEQUENCE_LENGTH)
+
+  while result == broker.signature:
+    result = getRandAlphabetSequence(FERUS_BROKER_ALPHABET_SEQUENCE_LENGTH)
+
 proc newBroker*(ipcServer: IPCServer): Broker =
-  var hasherInput = getRandAlphabetSequence(FERUS_BROKER_ALPHABET_SEQUENCE_LENGTH)
+  let hasherInput = getRandAlphabetSequence(FERUS_BROKER_ALPHABET_SEQUENCE_LENGTH)
   info "[src/sandbox/linux/broker.nim] New broker initializing!", hasherInput=hasherInput
   Broker(ipcServer: ipcServer, signature: hasherInput)

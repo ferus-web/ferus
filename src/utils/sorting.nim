@@ -5,10 +5,10 @@
 
   Taken from https://github.com/nim-lang/Nim/issues/2704
 ]#
-import threadpool
-import sequtils
-import times
-import random
+import std/[
+  threadpool,
+  times
+]
 
 proc quickSort[T](a: var seq[T], lo, hi: int) =
     if hi <= lo: return
