@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 file_name = input("File name >> ")
 to_replace = input("Replaces >> ")
 to_replace_with = input("With >> ")
