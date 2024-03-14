@@ -40,13 +40,13 @@ requires "taskpools"
 requires "cligen"
 
 # ferusgfx -- graphics pipeline
-requires "https://github.com/xTrayambak/ferusgfx"
+requires "https://github.com/ferus-web/ferusgfx"
 
 # pretty -- pretty printer for exploring data structures
 requires "pretty"
 
 # ferus-sanchar -- new networking stack for ferus + URL parser
-requires "https://github.com/xTrayambak/ferus_sanchar"
+requires "https://github.com/ferus-web/sanchar"
 
 # chame -- HTML5 parser
 requires "https://git.sr.ht/~bptato/chame"
