@@ -45,7 +45,7 @@ info "[src/rand.nim] Randomizing Xoroshiro128+ initial state"
 randomize()
 
 proc getRandAlphabetSequence*(stop: int): string {.inline.} =
-  var x = ""
+  var x: string
   for i in 0..stop:
     shuffle(CHAR_SET)
     x = x & CHAR_SET[0]
@@ -56,8 +56,7 @@ proc randint*(start: int, stop: int): int {.inline.} =
   rand(start..stop)
 
 proc randints*(numIterations: int, start: int, stop: int): seq[int] {.inline.} =
-  var
-    x: seq[int] = @[]
+  var x: seq[int]
 
   for y in 0..numIterations:
     x.add(randint(start, stop))
