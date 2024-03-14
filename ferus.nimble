@@ -74,11 +74,7 @@ task quickdebug, "Build and run debug version of Ferus":
 task buildLibferuscli, "Only re-compile libferuscli":
   echo "WARNING: You are partially recompiling libferuscli, this is intended to make development compilation fast. If you are looking to run Ferus, the commands are either nimble debugBuild or nimble productionBuild"
   exec "nim c -o:bin/libferuscli src/libferuscli.nim"
-  withDir "bin":
-    exec "./ferus"
 
 task buildFerusApp, "Only re-compile Ferus app":
   echo "WARNING: You are partially recompiling Ferus, this is intended to make development compilation fast. If you are looking to run Ferus, the commands are either nimble debugBuild or nimble productionBuild"
   exec "nim c -o:bin/ferus src/ferus.nim"
-  withDir "bin":
-    exec "./ferus"
