@@ -62,7 +62,7 @@ when defined(linux):
 task debugBuild, "Build Ferus as a debug package":
   exec "nim c -o:bin/ferus src/ferus.nim"
   exec "nim c -o:bin/libferuscli src/libferuscli.nim"
-  exec "Ferus was built successfully in debug mode!"
+  echo "Ferus was built successfully in debug mode!"
 
 # Production build (ferus + libferuscli)
 task productionBuild, "Build Ferus as a production package":
