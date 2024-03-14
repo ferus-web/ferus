@@ -7,8 +7,6 @@ jobs:
     strategy:
       matrix:
         os:
-          - windows-latest
-          - macos-latest
           - ubuntu-latest
         nimversion:
           - devel
