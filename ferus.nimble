@@ -60,11 +60,15 @@ when defined(linux):
 
 # Debug build (ferus + libferuscli)
 task debugBuild, "Build Ferus as a debug package":
-  exec "nim c -o:bin/ferus src/ferus.nim && nim c -o:bin/libferuscli src/libferuscli.nim"
+  exec "nim c -o:bin/ferus src/ferus.nim"
+  exec "nim c -o:bin/libferuscli src/libferuscli.nim"
+  exec "Ferus was built successfully in debug mode!"
 
 # Production build (ferus + libferuscli)
 task productionBuild, "Build Ferus as a production package":
-  exec "nim c -o:bin/ferus -d:release src/ferus.nim && nim c -o:bin/libferuscli -d:release src/libferuscli.nim"
+  exec "nim c -o:bin/ferus -d:release src/ferus.nim"
+  exec "nim c -o:bin/libferuscli -d:release src/libferuscli.nim"
+  echo "Ferus was built successfully in release/prod mode!"
 
 task quickdebug, "Build and run debug version of Ferus":
   exec "nim c -o:bin/ferus src/ferus.nim && nim c -o:bin/libferuscli src/libferuscli.nim"

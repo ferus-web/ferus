@@ -9,7 +9,6 @@ jobs:
         os:
           - ubuntu-latest
         nimversion:
-          - devel
           - stable
 
     name: ${{ matrix.os }} - ${{ matrix.nimversion }}
