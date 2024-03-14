@@ -4,7 +4,7 @@
 import ../ipc/[client, constants],
        ../dom/dom,
        ui, render, windy
-import std/[json, marshal, tables, strutils, os], chronicles, pixie, ferushtml
+import std/[json, marshal, tables, strutils, os], chronicles, pixie
 
 
 type SandboxedRenderer* = ref object of RootObj

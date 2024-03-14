@@ -20,7 +20,7 @@ import dom/[dom]
 import html/[dombuilder]
 import sandbox/processtypes
 import orchestral/server
-import ferus_sanchar
+import sanchar/[parse/url, http]
 when defined(linux):
   import sandbox/linux/broker
 
@@ -43,7 +43,7 @@ proc serveDOM*(app: FerusApplication, sender: Client) {.inline.} =
     }.toTable
   )
 
-proc handleHTTPError*(app: FerusApplication, code: int) =
+proc handleHTTPError*(app: FerusApplication, code: uint32) =
   case code:
     of 404:
       error "[src/app.nim] Server could not find the requested resource."
@@ -57,19 +57,15 @@ proc handleHTTPError*(app: FerusApplication, code: int) =
       error "[src/app.nim] An unhandled non-successful error code.", code=code
 
 proc loadURL*(app: FerusApplication, url: string): bool =
-  proc handler(conn: Connection, resp: Response) =
-    if resp.code == 200:
-      var
-        document = parseHTML(resp.body)
-
-      app.dom = newDOM(document)
-    else:
-      app.handleHTTPError(resp.code)
-
-  app.httpClient.fetch(
-    app.urlParser.parse(url),
-    handler
+  let resp = app.httpClient.get(
+    parse(url)
   )
+
+  if resp.code == 200:
+    var document = parseHTML(resp.content)
+    app.dom = newDOM(document)
+  else:
+    app.handleHTTPError(resp.code)
 
   return true
 
@@ -163,7 +159,7 @@ proc newFerusApplication*: FerusApplication {.inline.} =
   FerusApplication(
     orchestral: orchestral, 
     broker: broker,
-    httpClient: newHTTPClient(),
+    httpClient: httpClient(),
     urlParser: newURLParser(),
     dom: nil
   )
