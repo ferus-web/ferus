@@ -13,22 +13,22 @@ binDir        = "bin"
 requires "nim >= 1.6.10"
 
 # Chronicles -- logger
-requires "chronicles"
+requires "chronicles >= 0.10.3"
 
 # Jsony -- JSON encode/decode for IPC layer
-requires "jsony"
+requires "jsony >= 1.1.5"
 
 # Netty -- low latency reliable UDP implementation
-requires "netty"
+requires "netty >= 0.2.1"
 
 # Weave -- threading abstraction (ringabout's fork)
 # requires "https://github.com/ringabout/weave"
 
 # opengl -- OpenGL bindings for Nim
-requires "opengl"
+requires "opengl >= 1.2.9"
 
 # windy -- Windowing system
-requires "windy"
+requires "windy >= 0.0.0"
 
 # boxy -- using pixie to render to an OpenGL context
 requires "boxy"
@@ -40,13 +40,13 @@ requires "taskpools"
 requires "cligen"
 
 # ferusgfx -- graphics pipeline
-requires "https://github.com/ferus-web/ferusgfx"
+requires "https://github.com/ferus-web/ferusgfx >= 0.1.1"
 
 # pretty -- pretty printer for exploring data structures
 requires "pretty"
 
 # ferus-sanchar -- new networking stack for ferus + URL parser
-requires "https://github.com/ferus-web/sanchar"
+requires "https://github.com/ferus-web/sanchar >= 2.0.0"
 
 # chame -- HTML5 parser
 requires "https://git.sr.ht/~bptato/chame"
