@@ -31,35 +31,35 @@ requires "opengl >= 1.2.9"
 requires "windy >= 0.0.0"
 
 # boxy -- using pixie to render to an OpenGL context
-requires "boxy"
+requires "boxy >= 0.4.2"
 
 # nim-taskpools -- Thread task pools
-requires "taskpools"
+requires "taskpools >= 0.0.5"
 
 # cligen -- CLI parser
-requires "cligen"
+requires "cligen >= 1.7.0"
 
 # ferusgfx -- graphics pipeline
 requires "https://github.com/ferus-web/ferusgfx >= 0.1.1"
 
 # pretty -- pretty printer for exploring data structures
-requires "pretty"
+requires "pretty >= 0.1.0"
 
 # ferus-sanchar -- new networking stack for ferus + URL parser
 requires "https://github.com/ferus-web/sanchar >= 2.0.0"
 
 # chame -- HTML5 parser
-requires "https://git.sr.ht/~bptato/chame"
+requires "https://git.sr.ht/~bptato/chame >= 0.14.4"
 
 # chakasu -- encoding stuff
-requires "https://git.sr.ht/~bptato/chakasu"
+requires "https://git.sr.ht/~bptato/chakasu >= 0.3.2"
 
 # Linux-specific modules
 when defined(linux):
-  requires "https://github.com/xTrayambak/nim-firejail"
+  requires "https://github.com/juancarlospaco/nim-firejail >= 0.5.0"
 
 # Debug build (ferus + libferuscli)
-task debugBuild, "Build Ferus as a production package (debug)":
+task debugBuild, "Build Ferus as a debug package":
   exec "nim c -o:bin/ferus src/ferus.nim && nim c -o:bin/libferuscli src/libferuscli.nim"
 
 # Production build (ferus + libferuscli)
