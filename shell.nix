@@ -6,6 +6,7 @@ mkShell {
     xorg.libX11.dev
     xorg.libXext
     xorg.libXext.dev
+    openssl.dev
     libGL
   ];
 
