@@ -21,4 +21,4 @@ jobs:
       - uses: jiro4989/setup-nim-action@v1
         with:
           nim-version: ${{ matrix.nimversion }}
-      - run: nimble productionBuild
+      - run: nimble productionBuild -y
