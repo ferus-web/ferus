@@ -1,6 +1,23 @@
-import std/logging
+import std/[strutils, logging]
 import colored_logger
-import components/master/master
+import components/[
+  build_utils,
+  master/master
+]
+
+proc setupLogging* {.inline.} =
+  addHandler newColoredLogger()
 
 proc main {.inline.} =
-  info "Ferus " & 
+  setupLogging()
+
+  info "Ferus " & getVersion() & " launching!!"
+  info ("Compiled using $1; compiled on $2" % [$getCompilerType(), $getCompileDate()])
+  info "Architecture: " & $getArchitecture()
+  info "Host OS: " & $getHostOS()
+
+  let master = newMasterProcess()
+  initialize master
+
+when isMainModule:
+  main()
