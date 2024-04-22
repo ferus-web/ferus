@@ -4,6 +4,8 @@ import components/[
   build_utils,
   master/master
 ]
+import sanchar/parse/url
+import pretty
 
 proc setupLogging* {.inline.} =
   addHandler newColoredLogger()
@@ -18,6 +20,12 @@ proc main {.inline.} =
 
   let master = newMasterProcess()
   initialize master
+
+  let data = master.fetchNetworkResource(0, parse "http://motherfuckingwebsite.com")
+  print data
+
+  while true:
+    master.poll()
 
 when isMainModule:
   main()

@@ -2,12 +2,9 @@ import std/logging, seccomp
 
 const FORBIDDEN_SYSCALLS* = [
   # Deny I/O
-  "write", "read", 
-
-  "getpid", "alarm", 
-
-  # Deny UDP since we're only using TCP
-  "sendto", "recvfrom", 
+  "read", 
+  "write",    # <----- logging crashes without this
+  "alarm", 
 
   # Don't allow the process to start a TCP server
   "bind", "listen", 
@@ -18,24 +15,28 @@ const FORBIDDEN_SYSCALLS* = [
   "chown", "sysinfo", "setgid", "getgid",
   "ptrace", "reboot", "sethostname",
   "init_module", "splice", "migrate_pages",
-  "kexec_load"
+  "kexec_load", "shutdown"
+]
+
+const ALLOWED_SYSCALLS* = [
+  "exit_group", "socket", "connect",
+  "getuid", "getpid", "rt_sigreturn",
+  "exit", "mmap", "pipe2"
 ]
 
 proc sandbox* {.noinline.} =
+  when not defined(ferusInJail):
+    return
+
   info "Starting sandboxing via seccomp backend!"
   let ver = getVersion()
 
   info "Using seccomp@" & $ver[0] & '.' & $ver[1] & '.' & $ver[2]
-  let ctx = seccompCtx()
+  let ctx = seccompCtx(Allow)
     
   for forbidden in FORBIDDEN_SYSCALLS:
-    info "Forbidding syscall: " & forbidden
-    ctx.addRule(Allow, forbidden)
+    info "Forbidding system call: " & forbidden
+    ctx.addRule(Kill, forbidden)
   
-  # allow these ones
-  ctx.addRule(Allow, "exit_group")
-  ctx.addRule(Allow, "rt_sigreturn")
-  ctx.addRule(Allow, "exit")
-
   info "Applying context. Any violations beyond this point will result in program termination."
   load ctx
