@@ -7,12 +7,18 @@ proc talk(
   renderer: FerusRenderer,
   process: FerusProcess
 ) {.inline.} =
-  let
-    data = client.receive()
-    jdata = tryParseJson(data, JsonNode)
+  return
+  poll client
+  let data = client.receive()
+  
+  if data.len < 1:
+    return
+
+  let jdata = tryParseJson(data, JsonNode)
 
   if not *jdata:
     client.warn "Did not get any valid JSON data."
+    client.warn data
     return
 
   let
@@ -43,5 +49,6 @@ proc renderProcessLogic*(
 
   while true:
     tick renderer
-    poll client
     client.talk(renderer, process)
+
+  close renderer

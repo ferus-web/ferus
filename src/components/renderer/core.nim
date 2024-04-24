@@ -1,4 +1,4 @@
-import std/[options, importutils]
+import std/[options, strutils, importutils]
 import ferusgfx, ferus_ipc/client/prelude
 import glfw, opengl
 
@@ -30,6 +30,15 @@ proc tick*(renderer: FerusRenderer) {.inline.} =
   renderer.window.swapBuffers()
   glfw.pollEvents()
 
+proc close*(renderer: FerusRenderer) {.inline.} =
+  renderer.ipc.info "Closing renderer."
+  glfw.terminate()
+  destroy renderer.window
+
+proc resize*(renderer: FerusRenderer, dims: tuple[w, h: int32]) {.inline.} =
+  renderer.ipc.info "Resizing renderer viewport to $1x$2" % [$dims.w, $dims.h]
+  renderer.scene.onResize(dims)
+
 proc initialize*(renderer: FerusRenderer) {.inline.} =
   renderer.ipc.info "Initializing renderer."
   glfw.initialize()
@@ -41,12 +50,19 @@ proc initialize*(renderer: FerusRenderer) {.inline.} =
   conf.makeContextCurrent = true
 
   var window = newWindow(conf)
-  defer:
-    renderer.ipc.info "Destroying renderer."
-    destroy window
-    glfw.terminate()
 
   renderer.scene = newScene(640, 480)
+
+  window.windowSizeCb = proc(_: Window, size: tuple[w, h: int32]) =
+    renderer.resize(size)
+
+  window.scrollCb = proc(_: Window, offset: tuple[x, y: float64]) =
+    renderer.scene.onScroll(
+      vec2(
+        offset.x,
+        offset.y
+      )
+    )
  
   # window.registerWindowCallbacks()
   renderer.window = window

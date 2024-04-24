@@ -8,6 +8,10 @@ type
 proc dispatch*(summon: Summon): string {.inline.} =
   var s: string
 
+  when defined(ferusAddMangohudToRendererPrefix):
+    if summon.process.kind == Renderer:
+      s &= "mangohud --dlsym "
+
   when defined(ferusSandboxAttachStrace):
     s &= "strace "
 

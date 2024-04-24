@@ -30,6 +30,11 @@ proc poll*(master: MasterProcess) {.inline.} =
   master.server.poll()
 
 proc launchAndWait(master: MasterProcess, summoned: string) =
+  info "launchAndWait(\"" & summoned & "\"): starting execution of process."
+  when defined(ferusJustWaitForConnection):
+    master.server.acceptNewConnection()
+    return
+
   when defined(unix):
     let 
       original = getpid()
@@ -56,14 +61,16 @@ proc summonRendererProcess*(master: MasterProcess) {.inline.} =
 
   master.launchAndWait(summoned)
 
-proc loadFont*(master: MasterProcess, file, name: string) {.inline.} =
+proc loadFont*(master: MasterProcess, file, name: string, recursion: int = 0) {.inline.} =
   var
     process = master.server.groups[0].findProcess(Renderer, workers = false)
     numWait: int
+    numRecursions = recursion
 
   if not *process:
-    process = master.summonRendererProcess(group)
-    return master.loadFont(file, name)
+    master.summonRendererProcess()
+    master.loadFont(file, name, numRecursions + 1)
+    return
 
   while (&process).state == Initialized:
     info "Waiting for renderer process to signal itself as ready for work x" & $numWait
@@ -73,7 +80,7 @@ proc loadFont*(master: MasterProcess, file, name: string) {.inline.} =
   
   info ("Sending renderer process a font to load: $1 as \"$2\"" % [file, name])
   master.server.send(
-    &(process).socket,
+    (&process).socket,
     RendererLoadFontPacket(
       content: readFile(file)
     )

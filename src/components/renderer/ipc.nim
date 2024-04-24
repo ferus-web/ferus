@@ -1,23 +1,20 @@
 import ferusgfx, ferus_ipc/shared, vmath
 
 type
-  IPCDrawable* = ref object of RootObj
-  # FIXME: perhaps move this into `src/ferusgfx/sandboxed`
-
-  TextNode* = ref object of IPCDrawable
+  TextNode* = ref object
     content*: string
     position*: Vec2
     font*: string ## this isnt the path!
 
-  ImageNode* = ref object of IPCDrawable
+  ImageNode* = ref object
     path*: string
     position*: Vec2
 
-  IPCDisplayList* = GDisplayList
-
-  RendererMutationPacket* = ref object
+  RendererMutationPacket*[T] = ref object
     kind: FerusMagic = feRendererMutation
-    list*: IPCDisplayList
+    dkind*: uint
+
+    add*, remove*: T
 
   RendererLoadFontPacket* = ref object
     kind: FerusMagic = feRendererLoadFont
