@@ -10,7 +10,10 @@ import sanchar/parse/url
 import sanchar/proto/http/shared
 
 import pretty
-import ../network/ipc
+import ../../components/[
+  network/ipc,
+  renderer/ipc
+]
 
 when defined(unix):
   import std/posix
@@ -26,10 +29,7 @@ proc initialize*(master: MasterProcess) {.inline.} =
 proc poll*(master: MasterProcess) {.inline.} =
   master.server.poll()
 
-proc summonNetworkProcess*(master: MasterProcess, group: uint) =
-  info "Summoning network process for group " & $group
-  let summoned = summon(Network, ipcPath = master.server.path).dispatch()
-
+proc launchAndWait(master: MasterProcess, summoned: string) =
   when defined(unix):
     let 
       original = getpid()
@@ -44,6 +44,40 @@ proc summonNetworkProcess*(master: MasterProcess, group: uint) =
       quit(1)
     else:
       master.server.acceptNewConnection()
+
+proc summonNetworkProcess*(master: MasterProcess, group: uint) =
+  info "Summoning network process for group " & $group
+  let summoned = summon(Network, ipcPath = master.server.path).dispatch()
+  master.launchAndWait(summoned)
+
+proc summonRendererProcess*(master: MasterProcess) {.inline.} =
+  info "Summoning renderer process."
+  let summoned = summon(Renderer, ipcPath = master.server.path).dispatch()
+
+  master.launchAndWait(summoned)
+
+proc loadFont*(master: MasterProcess, file, name: string) {.inline.} =
+  var
+    process = master.server.groups[0].findProcess(Renderer, workers = false)
+    numWait: int
+
+  if not *process:
+    process = master.summonRendererProcess(group)
+    return master.loadFont(file, name)
+
+  while (&process).state == Initialized:
+    info "Waiting for renderer process to signal itself as ready for work x" & $numWait
+    master.server.poll()
+    process = master.server.groups[0].findProcess(Renderer, workers = false)
+    inc numWait
+  
+  info ("Sending renderer process a font to load: $1 as \"$2\"" % [file, name])
+  master.server.send(
+    &(process).socket,
+    RendererLoadFontPacket(
+      content: readFile(file)
+    )
+  )
 
 proc fetchNetworkResource*(
   master: MasterProcess, 
@@ -78,7 +112,7 @@ proc fetchNetworkResource*(
     res: Option[NetworkFetchResult]
   
   while res.isNone:
-    info "Waiting for network process to send a `NetworkFetchResult` x" & $numRecv
+    #info "Waiting for network process to send a `NetworkFetchResult` x" & $numRecv
     let packet = master.server.receive(
       (&process).socket,
       NetworkFetchResult

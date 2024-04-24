@@ -2,7 +2,10 @@ import std/[strutils, logging]
 import colored_logger
 import components/[
   build_utils,
-  master/master
+  master/master,
+
+  network/ipc,
+  renderer/ipc
 ]
 import sanchar/parse/url
 import pretty
@@ -21,8 +24,24 @@ proc main {.inline.} =
   let master = newMasterProcess()
   initialize master
 
-  let data = master.fetchNetworkResource(0, parse "http://motherfuckingwebsite.com")
-  print data
+  #let data = master.fetchNetworkResource(0, parse "http://")
+  #print data
+  
+  #var list = newIPCDisplayList()
+  #list.add(
+  #  newTextNode(
+  #    "Hey there", 
+  #    vec2(0, 300),
+  #    "Default"
+  #  )
+  #)
+
+  master.summonRendererProcess()
+  master.loadFont(
+    "assets/IBMPlexSans-Regular.ttf",
+    "Default"
+  )
+  # master.dispatchRender(list)
 
   while true:
     master.poll()

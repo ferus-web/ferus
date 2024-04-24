@@ -2,7 +2,8 @@ import std/[os, options, strutils, parseopt, logging]
 import colored_logger
 import ferus_ipc/client/prelude
 import components/[
-  network/process
+  network/process,
+  renderer/process
 ]
 
 when defined(linux):
@@ -52,6 +53,8 @@ proc main {.inline.} =
   case process.kind
   of Network:
     networkProcessLogic(client, process)
+  of Renderer:
+    renderProcessLogic(client, process)
   else: discard
  
 when isMainModule:

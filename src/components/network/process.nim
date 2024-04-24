@@ -8,6 +8,8 @@ proc networkFetch*(
   fetchData: Option[NetworkFetchPacket]
 ): NetworkFetchResult {.inline.} =
   client.setState(Processing)
+  client.info "Getting ready to send HTTP request."
+
   if not *fetchData:
     client.error "Could not reinterpret JSON data as `NetworkFetchPacket`!"
     return
@@ -27,9 +29,13 @@ proc talk(client: var IPCClient, process: FerusProcess) {.inline.} =
     data = client.receive()
     jdata = tryParseJson(data, JsonNode)
 
+  client.info "1"
+
   if not *jdata:
     client.warn "Did not get any valid JSON data."
     return
+
+  client.info "2"
   
   let
     kind = (&jdata)
@@ -37,9 +43,13 @@ proc talk(client: var IPCClient, process: FerusProcess) {.inline.} =
       .getStr()
       .magicFromStr()
 
+  client.info "3"
+
   if not *kind:
     client.warn "No `kind` field inside JSON data provided."
     return
+
+  client.info "4"
   
   client.info "Kind: " & $(&kind)
   case &kind

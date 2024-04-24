@@ -2,7 +2,7 @@ import std/logging, seccomp
 
 const FORBIDDEN_SYSCALLS* = [
   # Deny I/O
-  "read", 
+  #"read", 
   "write",    # <----- logging crashes without this
   "alarm", 
 
@@ -10,7 +10,7 @@ const FORBIDDEN_SYSCALLS* = [
   "bind", "listen", 
   
   # misc
-  "kill", "uname",
+  "kill",
   "getcwd", "link", "readlink", "symlink",
   "chown", "sysinfo", "setgid", "getgid",
   "ptrace", "reboot", "sethostname",

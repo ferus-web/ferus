@@ -6,7 +6,12 @@ type
     ipcPath*: string
 
 proc dispatch*(summon: Summon): string {.inline.} =
-  var s = "./ferus_process --kind:" & $(summon.process.kind.int)
+  var s: string
+
+  when defined(ferusSandboxAttachStrace):
+    s &= "strace "
+
+  s &= "./ferus_process --kind:" & $(summon.process.kind.int)
 
   if summon.process.kind == Parser:
     s &= " --pKind:" & $(summon.process.pKind.int)
