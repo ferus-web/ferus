@@ -32,6 +32,7 @@ proc main() {.inline.} =
 
   master.summonRendererProcess()
   master.loadFont("assets/IBMPlexSans-Regular.ttf", "Default")
+  master.setWindowTitle("Ferus - This was set from the master process!")
   # master.dispatchRender(list)
 
   while true:

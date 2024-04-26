@@ -46,6 +46,18 @@ proc launchAndWait(master: MasterProcess, summoned: string) =
     else:
       master.server.acceptNewConnection()
 
+proc waitUntilReady*(
+  master: MasterProcess, 
+  process: var Option[FerusProcess], 
+  kind: FerusProcessKind, parserKind: ParserKind = pkCss
+) {.inline.} =
+  var numWait: int
+  while (&process).state == Initialized:
+    info ("Waiting for $1 process to signal itself as ready for work #$2" % [$kind, $numWait])
+    master.server.poll()
+    process = master.server.groups[0].findProcess(kind, parserKind, workers = false)
+    inc numWait
+
 proc summonNetworkProcess*(master: MasterProcess, group: uint) =
   info "Summoning network process for group " & $group
   let summoned = summon(Network, ipcPath = master.server.path).dispatch()
@@ -54,15 +66,28 @@ proc summonNetworkProcess*(master: MasterProcess, group: uint) =
 proc summonRendererProcess*(master: MasterProcess) {.inline.} =
   info "Summoning renderer process."
   let summoned = summon(Renderer, ipcPath = master.server.path).dispatch()
-
   master.launchAndWait(summoned)
+
+proc setWindowTitle*(master: MasterProcess, title: string) {.inline.} =
+  var process = master.server.groups[0].findProcess(Renderer, workers = false)
+
+  if not *process:
+    master.summonRendererProcess()
+    master.setWindowTitle(title)
+    return
+
+  master.server.send(
+    (&process).socket,
+    RendererSetWindowTitle(
+      title: title.encode(safe = true)   # So that we can get spaces
+    )
+  )
 
 proc loadFont*(
     master: MasterProcess, file, name: string, recursion: int = 0
 ) {.inline.} =
   var
     process = master.server.groups[0].findProcess(Renderer, workers = false)
-    numWait: int
     numRecursions = recursion
 
   if not *process:
@@ -72,14 +97,10 @@ proc loadFont*(
 
   let ext = file.splitFile().ext
 
-  while (&process).state == Initialized:
-    info "Waiting for renderer process to signal itself as ready for work x" & $numWait
-    master.server.poll()
-    process = master.server.groups[0].findProcess(Renderer, workers = false)
-    inc numWait
+  master.waitUntilReady(process, Renderer) 
 
   info ("Sending renderer process a font to load: $1 as \"$2\"" % [file, name])
-  let encoded = encode(
+  let encoded = encode( # encode the data in base64 to ensure that it doesn't mess up the JSON packet
     readFile file,
     safe = true
   )

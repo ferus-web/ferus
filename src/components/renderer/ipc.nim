@@ -19,3 +19,7 @@ type
   RendererLoadFontPacket* = ref object
     kind: FerusMagic = feRendererLoadFont
     name*, content*, format*: string
+  
+  RendererSetWindowTitle* = ref object
+    kind: FerusMagic = feRendererSetWindowTitle
+    title*: string
