@@ -1,12 +1,11 @@
 # Package
 
-version       = "0.1.0"
-author        = "xTrayambak"
-description   = "The Ferus Web Engine"
-license       = "MIT"
-srcDir        = "src"
-bin           = @["ferus", "ferus_process"]
-
+version = "0.1.0"
+author = "xTrayambak"
+description = "The Ferus Web Engine"
+license = "MIT"
+srcDir = "src"
+bin = @["ferus", "ferus_process"]
 
 # Dependencies
 

@@ -1,4 +1,4 @@
-import std/[logging, osproc, strutils, options]
+import std/[os, logging, osproc, strutils, options, base64]
 import ferus_ipc/server/prelude
 import jsony
 import ./summon
@@ -10,17 +10,13 @@ import sanchar/parse/url
 import sanchar/proto/http/shared
 
 import pretty
-import ../../components/[
-  network/ipc,
-  renderer/ipc
-]
+import ../../components/[network/ipc, renderer/ipc]
 
 when defined(unix):
   import std/posix
 
-type
-  MasterProcess* = ref object
-    server*: IPCServer
+type MasterProcess* = ref object
+  server*: IPCServer
 
 proc initialize*(master: MasterProcess) {.inline.} =
   master.server.add(FerusGroup())
@@ -36,10 +32,10 @@ proc launchAndWait(master: MasterProcess, summoned: string) =
     return
 
   when defined(unix):
-    let 
+    let
       original = getpid()
       forked = fork()
-    
+
     if forked == 0:
       info "Running: " & summoned
       let (output, res) = execCmdEx(summoned)
@@ -61,7 +57,9 @@ proc summonRendererProcess*(master: MasterProcess) {.inline.} =
 
   master.launchAndWait(summoned)
 
-proc loadFont*(master: MasterProcess, file, name: string, recursion: int = 0) {.inline.} =
+proc loadFont*(
+    master: MasterProcess, file, name: string, recursion: int = 0
+) {.inline.} =
   var
     process = master.server.groups[0].findProcess(Renderer, workers = false)
     numWait: int
@@ -72,26 +70,32 @@ proc loadFont*(master: MasterProcess, file, name: string, recursion: int = 0) {.
     master.loadFont(file, name, numRecursions + 1)
     return
 
+  let ext = file.splitFile().ext
+
   while (&process).state == Initialized:
     info "Waiting for renderer process to signal itself as ready for work x" & $numWait
     master.server.poll()
     process = master.server.groups[0].findProcess(Renderer, workers = false)
     inc numWait
-  
+
   info ("Sending renderer process a font to load: $1 as \"$2\"" % [file, name])
+  let encoded = encode(
+    readFile file,
+    safe = true
+  )
   master.server.send(
-    (&process).socket,
+    (&process).socket, 
     RendererLoadFontPacket(
-      content: readFile(file)
+       name: "Default",
+       content: encoded,
+       format: ext
     )
   )
 
 proc fetchNetworkResource*(
-  master: MasterProcess, 
-  group: uint, 
-  url: URL
+    master: MasterProcess, group: uint, url: URL
 ): Option[NetworkFetchResult] =
-  var 
+  var
     process = master.server.groups[group.int].findProcess(Network, workers = false)
     numWait: int
 
@@ -105,26 +109,22 @@ proc fetchNetworkResource*(
     master.server.poll()
     process = master.server.groups[group.int].findProcess(Network, workers = false)
     inc numWait
-  
-  info ("Sending group $1 network process a request to fetch data from $2" % [$group, $url])
-  master.server.send(
-    (&process).socket,
-    NetworkFetchPacket(url: url)
+
+  info (
+    "Sending group $1 network process a request to fetch data from $2" % [$group, $url]
   )
+  master.server.send((&process).socket, NetworkFetchPacket(url: url))
 
   info ("Waiting for response from group $1 network process" % [$group])
-  
+
   var
     numRecv: int
     res: Option[NetworkFetchResult]
-  
+
   while res.isNone:
     #info "Waiting for network process to send a `NetworkFetchResult` x" & $numRecv
-    let packet = master.server.receive(
-      (&process).socket,
-      NetworkFetchResult
-    )
-    
+    let packet = master.server.receive((&process).socket, NetworkFetchResult)
+
     if not *packet:
       inc numRecv
       continue
@@ -136,8 +136,6 @@ proc fetchNetworkResource*(
     inc numRecv
 
   res
-    
-proc newMasterProcess*: MasterProcess {.inline.} =
-  MasterProcess(
-    server: newIPCServer()
-  )
+
+proc newMasterProcess*(): MasterProcess {.inline.} =
+  MasterProcess(server: newIPCServer())

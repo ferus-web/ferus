@@ -18,4 +18,4 @@ type
 
   RendererLoadFontPacket* = ref object
     kind: FerusMagic = feRendererLoadFont
-    content*: string
+    name*, content*, format*: string

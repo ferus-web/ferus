@@ -1,9 +1,8 @@
 import ferus_ipc/server/prelude
 
-type
-  Summon* = ref object
-    process*: FerusProcess
-    ipcPath*: string
+type Summon* = ref object
+  process*: FerusProcess
+  ipcPath*: string
 
 proc dispatch*(summon: Summon): string {.inline.} =
   var s: string
@@ -25,9 +24,9 @@ proc dispatch*(summon: Summon): string {.inline.} =
   s
 
 proc summon*(
-  kind: FerusProcessKind,
-  pKind: ParserKind = pkCSS, # TODO: implement pkNone
-  ipcPath: string
+    kind: FerusProcessKind,
+    pKind: ParserKind = pkCSS, # TODO: implement pkNone
+    ipcPath: string,
 ): Summon {.inline.} =
   var process = FerusProcess(kind: kind)
 
