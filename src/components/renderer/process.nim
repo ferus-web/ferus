@@ -51,7 +51,6 @@ proc talk(
   let data = client.receive()
 
   if data.len < 1:
-    echo "empty"
     return
 
   let jdata = tryParseJson(data, JsonNode)
@@ -71,9 +70,15 @@ proc talk(
     return
 
   case &kind
-  of feRendererMutation: discard
+  of feRendererMutation: discard # TODO: implement this
   of feRendererLoadFont:
     loadFont(client, renderer, tryParseJson(data, RendererLoadFontPacket))
+  of feRendererSetWindowTitle:
+    let reinterpreted = tryParseJson(data, RendererSetWindowTitle)
+    if not *reinterpreted:
+      client.warn "Cannot reinterpret JSON data as `RendererSetWindowTitle` packet!"
+    
+    renderer.setWindowTitle((&reinterpreted).title.decode())
   else:
     discard
 

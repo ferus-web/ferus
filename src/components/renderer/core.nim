@@ -31,6 +31,10 @@ proc close*(renderer: FerusRenderer) {.inline.} =
   glfw.terminate()
   destroy renderer.window
 
+proc setWindowTitle*(renderer: FerusRenderer, title: string) {.inline.} =
+  renderer.ipc.info "Setting window title to \"" & title & "\""
+  renderer.window.title = title
+
 proc resize*(renderer: FerusRenderer, dims: tuple[w, h: int32]) {.inline.} =
   renderer.ipc.info "Resizing renderer viewport to $1x$2" % [$dims.w, $dims.h]
   let casted = (w: dims.w.int, h: dims.h.int)
@@ -54,6 +58,7 @@ proc initialize*(renderer: FerusRenderer) {.inline.} =
     renderer.resize(size)
 
   window.scrollCb = proc(_: Window, offset: tuple[x, y: float64]) =
+    renderer.ipc.debug "Scrolling (offset: " & $offset & ")"
     renderer.scene.onScroll(vec2(offset.x, offset.y))
 
   # window.registerWindowCallbacks()
