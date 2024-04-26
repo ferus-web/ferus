@@ -1,6 +1,6 @@
 import std/[os, pegs]
 
-proc staticReadVersionFromNimble: string {.compileTime.} =
+proc staticReadVersionFromNimble(): string {.compileTime.} =
   ## Stolen from Moe's code :3 
 
   let
@@ -14,7 +14,7 @@ proc staticReadVersionFromNimble: string {.compileTime.} =
   assert captures.len == 1
   return captures[0]
 
-proc getVersion*: string {.compileTime.} =
+proc getVersion*(): string {.compileTime.} =
   staticReadVersionFromNimble()
 
 type
@@ -32,16 +32,16 @@ type
     bfBsd
 
 proc `$`*(ct: CompilerType): string =
-  case ct:
-    of ctGcc: "GNU Compiler Collection"
-    of ctClang: "Clang"
-    of ctMsvc: "Microsoft Visual C/C++ Compiler"
-    of ctCc: "Generic C Compiler"
+  case ct
+  of ctGcc: "GNU Compiler Collection"
+  of ctClang: "Clang"
+  of ctMsvc: "Microsoft Visual C/C++ Compiler"
+  of ctCc: "Generic C Compiler"
 
-proc getCompilerType*: CompilerType =
+proc getCompilerType*(): CompilerType =
   when defined(gcc):
     return ctGcc
-  
+
   when defined(msvc):
     return ctMsvc
 
@@ -51,26 +51,28 @@ proc getCompilerType*: CompilerType =
   # Generic C compiler
   return ctCc
 
-proc getArchitecture*: string {.inline, compileTime.} =
+proc getArchitecture*(): string {.inline, compileTime.} =
   hostCPU
 
-proc getHostOS*: string {.inline, compileTime.} =
+proc getHostOS*(): string {.inline, compileTime.} =
   hostOS
 
-proc getCompileDate*: string {.inline, compileTime.} =
+proc getCompileDate*(): string {.inline, compileTime.} =
   CompileDate
 
-proc getBinFormat*: BinFormat {.inline, compileTime.} =
-  when defined(win32): return bfWin32
-  when defined(win64): return bfWin64
-  when defined(mac): return bfMac
-  when defined(freebsd) or defined(openbsd) or defined(netbsd) or defined(bsd): return bfBsd
-  when defined(linux): return bfLinux
+proc getBinFormat*(): BinFormat {.inline, compileTime.} =
+  when defined(win32):
+    return bfWin32
+  when defined(win64):
+    return bfWin64
+  when defined(mac):
+    return bfMac
+  when defined(freebsd) or defined(openbsd) or defined(netbsd) or defined(bsd):
+    return bfBsd
+  when defined(linux):
+    return bfLinux
 
-proc isDebugBuild*: bool {.inline, compileTime.} =
-  when defined(debug):
-    true
-  else:
-    false
+proc isDebugBuild*(): bool {.inline, compileTime.} =
+  when defined(debug): true else: false
 
 {.warning[UnreachableCode]: on.}

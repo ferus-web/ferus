@@ -1,12 +1,11 @@
 # Package
 
-version       = "0.1.0"
-author        = "xTrayambak"
-description   = "The Ferus Web Engine"
-license       = "MIT"
-srcDir        = "src"
-bin           = @["ferus", "ferus_process"]
-
+version = "0.1.0"
+author = "xTrayambak"
+description = "The Ferus Web Engine"
+license = "MIT"
+srcDir = "src"
+bin = @["ferus", "ferus_process"]
 
 # Dependencies
 
@@ -18,3 +17,4 @@ requires "https://github.com/ferus-web/sanchar"
 requires "https://github.com/ferus-web/vyavast"
 requires "seccomp >= 0.2.1"
 requires "pretty"
+requires "glfw >= 3.4.0"
