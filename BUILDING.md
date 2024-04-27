@@ -27,6 +27,10 @@ and libraries. If you're using Nix, all you have to do is run
     nix develop
 
 and from there you can execute Nimble as usual to build Ferus.
+If you're having trouble executing Ferus from another directory,
+use the `build-ferus` shell function instead. This function is
+activated whenever you enter a dev shell with `nix develop` and
+passes all its arguments to `nimble build.`
 
 ## Building using the Nix flake
 
