@@ -76,10 +76,29 @@ proc setWindowTitle*(master: MasterProcess, title: string) {.inline.} =
     master.setWindowTitle(title)
     return
 
+  master.waitUntilReady(process, Renderer)
+
   master.server.send(
     (&process).socket,
     RendererSetWindowTitle(
       title: title.encode(safe = true)   # So that we can get spaces
+    )
+  )
+
+proc dispatchRender*(master: MasterProcess, list: IPCDisplayList) {.inline.} =
+  var process = master.server.groups[0].findProcess(Renderer, workers = false)
+
+  if not *process:
+    master.summonRendererProcess()
+    master.dispatchRender(list)
+    return
+
+  master.waitUntilReady(process, Renderer)
+
+  master.server.send(
+    (&process).socket,
+    RendererMutationPacket(
+      list: list
     )
   )
 
@@ -109,7 +128,7 @@ proc loadFont*(
     RendererLoadFontPacket(
        name: "Default",
        content: encoded,
-       format: ext
+       format: ext[1 ..< ext.len]
     )
   )
 

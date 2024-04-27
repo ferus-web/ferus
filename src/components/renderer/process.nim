@@ -1,7 +1,9 @@
 import std/[options, json, base64, importutils]
-import ferusgfx, ferus_ipc/client/prelude, jsony
+import ferus_ipc/client/prelude, jsony
+import ferusgfx/[displaylist, fontmgr, textnode, imagenode, gifnode]
 import pixie, pixie/fontformats/opentype
-import ../../components/renderer/[core, ipc]
+import ../../components/renderer/[core] 
+import ../../components/renderer/ipc except newDisplayList
 
 proc readTypeface*(data, format: string): Typeface {.raises: [PixieError].} =
   ## Loads a typeface from data.
@@ -35,15 +37,62 @@ proc loadFont*(
 
   try:
     font = newFont(
-      decode(data).readTypeface("ttf")
+      decode(data).readTypeface(packet.format)
     ).some()
   except PixieError as exc:
-    client.error "Failed to load font: " & exc.msg
+    client.error "Failed to load font: " & exc.msg & ": fmt=" & packet.format 
   
   if *font:
     renderer.scene.fontManager.set(name, &font)
     client.info "Loaded font \"" & name & "\" successfully!"
 
+proc mutateTree*(
+  client: var IPCClient,
+  renderer: FerusRenderer,
+  packet: Option[RendererMutationPacket]
+) {.inline.} =
+  if not *packet:
+    client.warn "Failed to mutate scene tree: cannot reinterpret data as `RendererMutationPacket`!"
+    return
+
+  let mutation = (&packet).list
+  var list = newDisplayList(renderer.scene.addr)
+  privateAccess(GDisplayList)
+
+  for adds in mutation.adds:
+    case adds.kind
+    of TextNode:
+      let content = decode adds.content
+      list.add(
+        newTextNode(
+          content, 
+          adds.position, 
+          renderer.scene.fontManager
+        )
+      )
+    of ImageNode:
+      let content = decode adds.imgContent
+
+      list.add(
+        newImageNodeFromMemory(
+          content,
+          adds.position
+        )
+      )
+    of GIFNode:
+      let content = decode adds.gifContent
+
+      list.add(
+        newGIFNodeFromMemory(
+          content,
+          adds.position
+        )
+      )
+    else: discard
+
+  client.info "Committing display list."
+  commit list
+  
 proc talk(
     client: var IPCClient, renderer: FerusRenderer, process: FerusProcess
 ) {.inline.} =
@@ -70,7 +119,9 @@ proc talk(
     return
 
   case &kind
-  of feRendererMutation: discard # TODO: implement this
+  of feRendererMutation:
+    client.info data
+    mutateTree(client, renderer, tryParseJson(data, RendererMutationPacket))
   of feRendererLoadFont:
     loadFont(client, renderer, tryParseJson(data, RendererLoadFontPacket))
   of feRendererSetWindowTitle:

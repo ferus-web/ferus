@@ -47,12 +47,12 @@ proc initialize*(renderer: FerusRenderer) {.inline.} =
 
   var conf = DefaultOpenglWindowConfig
   conf.title = "Ferus"
-  conf.size = (w: 640, h: 480)
+  conf.size = (w: 1280, h: 1080)
   conf.makeContextCurrent = true
 
   var window = newWindow(conf)
 
-  renderer.scene = newScene(640, 480)
+  renderer.scene = newScene(1280, 1080)
 
   window.windowSizeCb = proc(_: Window, size: tuple[w, h: int32]) =
     renderer.resize(size)
@@ -60,7 +60,6 @@ proc initialize*(renderer: FerusRenderer) {.inline.} =
   window.scrollCb = proc(_: Window, offset: tuple[x, y: float64]) =
     renderer.ipc.debug "Scrolling (offset: " & $offset & ")"
     renderer.scene.onScroll(vec2(offset.x, offset.y))
-
   # window.registerWindowCallbacks()
   renderer.window = window
 
