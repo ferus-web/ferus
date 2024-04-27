@@ -1,5 +1,8 @@
 import ferus_ipc/server/prelude
 
+const
+  FerusInstallPath {.strdefine: "".} = "./"
+
 type Summon* = ref object
   process*: FerusProcess
   ipcPath*: string
@@ -14,7 +17,7 @@ proc dispatch*(summon: Summon): string {.inline.} =
   when defined(ferusSandboxAttachStrace):
     s &= "strace "
 
-  s &= "./ferus_process --kind:" & $(summon.process.kind.int)
+  s &= FerusInstallPath & "/ferus_process --kind:" & $(summon.process.kind.int)
 
   if summon.process.kind == Parser:
     s &= " --pKind:" & $(summon.process.pKind.int)
