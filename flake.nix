@@ -17,7 +17,7 @@
     in
       {
         packages = forAllSystems (pkgs: {
-          default = pkgs.buildNimPackage {
+          default = pkgs.buildNimPackage rec {
             name = "ferus";
             src = ./.;
 
@@ -25,7 +25,9 @@
 
             nativeBuildInputs = with pkgs; [
               makeBinaryWrapper
+              nimble
               wayland-protocols
+              wayland-scanner
             ];
 
             buildInputs = with pkgs; [
@@ -38,15 +40,17 @@
               xorg.libXext
 
               wayland
-              wayland-scanner
+            ];
+
+            LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [
+              libGL
             ];
 
             postInstall =
               with pkgs;
               let
                 makeWrapperArgs = ''
-                  --prefix LD_LIBRARY_PATH : \
-                    ${lib.makeLibraryPath [ libGL ]}
+                  --prefix LD_LIBRARY_PATH : ${LD_LIBRARY_PATH}
                 '';
               in
               ''
