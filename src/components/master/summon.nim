@@ -1,3 +1,4 @@
+import std/os
 import ferus_ipc/server/prelude
 
 const
@@ -17,7 +18,7 @@ proc dispatch*(summon: Summon): string {.inline.} =
   when defined(ferusSandboxAttachStrace):
     s &= "strace "
 
-  s &= FerusInstallPath & "/ferus_process --kind:" & $(summon.process.kind.int)
+  s &= getAppDir() & "/ferus_process --kind:" & $(summon.process.kind.int)
 
   if summon.process.kind == Parser:
     s &= " --pKind:" & $(summon.process.pKind.int)
