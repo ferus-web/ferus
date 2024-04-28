@@ -21,3 +21,6 @@ So far,
 - Implementing the JavaScript runtime process component
 
 2024 is gonna be ~~painful~~ fun for me :)
+
+# Hacking on Ferus
+For details on building/hacking on Ferus, consult the BUILDING.md document.
