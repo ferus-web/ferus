@@ -6,7 +6,7 @@ type
 
   Rule* = ref object
     selectors*: seq[Selector]
-    declarations*: seq[Declaration]
+    #declarations*: seq[Declaration]
 
   SelectorKind* = enum
     skType, skId, skAttr, skClass, skUniversal,
@@ -25,8 +25,8 @@ type
     of skUniversal: discard
     of skPseudoClass:
       pclass*: PseudoData
-    of skPseudoElem:
-      elem*: PseudoElem
+    of skPseudoElem: discard
+    #  elem*: PseudoElem
 
   PseudoClass* = enum
     pcFirstChild, pcLastChild, pcOnlyChild, pcHover, pcRoot, pcNthChild,
@@ -34,20 +34,38 @@ type
     pcVisited
 
   ParsedItem* = ref object of RootObj
-  ComponentValue* = ref object of CSSParsedItem
+  ComponentValue* = ref object of ParsedItem
   
-  Rule* = ref object of ParsedItem
-    prelude*: seq[ComponentValue]
-    oblock*: CSSBlock
+ # Rule* = ref object of ParsedItem
+ #   prelude*: seq[ComponentValue]
+ #   oblock*: CSSBlock
 
-  CSSBlock* = ref object
-    tokens*: seq[Token]
+ # CSSBlock* = ref object
+ #   tokens*: seq[Token]
 
   AnB* = object
-    a*, b*: int
+    a*, b*: int32
 
   PseudoData* = ref object
     case class*: PseudoClass
     of pcNthChild, pcNthLastChild:
       anb*: AnB
+      ofsels*: SelectorList
+    of pcIs, pcWhere, pcNot:
+      fsels*: SelectorList
+    of pcLang:
+      s*: string
+    else: discard
 
+  CombinatorKind* = enum
+    ckNone, ckDescendant, ckChild, ckNextSibling, ckSubsequentSibling
+
+  CompoundSelector* = object
+    kind*: CombinatorKind
+    selectors*: seq[Selector]
+
+  ComplexSelector* = seq[CompoundSelector]
+  SelectorList* = seq[ComplexSelector]
+
+proc anb*(a, b: int32): AnB {.inline, noSideEffect, gcsafe.} =
+  AnB(a: a, b: b)
