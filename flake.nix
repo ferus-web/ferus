@@ -46,17 +46,28 @@
               libGL
             ];
 
-            postInstall =
-              with pkgs;
+            wrapFerus =
               let
                 makeWrapperArgs = ''
                   --prefix LD_LIBRARY_PATH : ${LD_LIBRARY_PATH}
                 '';
               in
               ''
-                wrapProgram $out/bin/ferus ${makeWrapperArgs}
-                wrapProgram $out/bin/ferus_process ${makeWrapperArgs}
+                wrapProgram "$(pwd)"/ferus ${makeWrapperArgs}
+                wrapProgram "$(pwd)"/ferus_process ${makeWrapperArgs}
               '';
+
+            postInstall = ''
+              cd $out/bin/
+              ${wrapFerus}
+            '';
+
+            shellHook = ''
+              build-ferus () {
+                nimble build $@
+                ${wrapFerus}
+              }
+            '';
           };
         });
       };

@@ -1,6 +1,9 @@
 import std/[strutils, logging]
 import colored_logger
-import components/[build_utils, master/master, network/ipc, renderer/ipc]
+import components/[
+  build_utils, 
+  master/master, network/ipc, renderer/ipc
+]
 import sanchar/parse/url
 import pretty
 
@@ -20,6 +23,14 @@ proc main() {.inline.} =
 
   #let data = master.fetchNetworkResource(0, parse "http://")
   #print data
+  
+  let src = """
+body {
+  background-color: rgb(25, 25, 25);
+}
+  """
+
+  let rules = master.parseCssRules(src)
 
   var list = newDisplayList()
   list.add(

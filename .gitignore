@@ -1,4 +1,4 @@
-./ferus
-./ferus_process
-
-result/
+*
+!*.*
+!*/
+result

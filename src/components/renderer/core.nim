@@ -26,6 +26,9 @@ proc tick*(renderer: FerusRenderer) {.inline.} =
   renderer.window.swapBuffers()
   glfw.pollEvents()
 
+  privateAccess renderer.scene.camera.typeof
+  renderer.ipc.debug $renderer.scene.camera.delta
+
 proc close*(renderer: FerusRenderer) {.inline.} =
   renderer.ipc.info "Closing renderer."
   glfw.terminate()
@@ -58,8 +61,10 @@ proc initialize*(renderer: FerusRenderer) {.inline.} =
     renderer.resize(size)
 
   window.scrollCb = proc(_: Window, offset: tuple[x, y: float64]) =
-    renderer.ipc.debug "Scrolling (offset: " & $offset & ")"
-    renderer.scene.onScroll(vec2(offset.x, offset.y))
+    # renderer.ipc.debug "Scrolling (offset: " & $offset & ")"
+    let casted = vec2(offset.x, offset.y)
+    renderer.scene.onScroll(casted)
+
   # window.registerWindowCallbacks()
   renderer.window = window
 
