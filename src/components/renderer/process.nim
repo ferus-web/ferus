@@ -5,6 +5,9 @@ import pixie, pixie/fontformats/opentype
 import ../../components/renderer/[core] 
 import ../../components/renderer/ipc except newDisplayList
 
+{.passL: "-lwayland-client -lwayland-cursor -lwayland-egl -lxkbcommon".}
+{.passC: "-D_GLFW_USE_WAYLAND=on".}
+
 proc readTypeface*(data, format: string): Typeface {.raises: [PixieError].} =
   ## Loads a typeface from data.
   try:
