@@ -9,7 +9,6 @@ import ./summon
 import sanchar/parse/url
 import sanchar/proto/http/shared
 
-import pretty
 import ../../components/[network/ipc, renderer/ipc]
 
 when defined(unix):

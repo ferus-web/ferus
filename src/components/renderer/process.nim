@@ -1,7 +1,7 @@
 import std/[options, json, base64, importutils]
 import ferus_ipc/client/prelude, jsony
 import ferusgfx/[displaylist, fontmgr, textnode, imagenode, gifnode]
-import pixie, pixie/fontformats/opentype
+import pixie
 import ../../components/renderer/[core] 
 import ../../components/renderer/ipc except newDisplayList
 
@@ -91,7 +91,6 @@ proc mutateTree*(
           adds.position
         )
       )
-    else: discard
 
   client.info "Committing display list."
   commit list

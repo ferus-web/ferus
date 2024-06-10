@@ -74,6 +74,4 @@ proc newGIFNode*(
 proc newDisplayList*(clearAll: bool = false): IPCDisplayList {.inline.} =
   IPCDisplayList(doClearAll: clearAll)
 
-import ferusgfx/displaylist
-
 export vmath, displaylist
