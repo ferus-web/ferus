@@ -5,7 +5,6 @@ import components/[
   master/master, network/ipc, renderer/ipc
 ]
 import sanchar/parse/url
-import pretty
 
 proc setupLogging*() {.inline.} =
   addHandler newColoredLogger()
