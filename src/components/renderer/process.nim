@@ -1,4 +1,4 @@
-import std/[options, json, base64, importutils]
+import std/[options, json, logging, base64, importutils, logging]
 import ferus_ipc/client/prelude, jsony
 import ferusgfx/[displaylist, fontmgr, textnode, imagenode, gifnode]
 import pixie, pixie/fontformats/opentype
@@ -43,11 +43,11 @@ proc loadFont*(
       decode(data).readTypeface(packet.format)
     ).some()
   except PixieError as exc:
-    client.error "Failed to load font: " & exc.msg & ": fmt=" & packet.format 
+    error "Failed to load font: " & exc.msg & ": fmt=" & packet.format 
   
   if *font:
     renderer.scene.fontManager.set(name, &font)
-    client.info "Loaded font \"" & name & "\" successfully!"
+    info "Loaded font \"" & name & "\" successfully!"
 
 proc mutateTree*(
   client: var IPCClient,
@@ -55,7 +55,7 @@ proc mutateTree*(
   packet: Option[RendererMutationPacket]
 ) {.inline.} =
   if not *packet:
-    client.warn "Failed to mutate scene tree: cannot reinterpret data as `RendererMutationPacket`!"
+    warn "Failed to mutate scene tree: cannot reinterpret data as `RendererMutationPacket`!"
     return
 
   let mutation = (&packet).list
@@ -93,7 +93,7 @@ proc mutateTree*(
       )
     else: discard
 
-  client.info "Committing display list."
+  info "Committing display list."
   commit list
   
 proc talk(
@@ -108,8 +108,8 @@ proc talk(
   let jdata = tryParseJson(data, JsonNode)
 
   if not *jdata:
-    client.warn "Did not get any valid JSON data."
-    client.warn data
+    warn "Did not get any valid JSON data."
+    warn data
     return
 
   let kind = (&jdata)
@@ -118,26 +118,26 @@ proc talk(
     .magicFromStr()
 
   if not *kind:
-    client.warn "No `kind` field inside JSON data provided."
+    warn "No `kind` field inside JSON data provided."
     return
 
   case &kind
   of feRendererMutation:
-    client.info data
+    info data
     mutateTree(client, renderer, tryParseJson(data, RendererMutationPacket))
   of feRendererLoadFont:
     loadFont(client, renderer, tryParseJson(data, RendererLoadFontPacket))
   of feRendererSetWindowTitle:
     let reinterpreted = tryParseJson(data, RendererSetWindowTitle)
     if not *reinterpreted:
-      client.warn "Cannot reinterpret JSON data as `RendererSetWindowTitle` packet!"
+      warn "Cannot reinterpret JSON data as `RendererSetWindowTitle` packet!"
     
     renderer.setWindowTitle((&reinterpreted).title.decode())
   else:
     discard
 
 proc renderProcessLogic*(client: var IPCClient, process: FerusProcess) {.inline.} =
-  client.info "Entering renderer process logic."
+  info "Entering renderer process logic."
   client.setState(Processing)
 
   let renderer = newFerusRenderer(client)

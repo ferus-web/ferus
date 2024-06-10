@@ -1,6 +1,6 @@
 import std/[os, options, strutils, parseopt, logging]
 import colored_logger
-import ferus_ipc/client/prelude
+import ferus_ipc/client/[prelude, logger]
 import components/[network/process, renderer/process]
 
 when defined(linux):
@@ -34,17 +34,15 @@ proc bootstrap(
       discard
 
 proc main() {.inline.} =
-  addHandler newColoredLogger()
   sandbox()
-
-  # We cannot call logging methods ourselves anymore as the write syscall
-  # is forbidden!
 
   var
     p = initOptParser(commandLineParams())
     process = FerusProcess(pid: uint64 getCurrentProcessId())
     client = newIPCClient()
     path: Option[string]
+
+  addHandler newIPCLogger(lvlAll, client)
 
   bootstrap(p, process, path)
   client.identifyAs(process)
@@ -53,6 +51,7 @@ proc main() {.inline.} =
 
   case process.kind
   of Network:
+    echo "network logic"
     networkProcessLogic(client, process)
   of Renderer:
     renderProcessLogic(client, process)

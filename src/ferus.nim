@@ -24,18 +24,10 @@ proc main() {.inline.} =
   #let data = master.fetchNetworkResource(0, parse "http://")
   #print data
   
-  let src = """
-body {
-  background-color: rgb(25, 25, 25);
-}
-  """
-
-  let rules = master.parseCssRules(src)
-
   var list = newDisplayList()
   list.add(
     newTextNode(
-      "Hey there - this is a text node created by the master process and sent to the renderer process via Ferus' IPC layer!", 
+      "Hey there - hold on whilst we fetch some network content from a site!", 
       vec2(0, 100),
       "Default"
     )
@@ -48,33 +40,21 @@ body {
     )
   )
 
-  list.add(
-    newTextNode(
-      "Recompile with -d:ferusgfxDrawDamagedRegions to see cool stuff! (epilepsy warning)",
-      vec2(0, 800),
-      "Default"
-    )
-  )
-
-  list.add(
-    newImageNode(
-      "assets/images/ferus_logo.png",
-      vec2(20, 850)
-    )
-  )
-
-  list.add(
-    newTextNode(
-      "That's the Ferus logo. Expect more to come soon!",
-      vec2(0, 950),
-      "Default"
-    )
-  )
-
   master.summonRendererProcess()
   master.loadFont("assets/fonts/IBMPlexSans-Regular.ttf", "Default")
-  master.setWindowTitle("Ferus - This was set from the master process!")
+  master.setWindowTitle("Ferus - Loading")
   master.dispatchRender(list)
+  
+  master.summonNetworkProcess(0)
+  let data = master.fetchNetworkResource(0, parse "http://motherfuckingwebsite.com")
+  print data
+  
+  list.reset()
+  list.add(
+    newTextNode("We're done with fetching data from the site and we also saved the cookies to disk!", vec2(0, 100), "Default")
+  )
+  master.dispatchRender(list)  
+  master.setWindowTitle("Ferus - Done")
 
   while true:
     master.poll()
