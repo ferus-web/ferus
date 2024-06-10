@@ -18,6 +18,5 @@ Keep in mind that this is a non-exhaustive list. Send in PRs if you want to add 
 | stylus        | Trayambak Rai (xTrayambak)        | 
 | ferusgfx      | Trayambak Rai (xTrayambak)        |
 | ferus_ipc     | Trayambak Rai (xTrayambak) et. al |
-| vyavast       | Trayambak Rai (xTrayambak)        |
 | mirage        | Trayambak Rai (xTrayambak)        |
 | ferus         | Trayambak Rai (xTrayambak) et. al |

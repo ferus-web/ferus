@@ -39,6 +39,7 @@ proc launchAndWait(master: MasterProcess, summoned: string) =
     if forked == 0:
       info "Running: " & summoned
       let (output, res) = execCmdEx(summoned)
+      info "Exiting out with process code: " & $res & "; ciao!"
       quit(res)
     elif forked < 0:
       error "Fork syscall failed!!!"

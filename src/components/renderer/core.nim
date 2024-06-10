@@ -1,4 +1,4 @@
-import std/[options, strutils, importutils]
+import std/[options, strutils, importutils, logging]
 import ferusgfx, ferus_ipc/client/prelude
 import glfw, opengl
 
@@ -9,16 +9,16 @@ type FerusRenderer* = ref object
 
 proc mutate*(renderer: FerusRenderer, list: Option[DisplayList]) {.inline.} =
   if not *list:
-    renderer.ipc.error "Cannot mutate scene tree - could not reinterpret JSON data as `DisplayList`!"
+    error "Cannot mutate scene tree - could not reinterpret JSON data as `DisplayList`!"
 
-  renderer.ipc.info "Mutating scene tree"
+  info "Mutating scene tree"
 
   var dlist = &list
   privateAccess(DisplayList) # FIXME: make `DisplayList`'s `scene` pointer public!
 
   dlist.scene = addr renderer.scene
 
-  renderer.ipc.info "Committing display list."
+  info "Committing display list."
   commit dlist
 
 proc tick*(renderer: FerusRenderer) {.inline.} =
@@ -30,21 +30,21 @@ proc tick*(renderer: FerusRenderer) {.inline.} =
   renderer.ipc.debug $renderer.scene.camera.delta
 
 proc close*(renderer: FerusRenderer) {.inline.} =
-  renderer.ipc.info "Closing renderer."
+  info "Closing renderer."
   glfw.terminate()
   destroy renderer.window
 
 proc setWindowTitle*(renderer: FerusRenderer, title: string) {.inline.} =
-  renderer.ipc.info "Setting window title to \"" & title & "\""
+  info "Setting window title to \"" & title & "\""
   renderer.window.title = title
 
 proc resize*(renderer: FerusRenderer, dims: tuple[w, h: int32]) {.inline.} =
-  renderer.ipc.info "Resizing renderer viewport to $1x$2" % [$dims.w, $dims.h]
+  info "Resizing renderer viewport to $1x$2" % [$dims.w, $dims.h]
   let casted = (w: dims.w.int, h: dims.h.int)
   renderer.scene.onResize(casted)
 
 proc initialize*(renderer: FerusRenderer) {.inline.} =
-  renderer.ipc.info "Initializing renderer."
+  info "Initializing renderer."
   glfw.initialize()
   loadExtensions()
 
