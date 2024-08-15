@@ -21,4 +21,8 @@ requires "seccomp >= 0.2.1"
 requires "results"
 requires "pretty"
 requires "curly"
-requires "glfw >= 3.4.0"
+
+when defined(ferusUseGlfw):
+  requires "glfw >= 3.4.0.4"
+else:
+  requires "windy >= 0.0.0"

@@ -5,6 +5,7 @@ import components/[
   master/master, network/ipc, renderer/ipc
 ]
 import sanchar/parse/url
+import pretty
 
 proc setupLogging*() {.inline.} =
   addHandler newColoredLogger()
@@ -38,22 +39,16 @@ proc main() {.inline.} =
       vec2(0, 150)
     )
   )
-
-  master.summonRendererProcess()
-  master.loadFont("assets/fonts/IBMPlexSans-Regular.ttf", "Default")
-  master.setWindowTitle("Ferus - Loading")
-  master.dispatchRender(list)
   
   master.summonNetworkProcess(0)
   let data = master.fetchNetworkResource(0, parse "http://motherfuckingwebsite.com")
   print data
-  
-  list.reset()
-  list.add(
-    newTextNode("We're done with fetching data from the site and we also saved the cookies to disk!", vec2(0, 100), "Default")
-  )
-  master.dispatchRender(list)  
-  master.setWindowTitle("Ferus - Done")
+
+  master.summonRendererProcess()
+  master.loadFont("assets/fonts/IBMPlexSans-Regular.ttf", "Default")
+  master.setWindowTitle("Ferus")
+  master.dispatchRender(list)
+  master.setWindowTitle("Ferus")
 
   while true:
     master.poll()

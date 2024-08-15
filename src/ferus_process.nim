@@ -51,7 +51,6 @@ proc main() {.inline.} =
 
   case process.kind
   of Network:
-    echo "network logic"
     networkProcessLogic(client, process)
   of Renderer:
     renderProcessLogic(client, process)

@@ -33,7 +33,6 @@ proc talk(client: var IPCClient, process: FerusProcess) {.inline.} =
     warn "No `kind` field inside JSON data provided."
     return
 
-  info "Kind: " & $(&kind)
   case &kind
   of feNetworkFetch:
     let data = client.networkFetch(tryParseJson(data, NetworkFetchPacket))

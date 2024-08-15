@@ -52,8 +52,9 @@ proc waitUntilReady*(
   kind: FerusProcessKind, parserKind: ParserKind = pkCss
 ) {.inline.} =
   var numWait: int
-  while (&process).state == Initialized:
-    info ("Waiting for $1 process to signal itself as ready for work #$2" % [$kind, $numWait])
+
+  while (&process).state in [Initialized, Processing]:
+    info ("Waiting for $1 process to signal itself as ready for work #$2 ($3)" % [$kind, $numWait, $(&process).state])
     master.server.poll()
     process = master.server.groups[0].findProcess(kind, parserKind, workers = false)
     inc numWait
@@ -143,12 +144,8 @@ proc fetchNetworkResource*(
     # process = master.summonNetworkProcess(group)
     master.summonNetworkProcess(group)
     return master.fetchNetworkResource(group, url)
-
-  while (&process).state == Initialized:
-    info "Waiting for network process to signal itself as ready for work x" & $numWait
-    master.server.poll()
-    process = master.server.groups[group.int].findProcess(Network, workers = false)
-    inc numWait
+  
+  master.waitUntilReady(process, Network)
 
   info (
     "Sending group $1 network process a request to fetch data from $2" % [$group, $url]
