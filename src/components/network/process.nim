@@ -1,6 +1,23 @@
-import std/[logging, options, json]
+import std/[strutils, logging, options, json]
 import sanchar/[http, proto/http/shared], sanchar/parse/url, ferus_ipc/client/prelude, jsony
 import ../../components/network/ipc
+import ../../components/build_utils
+
+func getUAString*: string {.inline.} =
+  "Mozilla/5.0 ($1 $2) Ferus/$3 (Ferus, like Gecko) Ferus/$3 Firefox/129.0" % [
+    (
+      when defined(linux): 
+        "X11; Linux"
+      elif defined(win32):
+        "Windows 10"
+      elif defined(win64):
+        "Windows 10"
+      elif defined(macos):
+        "MacOS"
+    ),
+    getArchitectureUAString(),
+    getVersion()
+  ]
 
 proc networkFetch*(
     client: var IPCClient, fetchData: Option[NetworkFetchPacket]
@@ -11,9 +28,11 @@ proc networkFetch*(
   if not *fetchData:
     error "Could not reinterpret JSON data as `NetworkFetchPacket`!"
     return
-
+  
+  let ua = getUAString()
+  info "User agent is set to \"" & ua & '"'
   var webClient = httpClient(@[
-    header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0")  
+    header("User-Agent", ua)
   ])
 
   result = NetworkFetchResult(response: webClient.get((&fetchData).url).some())
