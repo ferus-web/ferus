@@ -64,7 +64,7 @@ proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
       if child.tag == TAG_TITLE:
         if *child.text:
           info "Setting document title: " & &child.text
-          renderer.setWindowTitle("Ferus — " & &child.text)
+          renderer.setWindowTitle(&child.text & " — Ferus")
         else:
           warn "<title> tag has no text content!"
   else:

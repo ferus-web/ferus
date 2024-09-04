@@ -148,7 +148,7 @@ proc addImage*(layout: var Layout, content: string) =
 
 proc constructFromElem*(layout: var Layout, elem: HTMLElement) =
   case elem.tag
-  of TAG_P, TAG_B, TAG_SPAN, TAG_STRONG, TAG_LI: # FIXME: bold stuff
+  of TAG_P, TAG_B, TAG_SPAN, TAG_STRONG, TAG_LI, TAG_A: # FIXME: bold stuff
     if not *elem.text:
       warn "layout: <" & $elem.tag & "> element does not contain any text data, ignoring it."
       return

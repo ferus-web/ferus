@@ -32,7 +32,7 @@ func head*(doc: HTMLDocument): Option[HTMLElement] {.inline.} =
   if doc.elems.len < 1: return
 
   for elem in doc.elems[0]:
-    if elem.tag == TAG_BODY:
+    if elem.tag == TAG_HEAD:
       return some(elem)
 
 func findAll*(element: HTMLElement, tag: TagType, descend: bool = false): seq[HTMLElement] =
@@ -72,12 +72,11 @@ proc parseHTMLElement*(
     elem.attributes[mappedName] = encode(value)
 
   case tag
-  of TAG_P, { TAG_H1 .. TAG_H6 }, TAG_TITLE, TAG_SCRIPT, TAG_B, TAG_SPAN, TAG_STRONG, TAG_LI:
+  of TAG_P, { TAG_H1 .. TAG_H6 }, TAG_TITLE, TAG_SCRIPT, TAG_B, TAG_SPAN, TAG_STRONG, TAG_LI, TAG_A:
     var text: string
 
     for txt in element.textNodes:
-      text = txt.data # professional programming right here
-      break
+      text &= txt.data
 
     elem.text = some(encode(text))
   else: discard
