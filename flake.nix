@@ -37,6 +37,7 @@
               glfw
 
               xorg.libX11
+              openssl.dev
               xorg.libXext
 
               wayland

@@ -1,7 +1,7 @@
 import std/[os, options, strutils, parseopt, logging]
 import colored_logger
 import ferus_ipc/client/[prelude, logger]
-import components/[network/process, renderer/process]
+import components/[network/process, renderer/process, parsers/html/process]
 
 when defined(linux):
   import components/sandbox/linux
@@ -20,40 +20,58 @@ proc bootstrap(
         try:
           process.worker = parseBool(p.val)
         except ValueError:
-          quit(1)
+          quit(249)
       of "kind":
         try:
-          process.kind = FerusProcessKind(p.val.parseInt())
+          process = FerusProcess(kind: FerusProcessKind(p.val.parseInt()))
         except ValueError:
-          quit(1)
+          quit(250)
       of "ipc-path":
         path = some p.val
+      of "pKind":
+        assert process.kind == Parser, "`parser-kind` was specified, but `kind` is NOT `Parser`! Something has went horribly, horribly wrong!"
+        try:
+          process = FerusProcess(kind: Parser, pKind: ParserKind(p.val.parseInt()))
+        except ValueError:
+          quit(251)
       else:
         discard
     else:
       discard
 
 proc main() {.inline.} =
-  sandbox()
-
   var
     p = initOptParser(commandLineParams())
     process = FerusProcess(pid: uint64 getCurrentProcessId())
     client = newIPCClient()
     path: Option[string]
-
-  addHandler newIPCLogger(lvlAll, client)
-
+  
+  addHandler newColoredLogger()
   bootstrap(p, process, path)
+
+  process.pid = uint64 getCurrentProcessId()
   client.identifyAs(process)
+
+  info "Bootstrap: Kind: " & $process.kind
+
+  if process.kind == Parser:
+    info "Bootstrap: Parser Kind: " & $process.pKind
   discard client.connect(path)
   client.handshake()
+  
+  addHandler newIPCLogger(lvlAll, client)
+  setLogFilter(lvlInfo)
+  
+  if process.kind != Renderer:
+    sandbox(process.kind)
 
   case process.kind
   of Network:
     networkProcessLogic(client, process)
   of Renderer:
     renderProcessLogic(client, process)
+  of Parser:
+    htmlParserProcessLogic(client, process)
   else:
     discard
 

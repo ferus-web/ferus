@@ -1,6 +1,8 @@
-import std/[options, strutils, importutils, logging]
+import std/[options, strutils, tables, importutils, logging]
 import ferusgfx, ferus_ipc/client/prelude
-import opengl
+import opengl, pretty
+import ../parsers/html/document
+import ../layout/[box, processor]
 
 when defined(ferusUseGlfw):
   import glfw
@@ -11,6 +13,8 @@ type FerusRenderer* = ref object
   window*: Window
   ipc*: IPCClient
   scene*: Scene
+
+  layout*: Layout
 
 proc mutate*(renderer: FerusRenderer, list: Option[DisplayList]) {.inline.} =
   if not *list:
@@ -49,10 +53,56 @@ proc setWindowTitle*(renderer: FerusRenderer, title: string) {.inline.} =
   info "Setting window title to \"" & title & "\""
   renderer.window.title = title
 
+proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
+  info "Rendering HTML document - calculating layout"
+
+  var layout = newLayout(renderer.scene.fontManager.get("Default"))
+  renderer.layout = layout
+  print document
+
+  
+  if *document.head():
+    for child in &document.head():
+      if child.tag == TAG_TITLE:
+        if *child.text:
+          info "Setting document title: " & &child.text
+          renderer.setWindowTitle("Ferus — " & &child.text)
+        else:
+          warn "<title> tag has no text content!"
+  else:
+    info "Document has no <head>"
+
+  layout.constructFromDocument(document)
+
+  var displayList = newDisplayList(addr renderer.scene)
+
+  for box in layout.boxes:
+    if box of TextBox:
+      let textBox = TextBox(box)
+      if textBox.width < 1 or textBox.height < 1:
+        continue
+
+      displayList.add(
+        newTextNode(textBox.text, textBox.pos, vec2(textBox.width.float, textBox.height.float), renderer.scene.fontManager.getTypeface("Default"), textBox.fontSize)
+      )
+    elif box of ImageBox:
+      let imageBox = ImageBox(box)
+      if imageBox.width < 1 or imageBox.height < 1:
+        continue
+
+      let node = newImageNodeFromMemory(imageBox.content, imageBox.pos) # FIXME: this is wasteful! We already have the image loaded into memory!
+
+      displayList.add(
+        node
+      )
+
+  displayList.commit()
+
 proc resize*(renderer: FerusRenderer, dims: tuple[w, h: int32]) {.inline.} =
   info "Resizing renderer viewport to $1x$2" % [$dims.w, $dims.h]
   let casted = (w: dims.w.int, h: dims.h.int)
   renderer.scene.onResize(casted)
+  #renderer.layout.update()
 
 proc initialize*(renderer: FerusRenderer) {.inline.} =
   info "Initializing renderer."
@@ -73,13 +123,13 @@ proc initialize*(renderer: FerusRenderer) {.inline.} =
       quit(8)
   else:
     var window = newWindow(
-      "Ferus", ivec2(1280, 720)
+      "Initializing", ivec2(1280, 720)
     )
     window.makeContextCurrent()
   
   renderer.window = window
   renderer.scene = newScene(1280, 1080)
-  
+
   when defined(ferusUseGlfw):
     window.windowSizeCb = proc(_: Window, size: tuple[w, h: int32]) =
       renderer.resize(size)

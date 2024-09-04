@@ -1,6 +1,6 @@
 ## Taken from https://git.sr.ht/~bptato/chame/tree/master/item/chame/minidom.nim
 
-import std/[algorithm, hashes, options, sets, streams, tables]
+import std/[algorithm, hashes, options, sets, streams, tables, json]
 
 import chame/[tags, htmlparser]
 
@@ -22,6 +22,7 @@ type
 # Mandatory Atom functions
 func `==`*(a, b: DAtom): bool {.borrow.}
 func hash*(atom: DAtom): Hash {.borrow.}
+proc `%`*(n: DAtom): JsonNode {.borrow.}
 
 func strToAtom*(factory: DAtomFactory, s: string): DAtom
 
@@ -162,6 +163,33 @@ iterator attrsStr*(element: Element): tuple[name, value: string] =
       name &= $attr.prefix & ':'
     name &= factory.atomToStr(attr.name)
     yield (name, attr.value)
+
+iterator textNodes*(node: Node): Text =
+  for node in node.childList:
+    if node of Text:
+      yield Text(node)
+
+iterator children*(node: Node): Node =
+  for node in node.childList:
+    yield node
+
+iterator elementNodes*(node: Node): Element =
+  for node in node.childList:
+    if node of Element:
+      yield Element(node)
+
+func elements*(elem: Element): seq[Element] {.inline.} =
+  for element in elem.elementNodes:
+    result &= element
+
+func getBody*(document: Document): Element {.inline.} =
+  for child in document.elementNodes:
+    if child.tagType() != TAG_HTML:
+      continue
+
+    for tag in child.elementNodes:
+      if tag.tagType() == TAG_BODY:
+        return tag
 
 # htmlparseriface implementation
 proc strToAtomImpl(builder: FerusDOMBuilder, s: string): DAtom =
@@ -480,4 +508,4 @@ proc parseHTMLFragment*(s: string, element: Element): seq[Node] =
   )
   return parseHTMLFragment(inputStream, element, opts)
 
-export streams
+export streams, TagType

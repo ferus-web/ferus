@@ -11,6 +11,9 @@ Keep in mind that this is a non-exhaustive list. Send in PRs if you want to add 
 | pretty     | Andre von Houck (treeform) et. al                     |
 | nim-seccomp | Federico Ceratto (federicocerrato) et. al            |
 | nim-glfw       | John Novak (johnnovak) et. al                     |
+| chame          | bptato                                            |
+| chagashi       | bptato                                            |
+| windy          | Andre von Houck (treeform) et. al                 |
 
 # In-House Projects
 | Project       | Maintainers                       |
@@ -18,5 +21,7 @@ Keep in mind that this is a non-exhaustive list. Send in PRs if you want to add 
 | stylus        | Trayambak Rai (xTrayambak)        | 
 | ferusgfx      | Trayambak Rai (xTrayambak)        |
 | ferus_ipc     | Trayambak Rai (xTrayambak) et. al |
+| sanchar       | Trayambak Rai (xTrayambak) et. al |
 | mirage        | Trayambak Rai (xTrayambak)        |
 | ferus         | Trayambak Rai (xTrayambak) et. al |
+| bali          | Trayambak Rai (xTrayambak)        |
