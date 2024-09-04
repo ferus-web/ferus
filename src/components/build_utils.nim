@@ -31,14 +31,14 @@ type
     bfMac
     bfBsd
 
-proc `$`*(ct: CompilerType): string =
+func `$`*(ct: CompilerType): string =
   case ct
   of ctGcc: "GNU Compiler Collection"
   of ctClang: "Clang"
   of ctMsvc: "Microsoft Visual C/C++ Compiler"
   of ctCc: "Generic C Compiler"
 
-proc getCompilerType*(): CompilerType =
+func getCompilerType*(): CompilerType =
   when defined(gcc):
     return ctGcc
 
@@ -51,16 +51,23 @@ proc getCompilerType*(): CompilerType =
   # Generic C compiler
   return ctCc
 
-proc getArchitecture*(): string {.inline, compileTime.} =
+func getArchitecture*(): string {.inline, compileTime.} =
   hostCPU
 
-proc getHostOS*(): string {.inline, compileTime.} =
+func getArchitectureUAString*: string {.inline, compileTime.} =
+  case getArchitecture()
+  of "i386": "x86"
+  of "alpha", "powerpc", "powerpc64", "sparc", "mips", "mipsel", "mips64": "risc"
+  of "amd64": "x86_64"
+  else: getArchitecture()
+
+func getHostOS*(): string {.inline, compileTime.} =
   hostOS
 
-proc getCompileDate*(): string {.inline, compileTime.} =
+func getCompileDate*(): string {.inline, compileTime.} =
   CompileDate
 
-proc getBinFormat*(): BinFormat {.inline, compileTime.} =
+func getBinFormat*(): BinFormat {.inline, compileTime.} =
   when defined(win32):
     return bfWin32
   when defined(win64):
@@ -72,7 +79,7 @@ proc getBinFormat*(): BinFormat {.inline, compileTime.} =
   when defined(linux):
     return bfLinux
 
-proc isDebugBuild*(): bool {.inline, compileTime.} =
+func isDebugBuild*(): bool {.inline, compileTime.} =
   when defined(debug): true else: false
 
 {.warning[UnreachableCode]: on.}
