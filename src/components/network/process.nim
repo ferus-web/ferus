@@ -1,5 +1,5 @@
 import std/[logging, options, json]
-import sanchar/http, sanchar/parse/url, ferus_ipc/client/prelude, jsony
+import sanchar/[http, proto/http/shared], sanchar/parse/url, ferus_ipc/client/prelude, jsony
 import ../../components/network/ipc
 
 proc networkFetch*(
@@ -12,7 +12,9 @@ proc networkFetch*(
     error "Could not reinterpret JSON data as `NetworkFetchPacket`!"
     return
 
-  var webClient = httpClient()
+  var webClient = httpClient(@[
+    header("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0")  
+  ])
 
   result = NetworkFetchResult(response: webClient.get((&fetchData).url).some())
 
