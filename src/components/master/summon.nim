@@ -28,9 +28,9 @@ proc dispatch*(summon: Summon): string {.inline.} =
   s
 
 proc summon*(
-    kind: FerusProcessKind,
-    pKind: ParserKind = pkCSS, # TODO: implement pkNone
-    ipcPath: string,
+  kind: FerusProcessKind,
+  pKind: ParserKind = pkHTML, # TODO: implement pkNone
+  ipcPath: string,
 ): Summon {.inline.} =
   var process = FerusProcess(kind: kind)
 
