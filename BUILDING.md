@@ -42,3 +42,24 @@ you can simply run
 and Ferus will be built and installed to the result/
 subdirectory. `nix profile install` can be used to
 install it to your home directory.
+
+## Compiling Ferus with a different windowing backend
+
+Ferus supports windy and glfw as two windowing backends. We hope that windy one day will have a working Wayland backend, but until then, glfw is the default. To force Ferus to use windy, go into the `nim.cfg` file and comment out the compile-time define `ferusUseGlfw`.
+
+## More compile-time flags for Ferus
+### --define:ferusInJail
+
+This will force all new processes to sandbox themselves appropriately. This is an unstable feature and will not be enabled by default until it is ready. It is much more secure than how Ferus currently works.
+
+### --define:ferusSandboxAttachStrace
+
+This exists for debugging the previously mentioned flag and adding more support for it. Ferus' child processes will be launched via `strace` if this flag is provided.
+
+### --define:ferusAddMangohudToRendererPrefix
+
+If provided, then Ferus' renderer will be started with `mangohud --dlsym`, providing a neat little overlay to see the framerate and other statistics.
+
+### --define:ferusJustWaitForConnection
+
+If provided, then Ferus' master spawner will not launch commands to summon new child processes itself, but wait for the user to type it out themselves. This is very useful for debugging the child processes, but gets annoying to do per-run fast.

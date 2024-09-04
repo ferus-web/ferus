@@ -39,15 +39,15 @@ proc tick*(renderer: FerusRenderer) {.inline.} =
   else:
     pollEvents()
 
-  #privateAccess renderer.scene.camera.typeof
-  #renderer.ipc.debug $renderer.scene.camera.delta
+  # privateAccess renderer.scene.camera.typeof
+  # renderer.ipc.debug $renderer.scene.camera.delta
 
 proc close*(renderer: FerusRenderer) {.inline.} =
   info "Closing renderer."
 
   when defined(ferusUseGlfw):
-    glfw.terminate()
     destroy renderer.window
+    glfw.terminate()
 
 proc setWindowTitle*(renderer: FerusRenderer, title: string) {.inline.} =
   info "Setting window title to \"" & title & "\""
@@ -58,9 +58,7 @@ proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
 
   var layout = newLayout(renderer.scene.fontManager.get("Default"))
   renderer.layout = layout
-  print document
 
-  
   if *document.head():
     for child in &document.head():
       if child.tag == TAG_TITLE:
@@ -75,8 +73,18 @@ proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
   layout.constructFromDocument(document)
 
   var displayList = newDisplayList(addr renderer.scene)
+  
+  var start, ending: Vec2
+  for i, box in layout.boxes:
+    if i == 0 or box.pos.y < start.y:
+      `=destroy`(start)
+      wasMoved(start)
+      start = vec2(box.pos.x, box.pos.y - (box.height.float + 32)) # FIXME: more precise document start detection
+    elif box.pos.y > ending.y:
+      `=destroy`(ending)
+      wasMoved(ending)
+      ending = deepCopy(box.pos)
 
-  for box in layout.boxes:
     if box of TextBox:
       let textBox = TextBox(box)
       if textBox.width < 1 or textBox.height < 1:
@@ -95,7 +103,8 @@ proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
       displayList.add(
         node
       )
-
+  
+  renderer.scene.camera.setBoundaries(start, ending)
   displayList.commit()
 
 proc resize*(renderer: FerusRenderer, dims: tuple[w, h: int32]) {.inline.} =
@@ -106,7 +115,10 @@ proc resize*(renderer: FerusRenderer, dims: tuple[w, h: int32]) {.inline.} =
 
 proc initialize*(renderer: FerusRenderer) {.inline.} =
   info "Initializing renderer."
-  # glfw.initialize()
+  
+  when defined(ferusUseGlfw):
+    glfw.initialize()
+
   loadExtensions()
   
   when defined(ferusUseGlfw):
@@ -135,9 +147,9 @@ proc initialize*(renderer: FerusRenderer) {.inline.} =
       renderer.resize(size)
 
     window.scrollCb = proc(_: Window, offset: tuple[x, y: float64]) =
-      # renderer.ipc.debug "Scrolling (offset: " & $offset & ")"
-      let casted = vec2(offset.x, offset.y)
-      renderer.scene.onScroll(casted)
+      # debug "Scrolling (offset: " & $offset & ")"
+      let vector = vec2(offset.x, offset.y)
+      renderer.scene.onScroll(vector)
 
     # window.registerWindowCallbacks()
     renderer.window = window
