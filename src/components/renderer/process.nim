@@ -2,6 +2,9 @@ import std/[options, json, logging, base64, importutils, logging]
 import ferus_ipc/client/prelude, jsony
 import ferusgfx/[displaylist, fontmgr, textnode, imagenode, gifnode]
 import pixie
+when defined(linux):
+  import ../../components/sandbox/linux
+
 import ../../components/renderer/[core] 
 import ../../components/renderer/ipc except newDisplayList
 
@@ -35,16 +38,26 @@ proc loadFont*(
     data = packet.content
     name = packet.name
 
-  var font: Option[Font]
+  var
+    typeface: Option[Typeface]
+    font: Option[Font]
+
+  try:
+    typeface = some decode(data).readTypeface(packet.format)
+  except PixieError as exc:
+    error "Failed to load typeface: " & exc.msg & ": fmt=" & packet.format
+    return
 
   try:
     font = newFont(
-      decode(data).readTypeface(packet.format)
+      &typeface
     ).some()
   except PixieError as exc:
     error "Failed to load font: " & exc.msg & ": fmt=" & packet.format 
+    return
   
   if *font:
+    renderer.scene.fontManager.setTypeface(name, &typeface)
     renderer.scene.fontManager.set(name, &font)
     info "Loaded font \"" & name & "\" successfully!"
 
@@ -98,8 +111,8 @@ proc talk(
     client: var IPCClient, renderer: FerusRenderer, process: FerusProcess
 ) {.inline.} =
   poll client
-  let data = client.receive()
 
+  let data = client.receive()
   if data.len < 1:
     return
 
@@ -122,15 +135,31 @@ proc talk(
   case &kind
   of feRendererMutation:
     info data
+    client.setState(Processing)
     mutateTree(client, renderer, tryParseJson(data, RendererMutationPacket))
+    client.setState(Idling)
   of feRendererLoadFont:
+    client.setState(Processing)
     loadFont(client, renderer, tryParseJson(data, RendererLoadFontPacket))
+    client.setState(Idling)
   of feRendererSetWindowTitle:
     let reinterpreted = tryParseJson(data, RendererSetWindowTitle)
     if not *reinterpreted:
       warn "Cannot reinterpret JSON data as `RendererSetWindowTitle` packet!"
+      return
     
+    client.setState(Processing)
     renderer.setWindowTitle((&reinterpreted).title.decode())
+    client.setState(Idling)
+  of feRendererRenderDocument:
+    let reinterpreted = tryParseJson(data, RendererRenderDocument)
+    if not *reinterpreted:
+      warn "Cannot reinterpret JSON data as `RendererRenderDocument` packet!"
+      return
+    
+    client.setState(Processing)
+    renderer.renderDocument((&reinterpreted).document)
+    client.setState(Idling)
   else:
     discard
 
@@ -141,7 +170,9 @@ proc renderProcessLogic*(client: var IPCClient, process: FerusProcess) {.inline.
   let renderer = newFerusRenderer(client)
   renderer.initialize()
 
+  info "Initialized renderer - marking ourselves as Idling."
   client.setState(Idling)
+  sandbox(Renderer)
 
   while true:
     tick renderer

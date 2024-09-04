@@ -4,6 +4,8 @@ import ferus_ipc/shared, vmath
 from ferusgfx import Scene
 import ferusgfx/displaylist
 
+import ../parsers/html/document
+
 type
   DrawableKind* = enum
     TextNode
@@ -32,6 +34,10 @@ type
   RendererSetWindowTitle* = ref object
     kind: FerusMagic = feRendererSetWindowTitle
     title*: string
+  
+  RendererRenderDocument* = ref object
+    kind: FerusMagic = feRendererRenderDocument
+    document*: HTMLDocument
 
   IPCDisplayList* = GDisplayList[Drawable] ## IPC display list
 
