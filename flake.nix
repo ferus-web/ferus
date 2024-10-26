@@ -35,6 +35,7 @@
               libseccomp
               libGL
               glfw
+              simdutf
 
               xorg.libX11
               openssl.dev
