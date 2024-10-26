@@ -23,6 +23,8 @@ proc main() {.inline.} =
 
   var master = newMasterProcess()
   initialize master
+  master.summonRendererProcess()
+  master.loadFont("assets/fonts/IBMPlexSans-Regular.ttf", "Default")
   
   let resource = paramStr(1)
   var content: string
@@ -55,8 +57,6 @@ proc main() {.inline.} =
   let document = &(&parsedHtml).document # i love unwrapping: electric boogaloo
   print document
 
-  master.summonRendererProcess()
-  master.loadFont("assets/fonts/IBMPlexSans-Regular.ttf", "Default")
   master.renderDocument(document)
 
   while true:

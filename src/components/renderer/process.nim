@@ -122,7 +122,6 @@ proc talk(
     return
 
   let data = client.receive()
-  echo data
   if data.len < 1:
     return
 

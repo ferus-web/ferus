@@ -160,7 +160,7 @@ proc addImage*(layout: var Layout, content: string) =
 
 proc constructFromElem*(layout: var Layout, elem: HTMLElement) =
   case elem.tag
-  of TAG_P, TAG_B, TAG_SPAN, TAG_STRONG, TAG_LI, TAG_A: # FIXME: bold stuff
+  of TAG_P, TAG_B, TAG_SPAN, TAG_STRONG, TAG_LI, TAG_A, TAG_DIV: # FIXME: bold stuff
     if not *elem.text:
       warn "layout: <" & $elem.tag & "> element does not contain any text data, ignoring it."
       return
@@ -268,6 +268,9 @@ proc constructFromDocument*(layout: var Layout, document: HTMLDocument) =
       pushRemainingChildren(currChildren, remainingChildren) ]#
 
 proc update*(layout: var Layout) =
-  layout.constructFromDocument(layout.document)
+  if layout.document != nil:
+    layout.constructFromDocument(layout.document)
+  else:
+    warn "Cannot re-calculate layout if document == NULL!"
 
 export bumpy

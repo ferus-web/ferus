@@ -56,29 +56,12 @@ proc setWindowTitle*(renderer: FerusRenderer, title: string) {.inline.} =
   info "Setting window title to \"" & title & "\""
   renderer.window.title = title
 
-proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
-  info "Rendering HTML document - calculating layout"
-    
-  var layout = newLayout(renderer.ipc, renderer.scene.fontManager.get("Default"))
-  renderer.layout = layout
-
-  if *document.head():
-    for child in &document.head():
-      if child.tag == TAG_TITLE:
-        if *child.text:
-          info "Setting document title: " & &child.text
-          renderer.setWindowTitle(&child.text & " — Ferus")
-        else:
-          warn "<title> tag has no text content!"
-  else:
-    info "Document has no <head>"
-
-  layout.constructFromDocument(document)
-
+proc paintLayout*(renderer: FerusRenderer) =
   var displayList = newDisplayList(addr renderer.scene)
+  displayList.doClearAll = true
   
   var start, ending: Vec2
-  for i, box in layout.boxes:
+  for i, box in renderer.layout.boxes:
     if i == 0 or box.pos.y < start.y:
       `=destroy`(start)
       wasMoved(start)
@@ -110,11 +93,33 @@ proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
   renderer.scene.camera.setBoundaries(start, ending)
   displayList.commit()
 
+proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
+  info "Rendering HTML document - calculating layout"
+    
+  var layout = newLayout(renderer.ipc, renderer.scene.fontManager.get("Default"))
+
+  if *document.head():
+    for child in &document.head():
+      if child.tag == TAG_TITLE:
+        if *child.text:
+          info "Setting document title: " & &child.text
+          renderer.setWindowTitle(&child.text & " — Ferus")
+        else:
+          warn "<title> tag has no text content!"
+  else:
+    info "Document has no <head>"
+
+  layout.constructFromDocument(document)
+  renderer.layout = move(layout)
+
+  renderer.paintLayout()
+
 proc resize*(renderer: FerusRenderer, dims: tuple[w, h: int32]) {.inline.} =
   info "Resizing renderer viewport to $1x$2" % [$dims.w, $dims.h]
   let casted = (w: dims.w.int, h: dims.h.int)
   renderer.scene.onResize(casted)
   #renderer.layout.update()
+  #renderer.paintLayout()
 
 proc initialize*(renderer: FerusRenderer) {.inline.} =
   info "Initializing renderer."
