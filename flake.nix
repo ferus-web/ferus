@@ -35,6 +35,7 @@
               libseccomp
               libGL
               glfw
+              simdutf
 
               xorg.libX11
               openssl.dev
@@ -49,13 +50,11 @@
 
             wrapFerus =
               let
-                makeWrapperArgs = ''
-                  --prefix LD_LIBRARY_PATH : ${LD_LIBRARY_PATH}
-                '';
+                makeWrapperArgs = "--prefix LD_LIBRARY_PATH : ${LD_LIBRARY_PATH}";
               in
               ''
-                wrapProgram "$(pwd)"/ferus ${makeWrapperArgs}
-                wrapProgram "$(pwd)"/ferus_process ${makeWrapperArgs}
+                wrapProgram ferus ${makeWrapperArgs}
+                wrapProgram ferus_process ${makeWrapperArgs}
               '';
 
             postInstall = ''
