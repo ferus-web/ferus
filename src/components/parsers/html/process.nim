@@ -2,7 +2,7 @@ import std/[base64, options, json, logging, monotimes]
 import ./ipc
 import ./document
 import ../../web/dom
-from ../../shared/sugar import `!`
+import ../../shared/sugar
 import ferus_ipc/client/prelude
 import jsony
 
@@ -56,7 +56,7 @@ proc talk(client: var IPCClient, process: FerusProcess) {.inline.} =
 proc htmlParserProcessLogic*(client: var IPCClient, process: FerusProcess) {.inline.} =
   info "Entering HTML parser process logic."
   client.setState(Idling)
+  client.poll()
 
   while true:
-    poll client
     client.talk(process)

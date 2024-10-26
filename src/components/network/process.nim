@@ -1,5 +1,6 @@
 import std/[strutils, logging, options, json]
 import sanchar/[http, proto/http/shared], sanchar/parse/url, ferus_ipc/client/prelude, jsony
+import ../../components/shared/sugar
 import ../../components/network/ipc
 import ../../components/build_utils
 
@@ -23,19 +24,24 @@ proc networkFetch*(
     client: var IPCClient, fetchData: Option[NetworkFetchPacket]
 ): NetworkFetchResult {.inline.} =
   client.setState(Processing)
-  info "Getting ready to send HTTP request."
-
   if not *fetchData:
     error "Could not reinterpret JSON data as `NetworkFetchPacket`!"
     return
   
-  let ua = getUAString()
+  let 
+    url = (&fetchData).url
+    ua = getUAString()
+
   info "User agent is set to \"" & ua & '"'
+  info "Getting ready to send HTTP/GET request to: " & $url
+
   var webClient = httpClient(@[
     header("User-Agent", ua)
   ])
 
   result = NetworkFetchResult(response: webClient.get((&fetchData).url).some())
+
+  info "Fetched HTTP/GET response from: " & $url
 
   client.setState(Idling)
 
@@ -53,7 +59,7 @@ proc talk(client: var IPCClient, process: FerusProcess) {.inline.} =
   if not *kind:
     warn "No `kind` field inside JSON data provided."
     return
-
+  
   case &kind
   of feNetworkFetch:
     let data = client.networkFetch(tryParseJson(data, NetworkFetchPacket))
@@ -66,5 +72,4 @@ proc networkProcessLogic*(client: var IPCClient, process: FerusProcess) {.inline
   client.setState(Idling)
 
   while true:
-    poll client
     client.talk(process)

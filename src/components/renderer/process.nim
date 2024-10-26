@@ -1,4 +1,4 @@
-import std/[options, json, logging, base64, importutils, logging]
+import std/[options, json, logging, base64, importutils, logging, posix, net]
 import ferus_ipc/client/prelude, jsony
 import ferusgfx/[displaylist, fontmgr, textnode, imagenode, gifnode]
 import pixie
@@ -6,9 +6,13 @@ when defined(linux):
   import ../../components/sandbox/linux
 
 import ../../components/renderer/[core] 
+import ../../components/shared/sugar
 import ../../components/renderer/ipc except newDisplayList
 
 {.passL: "-lwayland-client -lwayland-cursor -lwayland-egl -lxkbcommon -lGL".}
+
+var FIONREAD {.importc, header: "<sys/ioctl.h>".}: cint
+proc ioctl(fd: cint, op: cint, argp: pointer): cint {.importc, header: "<sys/ioctl.h>".}
 
 proc readTypeface*(data, format: string): Typeface {.raises: [PixieError].} =
   ## Loads a typeface from data.
@@ -110,9 +114,15 @@ proc mutateTree*(
 proc talk(
     client: var IPCClient, renderer: FerusRenderer, process: FerusProcess
 ) {.inline.} =
-  poll client
+  var count: cint
+  
+  discard ioctl(client.socket.getFd().cint, FIONREAD, addr count)
+  
+  if count < 1:
+    return
 
   let data = client.receive()
+  echo data
   if data.len < 1:
     return
 
@@ -175,7 +185,7 @@ proc renderProcessLogic*(client: var IPCClient, process: FerusProcess) {.inline.
   sandbox(Renderer)
 
   while true:
-    tick renderer
     client.talk(renderer, process)
+    renderer.tick()
 
   close renderer

@@ -10,6 +10,7 @@ import pretty
 import sanchar/parse/url
 import sanchar/proto/http/shared
 
+import ../../components/shared/sugar
 import ../../components/[network/ipc, renderer/ipc, cookie_worker/ipc, parsers/html/ipc, parsers/html/document]
 import ../../components/web/cookie/parsed_cookie
 
@@ -39,19 +40,20 @@ proc launchAndWait(master: MasterProcess, summoned: string) =
 
     if forked == 0:
       info "Running: " & summoned
-      let (output, res) = execCmdEx(summoned)
+      let res = execCmd(summoned)
 
       case res
       of 0:
         info "ferus_process exited out gracefully; ciao!"
-        warn output
       of 139:
-        warn "ferus_process has crashed with a segmentation fault (139)"
-        warn output
+        warn "ferus_process has crashed with a segmentation fault! (139)"
+        warn "command: " & summoned
       of 1:
-        warn "ferus_process has crashed with an unhandled error or defect (1)"
-        warn output
-      else: warn "ferus_process crashed with an unknown exit code: " & $res
+        warn "ferus_process has crashed with an unhandled error or defect! (1)"
+        warn "command: " & summoned
+      else: 
+        warn "ferus_process crashed with an unknown exit code: " & $res
+        warn "command: " & summoned
 
       quit(res)
     elif forked < 0:
@@ -65,13 +67,15 @@ proc waitUntilReady*(
   process: var FerusProcess,
   kind: FerusProcessKind, parserKind: ParserKind = pkCss, group: int = 0
 ) {.inline.} =
+  return
+
   var numWait: int
-  let og = deepcopy process.kind
 
   while process.state in [Initialized, Processing]:
-    #info ("Waiting for $1 process to signal itself as ready for work #$2 (currently $3)" % [$kind, $numWait, $process.state])
+    info ("Waiting for $1 process to signal itself as ready for work #$2 (currently $3)" % [$kind, $numWait, $process.state])
     master.server.poll()
     if (let o = master.server.groups[group].findProcess(kind, parserKind, workers = false); *o):
+      master.server.receiveFrom(process.group, master.server.groups[group].find(&o).uint)
       process = &o
     else:
       error "$1 process has disconnected before marking itself as ready! It probably crashed! D:" % [$kind]
@@ -161,13 +165,14 @@ proc renderDocument*(master: MasterProcess, document: HTMLDocument) =
   
   var prc = &process
   assert prc.kind == Renderer
-  master.waitUntilReady(prc, Renderer)
   master.server.send(
-    (&process).socket,
+    prc.socket,
     RendererRenderDocument(
       document: document
     )
   )
+
+  info "Dispatched document to renderer process."
 
 proc setWindowTitle*(master: MasterProcess, title: string) {.inline.} =
   var process = master.server.groups[0].findProcess(Renderer, workers = false)
@@ -178,7 +183,7 @@ proc setWindowTitle*(master: MasterProcess, title: string) {.inline.} =
     return
   
   var prc = &process
-  master.waitUntilReady(prc, Renderer)
+  # master.waitUntilReady(prc, Renderer)
 
   master.server.send(
     (&process).socket,
@@ -198,7 +203,7 @@ proc dispatchRender*(master: MasterProcess, list: IPCDisplayList) {.inline.} =
     return
   
   var prc = &process
-  master.waitUntilReady(prc, Renderer)
+  # master.waitUntilReady(prc, Renderer)
 
   master.server.send(
     (&process).socket,
@@ -222,7 +227,6 @@ proc loadFont*(
   let ext = file.splitFile().ext
   
   var prc = &process
-  master.waitUntilReady(prc, Renderer) 
 
   info ("Sending renderer process a font to load: $1 as \"$2\"" % [file, name])
   let encoded = encode( # encode the data in base64 to ensure that it doesn't mess up the JSON packet
@@ -264,7 +268,7 @@ proc fetchNetworkResource*(
     numRecv: int
     res: Option[NetworkFetchResult]
 
-  while res.isNone:
+  while not *res:
     #info "Waiting for network process to send a `NetworkFetchResult` x" & $numRecv
     let packet = master.server.receive((&process).socket, NetworkFetchResult)
 
@@ -280,5 +284,43 @@ proc fetchNetworkResource*(
 
   res
 
+proc dataTransfer*(master: MasterProcess, process: FerusProcess, request: DataTransferRequest) =
+  info "Data transfer request from " & $process.kind & " (PID " & $process.pid & ")"
+  if request.location.kind == DataLocationKind.WebRequest:
+    if process.kind != Renderer:
+      master.server.reportBadMessage(process, "Process that does not require network data transfers (" & $process.kind & ") attempted to perform one.", High)
+      return
+    
+    let data = master.fetchNetworkResource(process.group, request.location.url)
+
+    if not *data:
+      warn "Could not fulfill data transfer request as request to network process failed!"
+      master.server.send(
+        process.socket,
+        DataTransferResult(success: false)
+      )
+      return
+
+    let resp = (&data).response
+
+    if not *resp:
+      warn "Could not fulfill data transfer as a server error occured!"
+      master.server.send(
+        process.socket,
+        DataTransferResult(success: false)
+      )
+
+    master.server.send(
+      process.socket,
+      DataTransferResult(success: true, data: (&resp).content)
+    )
+  else:
+    warn "Unimplemented data transfer: FileRequest"
+
 proc newMasterProcess*(): MasterProcess {.inline.} =
-  MasterProcess(server: newIPCServer())
+  var master = MasterProcess(server: newIPCServer())
+
+  master.server.onDataTransfer = proc(process: FerusProcess, request: DataTransferRequest) =
+    master.dataTransfer(process, request)
+  
+  master

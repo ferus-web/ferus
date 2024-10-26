@@ -1,11 +1,12 @@
 ## Layout processor
 ## Copyright (C) 2024 Trayambak Rai and Ferus Authors
 
-import std/[strutils, tables, logging]
+import std/[strutils, tables, logging, options]
 import vmath, bumpy, pixie, pixie/fonts
 import ./box
 import ../parsers/html/document
 import ../shared/sugar
+import ferus_ipc/[client/prelude, shared]
 import pretty
 
 const
@@ -15,6 +16,7 @@ const
 type
   Layout* = object
     cursor*: Vec2
+    ipc*: IPCClient
     width*: int
     
     isLastBoxFinalized*: bool = false
@@ -61,9 +63,9 @@ proc getWordHeight*(layout: var Layout, word: string): int =
 
   height
 
-proc newLayout*(font: Font): Layout {.inline.} =
+proc newLayout*(ipc: IPCClient, font: Font): Layout {.inline.} =
   debug "layout: create layout processor"
-  var layout = Layout(font: font)
+  var layout = Layout(font: font, ipc: ipc)
 
   layout.cursor.reset()
   layout.boxes.reset()
@@ -132,19 +134,29 @@ proc addHeading*(layout: var Layout, text: string, level: uint = 1) =
   layout.addBreak()
 
 proc addImage*(layout: var Layout, content: string) =
-  let image = decodeImage(content)
+  let image: Option[Image] = 
+    try:
+      some decodeImage(content)
+    except PixieError as exc:
+      error "An error occured whilst decoding image: " & exc.msg
+      none(Image)
+
+  if not *image:
+    warn "Image box will not be processed as the image has failed to load."
+    return
+
   layout.boxes &=
     ImageBox(
-      image: image,
+      image: &image,
       content: content,
       pos: layout.cursor,
-      width: image.width,
-      height: image.height
+      width: (&image).width,
+      height: (&image).height
     )
 
-  layout.cursor = vec2(layout.cursor.x + image.width.float32, layout.cursor.y)
+  layout.cursor = vec2(layout.cursor.x + (&image).width.float32, layout.cursor.y)
   if layout.cursor.x >= layout.width.float:
-    layout.cursor = vec2(0f, layout.cursor.y + image.height.float32)
+    layout.cursor = vec2(0f, layout.cursor.y + (&image).height.float32)
 
 proc constructFromElem*(layout: var Layout, elem: HTMLElement) =
   case elem.tag
@@ -206,12 +218,14 @@ proc constructFromElem*(layout: var Layout, elem: HTMLElement) =
       warn "layout: <img> element does not contain `src` attribute, ignoring it."
       return
     
-    #[ let image = layout.client.dataRequest(
-      networkRequest(
-        reason = Reason.LoadContent,
-        url = &src
-      )
-    ) ]# # TODO: implement data requests in ferus_ipc
+    # ask the master to ask the network process for our tab to load an image
+    let image = layout.ipc.requestDataTransfer(
+      ResourceRequired, DataLocation(kind: DataLocationKind.WebRequest, url: &src)
+    )
+    
+    if *image:
+      info (&image).data
+      layout.addImage((&image).data)
   else:
     warn "layout: unhandled tag: " & $elem.tag
 
@@ -255,13 +269,5 @@ proc constructFromDocument*(layout: var Layout, document: HTMLDocument) =
 
 proc update*(layout: var Layout) =
   layout.constructFromDocument(layout.document)
-
-func newLayout*(font: Font, viewport: Rect): Layout {.inline.} =
-  Layout(
-    cursor: vec2(0, 0),
-    boxes: newSeq[Box](),
-    viewport: viewport,
-    font: font
-  )
 
 export bumpy

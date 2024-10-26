@@ -21,7 +21,7 @@ proc main() {.inline.} =
   info "Architecture: " & $getArchitecture()
   info "Host OS: " & $getHostOS()
 
-  let master = newMasterProcess()
+  var master = newMasterProcess()
   initialize master
   
   let resource = paramStr(1)

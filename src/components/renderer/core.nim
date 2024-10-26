@@ -1,6 +1,7 @@
 import std/[options, strutils, tables, importutils, logging]
 import ferusgfx, ferus_ipc/client/prelude
 import opengl, pretty
+import ../shared/sugar
 import ../parsers/html/document
 import ../layout/[box, processor]
 
@@ -13,6 +14,8 @@ type FerusRenderer* = ref object
   window*: Window
   ipc*: IPCClient
   scene*: Scene
+
+  needsNewContent*: bool = true
 
   layout*: Layout
 
@@ -55,8 +58,8 @@ proc setWindowTitle*(renderer: FerusRenderer, title: string) {.inline.} =
 
 proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
   info "Rendering HTML document - calculating layout"
-
-  var layout = newLayout(renderer.scene.fontManager.get("Default"))
+    
+  var layout = newLayout(renderer.ipc, renderer.scene.fontManager.get("Default"))
   renderer.layout = layout
 
   if *document.head():

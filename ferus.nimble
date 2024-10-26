@@ -10,7 +10,7 @@ bin = @["ferus", "ferus_process"]
 # Dependencies
 
 requires "nim >= 2.0.2"
-requires "ferusgfx#main"
+requires "ferusgfx >= 1.1"
 requires "colored_logger >= 0.1.0"
 requires "stylus >= 0.1.0"
 requires "https://github.com/ferus-web/ferus_ipc"
@@ -25,3 +25,5 @@ when defined(ferusUseGlfw):
   requires "glfw >= 3.4.0.4"
 else:
   requires "windy >= 0.0.0"
+
+requires "netty >= 0.2.1"
