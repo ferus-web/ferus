@@ -31,6 +31,7 @@
             ];
 
             buildInputs = with pkgs; [
+              pkg-config
               libxkbcommon
               libseccomp
               libGL
