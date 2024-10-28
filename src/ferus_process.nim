@@ -1,7 +1,7 @@
 import std/[os, options, strutils, parseopt, logging]
 import colored_logger
 import ferus_ipc/client/[prelude, logger]
-import components/[network/process, renderer/process, parsers/html/process]
+import components/[network/process, renderer/process, parsers/html/process, js/process]
 
 when defined(linux):
   import components/sandbox/linux
@@ -72,6 +72,8 @@ proc main() {.inline.} =
     renderProcessLogic(client, process)
   of Parser:
     htmlParserProcessLogic(client, process)
+  of JSRuntime:
+    jsProcessLogic(client, process)
   else:
     discard
 
