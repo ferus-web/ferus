@@ -4,6 +4,7 @@ import components/[
   build_utils, 
   master/master, network/ipc, renderer/ipc, shared/sugar
 ]
+import components/parsers/html/document
 import sanchar/parse/url
 import pretty
 
@@ -23,6 +24,7 @@ proc main() {.inline.} =
 
   var master = newMasterProcess()
   initialize master
+  master.summonJSRuntime(0)
   master.summonRendererProcess()
   master.loadFont("assets/fonts/IBMPlexSans-Regular.ttf", "Default")
   
@@ -55,7 +57,18 @@ proc main() {.inline.} =
     quit(1)
 
   let document = &(&parsedHtml).document # i love unwrapping: electric boogaloo
-  print document
+  var scriptNodes: seq[HTMLElement] 
+
+  for node in document.elems:
+    scriptNodes &= node.findAll(TAG_SCRIPT, descend = true)
+
+  for node in scriptNodes:
+    let text = node.text()
+
+    if !text: continue
+
+    master.executeJS(0, code = &text)
+    break
 
   master.renderDocument(document)
 
