@@ -162,8 +162,14 @@ proc summonRendererProcess*(master: MasterProcess) {.inline.} =
   let summoned = summon(Renderer, ipcPath = master.server.path).dispatch()
   master.launchAndWait(summoned)
 
+  
+  let oproc = master.server.groups[0].findProcess(Renderer, workers = false)
+  if !oproc:
+    error "Failed to spawn renderer process!"
+    quit(1)
+
   # FIXME: investigate why this happens
-  var process = &master.server.groups[0].findProcess(Renderer, workers = false)
+  var process = &oproc
   let idx = master.server.groups[0].processes.find(process)
 
   process.state = Initialized
@@ -395,6 +401,8 @@ proc newMasterProcess*(): MasterProcess {.inline.} =
         return
 
       master.onConsoleLog(process, &data)
-    else: discard
+    else:
+      warn "Unhandled IPC protocol magic: " & $kind
+      return
   
   master
