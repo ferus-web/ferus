@@ -25,6 +25,7 @@ proc main() {.inline.} =
   var master = newMasterProcess()
   initialize master
   master.summonJSRuntime(0)
+  master.summonNetworkProcess(0)
   master.summonRendererProcess()
   master.loadFont("assets/fonts/IBMPlexSans-Regular.ttf", "Default")
   
