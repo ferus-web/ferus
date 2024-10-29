@@ -1,6 +1,6 @@
-import std/[strutils, logging, options, json]
+import std/[strutils, logging, options, json, net]
 import sanchar/[http, proto/http/shared], sanchar/parse/url, ferus_ipc/client/prelude, jsony
-import ../../components/shared/sugar
+import ../../components/shared/[nix, sugar]
 import ../../components/network/ipc
 import ../../components/build_utils
 
@@ -46,6 +46,13 @@ proc networkFetch*(
   client.setState(Idling)
 
 proc talk(client: var IPCClient, process: FerusProcess) {.inline.} =
+  var count: cint
+
+  discard nix.ioctl(client.socket.getFd().cint, nix.FIONREAD, addr count)
+
+  if count < 1:
+    return
+
   let
     data = client.receive()
     jdata = tryParseJson(data, JsonNode)
