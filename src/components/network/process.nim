@@ -1,8 +1,17 @@
 import std/[strutils, logging, options, json, net]
-import sanchar/[http, proto/http/shared], sanchar/parse/url, ferus_ipc/client/prelude, jsony
+import sanchar/[http, proto/http/shared], sanchar/parse/url, ferus_ipc/client/prelude
+
+when defined(ferusUseCurl):
+  import webby/httpheaders
+  import curly
+
+import jsony
 import ../../components/shared/[nix, sugar]
 import ../../components/network/ipc
 import ../../components/build_utils
+
+when defined(ferusUseCurl):
+  var curl = newCurly()
 
 func getUAString*: string {.inline.} =
   "Mozilla/5.0 ($1 $2) Ferus/$3 (Ferus, like Gecko) Ferus/$3 Firefox/129.0" % [
@@ -34,12 +43,32 @@ proc networkFetch*(
 
   info "User agent is set to \"" & ua & '"'
   info "Getting ready to send HTTP/GET request to: " & $url
+  
+  when defined(ferusUseCurl):
+    let response = curl.get($url)
 
-  var webClient = httpClient(@[
-    header("User-Agent", ua)
-  ])
+    result = NetworkFetchResult(
+      response: some(HTTPResponse(
+        httpVersion: response.request.verb,
+        code: response.code.uint32,
+        content: response.body,
+        headers: (proc: Headers =
+          var headers: Headers
+          let baseHeaders = response.headers.toBase()
 
-  result = NetworkFetchResult(response: webClient.get((&fetchData).url).some())
+          for (key, value) in baseHeaders:
+            headers.add(Header(key: key, value: value))
+
+          headers
+        )()
+      ))
+    )
+  else:
+    var webClient = httpClient(@[
+      header("User-Agent", ua)
+    ])
+
+    result = NetworkFetchResult(response: webClient.get((&fetchData).url).some())
 
   info "Fetched HTTP/GET response from: " & $url
 
