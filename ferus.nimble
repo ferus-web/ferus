@@ -22,6 +22,7 @@ requires "simdutf >= 5.5.0"
 requires "https://github.com/ferus-web/bali#master"
 requires "results"
 requires "pretty"
+requires "jsony >= 1.1.5"
 requires "chagashi >= 0.5.4"
 
 when defined(ferusUseGlfw):
