@@ -1,8 +1,8 @@
-import std/[base64, options, json, logging, monotimes]
+import std/[base64, options, json, logging, monotimes, net]
 import ./ipc
 import ./document
 import ../../web/dom
-import ../../shared/sugar
+import ../../shared/[nix, sugar]
 import ferus_ipc/client/prelude
 import jsony
 
@@ -29,6 +29,12 @@ proc htmlParse*(
   )
 
 proc talk(client: var IPCClient, process: FerusProcess) {.inline.} =
+  var count: cint
+  discard nix.ioctl(client.socket.getFd().cint, nix.FIONREAD, addr(count))
+
+  if count < 1:
+    return
+
   let
     data = client.receive()
     jdata = tryParseJson(data, JsonNode)
