@@ -25,6 +25,7 @@ type
     text*: string
     font*: Font
 
+
     document*: HTMLDocument
 
 var
@@ -57,7 +58,7 @@ proc getWordHeight*(layout: var Layout, word: string): int =
 
     debug "layout: computed layout height for text \"" & word & "\": " & $height
   else:
-    height = WordLengths[word]
+    height = WordHeights[word]
 
     debug "layout: retrieved cached layout height for text \"" & word & "\": " & $height
 
@@ -70,11 +71,9 @@ proc newLayout*(ipc: IPCClient, font: Font): Layout {.inline.} =
   layout.cursor.reset()
   layout.boxes.reset()
   
-  if not WordLengths.contains(" "):
-    let bounds = layout.font.layoutBounds(" ")
-    WordLengths[" "] = bounds.x.int
-    WordHeights[" "] = bounds.y.int
-  
+  WordLengths[""] = 8
+  WordHeights[""] = 8
+
   layout
 
 proc getMaxHeight*(layout: Layout): int =
@@ -97,13 +96,17 @@ proc getMaxHeight*(layout: Layout): int =
     list &= restChildren
 ]#
 
-proc addText*(layout: var Layout, text: string, fontSize: float32) =
-  for word in text.splitLines():
+proc addText*(layout: var Layout, text: string, fontSize: float32, kind: BoxKind) =
+  var lastHeight: float
+
+  for word in text.split(' '):
     layout.font.size = fontSize
 
     let
-      width = layout.getWordLength(word)
-      height = layout.getWordHeight(word)
+      width = layout.getWordLength(word) + 4
+      height = layout.getWordHeight(word) + 4
+
+    echo "place " & word.repr & " at " & $layout.cursor
 
     layout.boxes &=
       TextBox(
@@ -111,15 +114,26 @@ proc addText*(layout: var Layout, text: string, fontSize: float32) =
         pos: layout.cursor,
         width: width,
         height: height,
-        fontSize: fontSize
+        fontSize: fontSize,
+        kind: kind
       )
 
+    # echo width
+    
     layout.cursor = vec2(layout.cursor.x + width.float, layout.cursor.y)
+
+    if lastHeight < height.float:
+      lastHeight = height.float
+
     if layout.cursor.x >= layout.width.float:
+      # assert off, "overflow"
       layout.cursor = vec2(0f, layout.cursor.y + height.float)
 
+  if kind == BoxKind.Block:
+    layout.cursor = vec2(0f, layout.cursor.y + lastHeight)
+
 proc addBreak*(layout: var Layout) =
-  layout.cursor = vec2(0, layout.cursor.y + 4) # FIXME: this is not how linebreaks work!
+  layout.cursor = vec2(0, layout.cursor.y + 4)
 
 proc addHeading*(layout: var Layout, text: string, level: uint = 1) =
   layout.addText(
@@ -129,9 +143,9 @@ proc addHeading*(layout: var Layout, text: string, level: uint = 1) =
     of 3: 24f
     of 4: 18f
     of 5: 16f
-    else: raise newException(ValueError, "addHeading given invalid range for level: " & $level); 0f
+    else: raise newException(ValueError, "addHeading given invalid range for level: " & $level); 0f,
+    kind = BoxKind.Block
   )
-  layout.addBreak()
 
 proc addImage*(layout: var Layout, content: string) =
   let image: Option[Image] = 
@@ -151,7 +165,8 @@ proc addImage*(layout: var Layout, content: string) =
       content: content,
       pos: layout.cursor,
       width: (&image).width,
-      height: (&image).height
+      height: (&image).height,
+      kind: BoxKind.Inline
     )
 
   layout.cursor = vec2(layout.cursor.x + (&image).width.float32, layout.cursor.y)
@@ -159,56 +174,42 @@ proc addImage*(layout: var Layout, content: string) =
     layout.cursor = vec2(0f, layout.cursor.y + (&image).height.float32)
 
 proc constructFromElem*(layout: var Layout, elem: HTMLElement) =
-  case elem.tag
-  of TAG_P, TAG_B, TAG_SPAN, TAG_STRONG, TAG_LI, TAG_A, TAG_DIV: # FIXME: bold stuff
+  template expectText =
     if not *elem.text:
       warn "layout: <" & $elem.tag & "> element does not contain any text data, ignoring it."
       return
-    
-    let text = &elem.text
-    layout.addText(text, 14f)
+
+  case elem.tag
+  of TAG_P:
+    expectText
+    layout.addText(&elem.text, 14f, kind = BoxKind.Block)
+  of TAG_SPAN, TAG_STRONG:
+    expectText
+    layout.addText(&elem.text, 14f, kind = BoxKind.Inline)
+  of TAG_LI, TAG_DIV:
+    expectText
+    layout.addText(&elem.text, 14f, kind = BoxKind.Block)
+  of TAG_A:
+    expectText
+    layout.addText(&elem.text, 14f, kind = BoxKind.Inline)
   of TAG_H1:
-    if not *elem.text:
-      warn "layout: <h1> element does not contain any text data, ignoring it."
-      return
-
-    let text = &elem.text
-    layout.addHeading(text, 1)
+    expectText
+    layout.addHeading(&elem.text, 1)
   of TAG_H2:
-    if not *elem.text:
-      warn "layout: <h2> element does not contain any text data, ignoring it."
-      return
-
-    let text = &elem.text
-    layout.addHeading(text, 2)
+    expectText
+    layout.addHeading(&elem.text, 2)
   of TAG_H3:
-    if not *elem.text:
-      warn "layout: <h3> element does not contain any text data, ignoring it."
-      return
-
-    let text = &elem.text
-    layout.addHeading(text, 3)
+    expectText
+    layout.addHeading(&elem.text, 3)
   of TAG_H4:
-    if not *elem.text:
-      warn "layout: <h4> element does not contain any text data, ignoring it."
-      return
-
-    let text = &elem.text
-    layout.addHeading(text, 4)
+    expectText
+    layout.addHeading(&elem.text, 4)
   of TAG_H5:
-    if not *elem.text:
-      warn "layout: <h5> element does not contain any text data, ignoring it."
-      return
-
-    let text = &elem.text
-    layout.addHeading(text, 5)
+    expectText
+    layout.addHeading(&elem.text, 5)
   of TAG_H6:
-    if not *elem.text:
-      warn "layout: <h6> element does not contain any text data, ignoring it."
-      return
-
-    let text = &elem.text
-    layout.addHeading(text, 6)
+    expectText
+    layout.addHeading(&elem.text, 6)
   of TAG_BR:
     layout.addBreak()
   of TAG_IMG:
@@ -219,6 +220,7 @@ proc constructFromElem*(layout: var Layout, elem: HTMLElement) =
       return
     
     # ask the master to ask the network process for our tab to load an image
+    info "Asking master process to fetch a web asset"
     let image = layout.ipc.requestDataTransfer(
       ResourceRequired, DataLocation(kind: DataLocationKind.WebRequest, url: &src)
     )

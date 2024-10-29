@@ -27,16 +27,6 @@ proc initialize*(master: MasterProcess) {.inline.} =
 proc poll*(master: MasterProcess) {.inline.} =
   master.server.poll()
 
-  for group, _ in master.server.groups:
-    for i, _ in master.server.groups[group]:
-      let socket = master.server.groups[group][i].socket
-      var count: cint
-
-      discard nix.ioctl(socket.getFd().cint, nix.FIONREAD, addr count)
-
-      if count > 0:
-        master.server.receiveFrom(group.uint, i.uint)
-
 proc launchAndWait(master: MasterProcess, summoned: string) =
   info "launchAndWait(\"" & summoned & "\"): starting execution of process."
   when defined(ferusJustWaitForConnection):
@@ -85,7 +75,6 @@ proc waitUntilReady*(
     info ("Waiting for $1 process to signal itself as ready for work #$2 (currently $3)" % [$kind, $numWait, $process.state])
     master.server.poll()
     if (let o = master.server.groups[group].findProcess(kind, parserKind, workers = false); *o):
-      master.server.receiveFrom(process.group, master.server.groups[group].find(&o).uint)
       process = &o
     else:
       error "$1 process has disconnected before marking itself as ready! It probably crashed! D:" % [$kind]

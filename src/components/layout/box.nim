@@ -3,15 +3,21 @@
 import vmath, pixie
 
 type
+  BoxKind* {.pure.} = enum
+    Block
+    Inline
+
   Box* = ref object of RootObj
     pos*: Vec2
     width*, height*: int
     visible*: bool = true
+
+    kind*: BoxKind
 
   TextBox* = ref object of Box
     text*: string
     fontSize*: float32
 
   ImageBox* = ref object of Box
-    image*: Image # FIXME: add streamed image loading
+    image*: Image # TODO: add streamed image loading
     content*: string
