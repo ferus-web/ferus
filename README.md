@@ -1,9 +1,12 @@
 # The Ferus Web Engine
-The Ferus web engine is a tiny web engine written in Nim which aims to be a full replacement for something like Chromium's Blink, Safari's WebKit or Firefox's Gecko.
+The Ferus web engine is a tiny web engine written in Nim which aims to be a full replacement for something like Chromium's Blink, Safari's WebKit or Firefox's Gecko. \
+It has rudimentary support for layout and JavaScript.
 ![A screenshot of Ferus rendering nim-lang.org](screenshots/ferus_nimlang.jpg)
 
 # Features
 - When possible, we write our own solution to a component of the overall modern web stack. This has resulted in projects like Stylus (our CSS3 compliant parser derived from Servo) and Bali (our JavaScript engine based on Mirage, our bytecode interpreter) and Sanchar (our HTTP client and URL parser) that are beneficial for the overall Nim community.
+
+- Ferus has some initial JavaScript support. Our JavaScript engine is hovering around 2% of passing tests in Test262, so don't expect to be able to daily drive Ferus!
 
 - Maximizing security will be our number one priority once we're past the toy engine stage. We have a sandbox that (mostly) works, but it has been disabled by default for the sake of everyone's (mostly our) sanity. If you want to try it out (and improve it), uncomment `-d:ferusInJail` in `nim.cfg`.
 
@@ -29,7 +32,7 @@ So far,
 - Getting Mirage up to speed [X]
 - Finalizing Stylus' API [X]
 - Layout compliance
-- Implementing the JavaScript runtime process component
+- Implementing the JavaScript runtime process component [X]
 
 ## Reality check on the progress
 I started this project when I was 14 to learn how the web works. It took me a while to learn a lot of things about the web (and I appreciate that!). I'm not some ex-WebKit/Blink/Gecko contributor or anything like that. My experience is currently fairly limited in web engine development. \

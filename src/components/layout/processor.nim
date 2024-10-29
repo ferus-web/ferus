@@ -226,6 +226,7 @@ proc constructFromElem*(layout: var Layout, elem: HTMLElement) =
     if *image:
       info (&image).data
       layout.addImage((&image).data)
+  of TAG_SCRIPT: discard
   else:
     warn "layout: unhandled tag: " & $elem.tag
 

@@ -6,13 +6,10 @@ when defined(linux):
   import ../../components/sandbox/linux
 
 import ../../components/renderer/[core] 
-import ../../components/shared/sugar
+import ../../components/shared/[nix, sugar]
 import ../../components/renderer/ipc except newDisplayList
 
 {.passL: "-lwayland-client -lwayland-cursor -lwayland-egl -lxkbcommon -lGL".}
-
-var FIONREAD {.importc, header: "<sys/ioctl.h>".}: cint
-proc ioctl(fd: cint, op: cint, argp: pointer): cint {.importc, header: "<sys/ioctl.h>".}
 
 proc readTypeface*(data, format: string): Typeface {.raises: [PixieError].} =
   ## Loads a typeface from data.
@@ -116,7 +113,7 @@ proc talk(
 ) {.inline.} =
   var count: cint
   
-  discard ioctl(client.socket.getFd().cint, FIONREAD, addr count)
+  discard nix.ioctl(client.socket.getFd().cint, nix.FIONREAD, addr count)
   
   if count < 1:
     return

@@ -31,11 +31,11 @@
             ];
 
             buildInputs = with pkgs; [
+              pkg-config
               libxkbcommon
               libseccomp
               libGL
               glfw
-              simdutf
 
               xorg.libX11
               openssl.dev
@@ -46,7 +46,13 @@
 
             LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [
               libGL
+              simdutf
             ];
+
+            env = {
+              # pkg-config cannot find simdutf without this, weird.
+              PKG_CONFIG_PATH = "${with pkgs; lib.makeLibraryPath [pkgs.simdutf]}/pkgconfig";
+            };
 
             wrapFerus =
               let

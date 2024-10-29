@@ -1,4 +1,4 @@
-import std/[os, logging, osproc, strutils, options, base64, sets]
+import std/[os, logging, osproc, strutils, options, base64, net, sets, terminal]
 import ferus_ipc/server/prelude
 import jsony
 import ./summon
@@ -10,8 +10,8 @@ import pretty
 import sanchar/parse/url
 import sanchar/proto/http/shared
 
-import ../../components/shared/sugar
-import ../../components/[network/ipc, renderer/ipc, cookie_worker/ipc, parsers/html/ipc, parsers/html/document]
+import ../../components/shared/[nix, sugar]
+import ../../components/[network/ipc, renderer/ipc, cookie_worker/ipc, parsers/html/ipc, parsers/html/document, js/ipc]
 import ../../components/web/cookie/parsed_cookie
 
 when defined(unix):
@@ -26,6 +26,16 @@ proc initialize*(master: MasterProcess) {.inline.} =
 
 proc poll*(master: MasterProcess) {.inline.} =
   master.server.poll()
+
+  for group, _ in master.server.groups:
+    for i, _ in master.server.groups[group]:
+      let socket = master.server.groups[group][i].socket
+      var count: cint
+
+      discard nix.ioctl(socket.getFd().cint, nix.FIONREAD, addr count)
+
+      if count > 0:
+        master.server.receiveFrom(group.uint, i.uint)
 
 proc launchAndWait(master: MasterProcess, summoned: string) =
   info "launchAndWait(\"" & summoned & "\"): starting execution of process."
@@ -142,13 +152,24 @@ proc summonCookieWorker*(master: MasterProcess) {.inline.} =
   let summoned = summon(CookieWorker, ipcPath = master.server.path).dispatch()
   master.launchAndWait(summoned)
 
+proc summonJSRuntime*(master: MasterProcess, group: uint) {.inline.} =
+  info "Summoning JS runtime process for group " & $group
+  let summoned = summon(JSRuntime, ipcPath = master.server.path).dispatch()
+  master.launchAndWait(summoned)
+
 proc summonRendererProcess*(master: MasterProcess) {.inline.} =
   info "Summoning renderer process."
   let summoned = summon(Renderer, ipcPath = master.server.path).dispatch()
   master.launchAndWait(summoned)
 
+  
+  let oproc = master.server.groups[0].findProcess(Renderer, workers = false)
+  if !oproc:
+    error "Failed to spawn renderer process!"
+    quit(1)
+
   # FIXME: investigate why this happens
-  var process = &master.server.groups[0].findProcess(Renderer, workers = false)
+  var process = &oproc
   let idx = master.server.groups[0].processes.find(process)
 
   process.state = Initialized
@@ -173,6 +194,27 @@ proc renderDocument*(master: MasterProcess, document: HTMLDocument) =
   )
 
   info "Dispatched document to renderer process."
+
+proc executeJS*(master: MasterProcess, group: uint, name: string = "<inline script>", code: string) =
+  info "Dispatching execution of JS code to runtime process"
+  var process = master.server.groups[group.int].findProcess(JSRuntime, workers = false)
+
+  if not *process:
+    master.summonJSRuntime(group)
+    master.executeJS(group, name = name, code =code)
+    return
+  
+  var prc = &process
+  assert prc.kind == JSRuntime
+  master.server.send(
+    prc.socket,
+    JSExecPacket(
+      name: name.encode(),
+      buffer: code.encode()
+    )
+  )
+
+  info "Dispatching JS code to runtime process."
 
 proc setWindowTitle*(master: MasterProcess, title: string) {.inline.} =
   var process = master.server.groups[0].findProcess(Renderer, workers = false)
@@ -317,10 +359,50 @@ proc dataTransfer*(master: MasterProcess, process: FerusProcess, request: DataTr
   else:
     warn "Unimplemented data transfer: FileRequest"
 
+proc onConsoleLog*(master: MasterProcess, process: FerusProcess, data: JSConsoleMessage) =
+  styledWriteLine(
+    stdout,
+    "(", fgYellow, "JS Console", resetStyle, ") ",
+    (
+      case data.level
+      of ConsoleLevel.Log:
+        fgGreen
+      of ConsoleLevel.Error:
+        fgRed
+      of ConsoleLevel.Debug:
+        fgMagenta
+      of ConsoleLevel.Info:
+        fgBlue
+      of ConsoleLevel.Trace:
+        fgMagenta
+      of ConsoleLevel.Warn:
+        fgYellow
+    ),
+    data.message,
+    resetStyle
+  )
+
 proc newMasterProcess*(): MasterProcess {.inline.} =
   var master = MasterProcess(server: newIPCServer())
 
   master.server.onDataTransfer = proc(process: FerusProcess, request: DataTransferRequest) =
     master.dataTransfer(process, request)
+
+  master.server.handler = proc(process: FerusProcess, kind: FerusMagic, data: string) =
+    case kind
+    of feJSConsoleMessage:
+      let data = tryParseJson(data, JSConsoleMessage)
+
+      if !data:
+        master.server.reportBadMessage(process,
+          "Cannot reinterpret data for kind `feJSConsoleLog` as `JSConsoleMessage`",
+          Low
+        )
+        return
+
+      master.onConsoleLog(process, &data)
+    else:
+      warn "Unhandled IPC protocol magic: " & $kind
+      return
   
   master

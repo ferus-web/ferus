@@ -52,6 +52,7 @@ proc talk(client: var IPCClient, process: FerusProcess) {.inline.} =
 
   if not *jdata:
     warn "Did not get any valid JSON data."
+    warn data
     return
 
   let kind = (&jdata).getOrDefault("kind").getStr().magicFromStr()
