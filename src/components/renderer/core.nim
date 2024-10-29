@@ -97,6 +97,7 @@ proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
   info "Rendering HTML document - calculating layout"
     
   var layout = newLayout(renderer.ipc, renderer.scene.fontManager.get("Default"))
+  layout.width = renderer.scene.camera.bounds.w.int
 
   if *document.head():
     for child in &document.head():
@@ -118,8 +119,12 @@ proc resize*(renderer: FerusRenderer, dims: tuple[w, h: int32]) {.inline.} =
   info "Resizing renderer viewport to $1x$2" % [$dims.w, $dims.h]
   let casted = (w: dims.w.int, h: dims.h.int)
   renderer.scene.onResize(casted)
-  #renderer.layout.update()
-  #renderer.paintLayout()
+
+  if renderer.layout.width != dims.w.int: # Only recalculate layout when width changes. We don't care about the height.
+    renderer.layout.width = dims.w.int
+    renderer.layout.cursor.reset()
+    renderer.layout.update()
+    renderer.paintLayout()
 
 proc initialize*(renderer: FerusRenderer) {.inline.} =
   info "Initializing renderer."
