@@ -51,7 +51,7 @@ proc talk(js: var JSProcess, process: FerusProcess) =
     info "Executing JavaScript buffer"
     js.ipc.setState(Processing)
     let data = &tryParseJson(data, JSExecPacket)
-    
+
     js.parser = newParser(data.buffer.decode())
     js.runtime = newRuntime(data.name.decode(), js.parser.parse())
     js.runtime.run()
