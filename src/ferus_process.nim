@@ -59,7 +59,7 @@ proc main() {.inline.} =
   discard client.connect(path)
   client.handshake()
   
-  addHandler newIPCLogger(lvlAll, client)
+  # addHandler newIPCLogger(lvlAll, client)
   setLogFilter(lvlInfo)
   
   if process.kind != Renderer:
