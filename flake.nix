@@ -36,6 +36,7 @@
               libseccomp
               libGL
               glfw
+              curl.dev
 
               xorg.libX11
               openssl.dev
@@ -47,6 +48,7 @@
             LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [
               libGL
               simdutf
+              curl.dev
             ];
 
             env = {
