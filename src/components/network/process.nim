@@ -1,5 +1,6 @@
-import std/[strutils, logging, options, json, net]
+import std/[base64, strutils, logging, options, json, net]
 import sanchar/[http, proto/http/shared], sanchar/parse/url, ferus_ipc/client/prelude
+import pretty
 
 when defined(ferusUseCurl):
   import webby/httpheaders
@@ -45,7 +46,9 @@ proc networkFetch*(
   info "Getting ready to send HTTP/GET request to: " & $url
   
   when defined(ferusUseCurl):
-    let response = curl.get($url)
+    var headers: HttpHeaders
+    headers["User-Agent"] = ua
+    let response = curl.get($url, headers = headers)
 
     result = NetworkFetchResult(
       response: some(HTTPResponse(
@@ -99,8 +102,18 @@ proc talk(client: var IPCClient, process: FerusProcess) {.inline.} =
   
   case &kind
   of feNetworkFetch:
-    let data = client.networkFetch(tryParseJson(data, NetworkFetchPacket))
-    client.send(data)
+    var odata = client.networkFetch(tryParseJson(data, NetworkFetchPacket))
+
+    if !odata.response:
+      client.send(odata.move())
+      return
+
+    var resp = &odata.response
+    resp.content = resp.content.encode()
+
+    odata.response = some(move(resp))
+
+    client.send(odata.move())
   else:
     discard
 
