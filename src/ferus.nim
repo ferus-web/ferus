@@ -33,16 +33,16 @@ proc main() {.inline.} =
   var content: string
 
   if resource.startsWith("https://") or resource.startsWith("http://"):
-    let data = master.fetchNetworkResource(0, paramStr(1))
+    let data = master.fetchNetworkResource(0, resource)
+    master.urls.add(resource)
 
     if not *data:
       error "Failed to fetch HTTP resource"
       quit(1)
 
-    let resp = &(&data).response # i love unwrapping
-    print(resp)
+    let resp = &data
 
-    content = resp.content
+    content = resp.content()
   else:
     if not fileExists(resource):
       error "Failed to find file"
