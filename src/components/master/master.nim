@@ -20,6 +20,8 @@ when defined(unix):
 type MasterProcess* = ref object
   server*: IPCServer
 
+  urls*: seq[string]
+
 proc initialize*(master: MasterProcess) {.inline.} =
   master.server.add(FerusGroup()) # TODO: multi-tab support, although we could just keep adding more FerusGroup(s) and it should *theoretically* scale
   master.server.initialize()
@@ -301,8 +303,23 @@ proc fetchNetworkResource*(
 
   while not *res:
     #info "Waiting for network process to send a `NetworkFetchResult` x" & $numRecv
+    var count: cint
+    discard nix.ioctl((&process).socket.getFd().cint, nix.FIONREAD, addr count)
+    if count < 1:
+      inc numRecv
+      continue
+
     let packet = master.server.receive((&process).socket, NetworkFetchResult)
 
+    if not *packet:
+      inc numRecv
+      continue
+
+    let data = &packet
+    if data.kind != feNetworkSendResult:
+      inc numRecv
+      continue
+    
     if not *packet:
       inc numRecv
       continue
@@ -321,8 +338,14 @@ proc dataTransfer*(master: MasterProcess, process: FerusProcess, request: DataTr
     if process.kind != Renderer:
       master.server.reportBadMessage(process, "Process that does not require network data transfers (" & $process.kind & ") attempted to perform one.", High)
       return
+
+    var dest = request.location.url
+    if not dest.startsWith("http") and not dest.startsWith("https"):
+      dest = master.urls[process.group.int] & dest
+
+    echo dest
     
-    let data = master.fetchNetworkResource(process.group, request.location.url)
+    let data = master.fetchNetworkResource(process.group, dest)
 
     if not *data:
       warn "Could not fulfill data transfer request as request to network process failed!"
@@ -340,7 +363,8 @@ proc dataTransfer*(master: MasterProcess, process: FerusProcess, request: DataTr
         process.socket,
         DataTransferResult(success: false)
       )
-
+    
+    info "Received requested data from Network process, sending it to the " & $process.kind & " process"
     master.server.send(
       process.socket,
       DataTransferResult(success: true, data: (&resp).content)
