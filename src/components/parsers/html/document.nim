@@ -1,6 +1,7 @@
 ## I love chame
 
 import std/[options, logging, tables, base64]
+import sanchar/parse/url
 import ../../shared/sugar
 import ../../web/dom
 import pretty
@@ -16,6 +17,7 @@ type
 
   HTMLDocument* = ref object
     elems*: seq[HTMLElement]
+    url*: URL
 
 iterator items*(elem: HTMLElement): HTMLElement =
   for child in elem.children:
