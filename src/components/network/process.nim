@@ -1,8 +1,18 @@
-import std/[strutils, logging, options, json]
-import sanchar/[http, proto/http/shared], sanchar/parse/url, ferus_ipc/client/prelude, jsony
-import ../../components/shared/sugar
+import std/[base64, strutils, logging, options, json, net]
+import sanchar/[http, proto/http/shared], sanchar/parse/url, ferus_ipc/client/prelude
+import pretty
+
+when defined(ferusUseCurl):
+  import webby/httpheaders
+  import curly
+
+import jsony
+import ../../components/shared/[nix, sugar]
 import ../../components/network/ipc
 import ../../components/build_utils
+
+when defined(ferusUseCurl):
+  var curl = newCurly()
 
 func getUAString*: string {.inline.} =
   "Mozilla/5.0 ($1 $2) Ferus/$3 (Ferus, like Gecko) Ferus/$3 Firefox/129.0" % [
@@ -34,18 +44,47 @@ proc networkFetch*(
 
   info "User agent is set to \"" & ua & '"'
   info "Getting ready to send HTTP/GET request to: " & $url
+  
+  when defined(ferusUseCurl):
+    var headers: HttpHeaders
+    headers["User-Agent"] = ua
+    let response = curl.get($url, headers = headers)
 
-  var webClient = httpClient(@[
-    header("User-Agent", ua)
-  ])
+    result = NetworkFetchResult(
+      response: some(HTTPResponse(
+        httpVersion: response.request.verb,
+        code: response.code.uint32,
+        content: response.body,
+        headers: (proc: Headers =
+          var headers: Headers
+          let baseHeaders = response.headers.toBase()
 
-  result = NetworkFetchResult(response: webClient.get((&fetchData).url).some())
+          for (key, value) in baseHeaders:
+            headers.add(Header(key: key, value: value))
+
+          headers
+        )()
+      ))
+    )
+  else:
+    var webClient = httpClient(@[
+      header("User-Agent", ua)
+    ])
+
+    result = NetworkFetchResult(response: webClient.get((&fetchData).url).some())
 
   info "Fetched HTTP/GET response from: " & $url
 
   client.setState(Idling)
 
 proc talk(client: var IPCClient, process: FerusProcess) {.inline.} =
+  var count: cint
+
+  discard nix.ioctl(client.socket.getFd().cint, nix.FIONREAD, addr count)
+
+  if count < 1:
+    return
+
   let
     data = client.receive()
     jdata = tryParseJson(data, JsonNode)
@@ -63,8 +102,18 @@ proc talk(client: var IPCClient, process: FerusProcess) {.inline.} =
   
   case &kind
   of feNetworkFetch:
-    let data = client.networkFetch(tryParseJson(data, NetworkFetchPacket))
-    client.send(data)
+    var odata = client.networkFetch(tryParseJson(data, NetworkFetchPacket))
+
+    if !odata.response:
+      client.send(odata.move())
+      return
+
+    var resp = &odata.response
+    resp.content = resp.content.encode()
+
+    odata.response = some(move(resp))
+
+    client.send(odata.move())
   else:
     discard
 

@@ -1,7 +1,7 @@
 ## Layout processor
 ## Copyright (C) 2024 Trayambak Rai and Ferus Authors
 
-import std/[strutils, tables, logging, options]
+import std/[strutils, tables, logging, options, base64]
 import vmath, bumpy, pixie, pixie/fonts
 import ./box
 import ../parsers/html/document
@@ -106,7 +106,7 @@ proc addText*(layout: var Layout, text: string, fontSize: float32, kind: BoxKind
       width = layout.getWordLength(word) + 4
       height = layout.getWordHeight(word) + 4
 
-    echo "place " & word.repr & " at " & $layout.cursor
+    # echo "place " & word.repr & " at " & $layout.cursor
 
     layout.boxes &=
       TextBox(
@@ -226,8 +226,8 @@ proc constructFromElem*(layout: var Layout, elem: HTMLElement) =
     )
     
     if *image:
-      info (&image).data
-      layout.addImage((&image).data)
+      let content = decode((&image).data)
+      layout.addImage(content)
   of TAG_SCRIPT: discard
   else:
     warn "layout: unhandled tag: " & $elem.tag

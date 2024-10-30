@@ -25,7 +25,7 @@ proc htmlParse*(
   info "Parsed HTML in " & $(endTime - startTime)
  
   HTMLParseResult(
-    document: some(document.parseHTMLDocument()) # I love chame
+    document: some(document.parseHTMLDocument())
   )
 
 proc talk(client: var IPCClient, process: FerusProcess) {.inline.} =

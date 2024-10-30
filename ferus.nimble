@@ -31,3 +31,6 @@ else:
   requires "windy >= 0.0.0"
 
 requires "netty >= 0.2.1"
+
+requires "curly >= 1.1.1"
+requires "webby >= 0.2.1"
