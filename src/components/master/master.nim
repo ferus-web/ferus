@@ -343,8 +343,6 @@ proc dataTransfer*(master: MasterProcess, process: FerusProcess, request: DataTr
     if not dest.startsWith("http") and not dest.startsWith("https"):
       dest = master.urls[process.group.int] & dest
 
-    echo dest
-    
     let data = master.fetchNetworkResource(process.group, dest)
 
     if not *data:
