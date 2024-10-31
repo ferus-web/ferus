@@ -48,24 +48,30 @@ proc networkFetch*(
   when defined(ferusUseCurl):
     var headers: HttpHeaders
     headers["User-Agent"] = ua
-    let response = curl.get($url, headers = headers)
 
-    result = NetworkFetchResult(
-      response: some(HTTPResponse(
-        httpVersion: response.request.verb,
-        code: response.code.uint32,
-        content: response.body,
-        headers: (proc: Headers =
-          var headers: Headers
-          let baseHeaders = response.headers.toBase()
+    try:
+      let response = curl.get($url, headers = headers)
 
-          for (key, value) in baseHeaders:
-            headers.add(Header(key: key, value: value))
+      result = NetworkFetchResult(
+        response: some(HTTPResponse(
+          httpVersion: response.request.verb,
+          code: response.code.uint32,
+          content: response.body,
+          headers: (proc: Headers =
+            var headers: Headers
+            let baseHeaders = response.headers.toBase()
 
-          headers
-        )()
-      ))
-    )
+            for (key, value) in baseHeaders:
+              headers.add(Header(key: key, value: value))
+
+            headers
+          )()
+        ))
+      )
+    except CatchableError as exc:
+      error "Failed to send HTTP/GET response to: " & $url
+      error exc.msg
+      result = NetworkFetchResult(response: none(HTTPResponse))
   else:
     var webClient = httpClient(@[
       header("User-Agent", ua)
