@@ -9,7 +9,7 @@ type
 
   Box* = ref object of RootObj
     pos*: Vec2
-    width*, height*: int
+    width*, height*: uint
     visible*: bool = true
 
     kind*: BoxKind
