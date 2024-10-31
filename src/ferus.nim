@@ -34,7 +34,11 @@ proc main() {.inline.} =
 
   if resource.startsWith("https://") or resource.startsWith("http://"):
     let data = master.fetchNetworkResource(0, resource)
-    master.urls.add(resource)
+
+    if resource.endsWith('/'):
+      master.urls.add(resource)
+    else:
+      master.urls.add(resource & '/')
 
     if not *data:
       error "Failed to fetch HTTP resource"
