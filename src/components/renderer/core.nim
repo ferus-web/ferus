@@ -84,7 +84,8 @@ proc paintLayout*(renderer: FerusRenderer) =
       if imageBox.width < 1 or imageBox.height < 1:
         continue
 
-      let node = newImageNodeFromMemory(imageBox.content, imageBox.pos) # FIXME: this is wasteful! We already have the image loaded into memory!
+      var node = newImageNodeFromMemory(imageBox.content, imageBox.pos) # FIXME: this is wasteful! We already have the image loaded into memory!
+      node.image = imageBox.image
 
       displayList.add(
         node
