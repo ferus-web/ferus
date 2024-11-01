@@ -42,7 +42,7 @@ proc networkFetch*(
     url = (&fetchData).url
     ua = getUAString()
 
-  info "User agent is set to \"" & ua & '"'
+  # info "User agent is set to \"" & ua & '"'
   info "Getting ready to send HTTP/GET request to: " & $url
   
   when defined(ferusUseCurl):
