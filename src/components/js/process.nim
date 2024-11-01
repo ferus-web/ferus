@@ -5,6 +5,7 @@ import bali/runtime/prelude
 import bali/stdlib/console
 import jsony
 import ../../components/shared/[nix, sugar]
+import ../../components/web/[window]
 import ./ipc
 
 type
@@ -54,6 +55,7 @@ proc talk(js: var JSProcess, process: FerusProcess) =
 
     js.parser = newParser(data.buffer.decode())
     js.runtime = newRuntime(data.name.decode(), js.parser.parse())
+    window.generateIR(js.runtime)
     js.runtime.run()
 
     js.ipc.setState(Idling)
@@ -66,7 +68,11 @@ proc jsProcessLogic*(client: var IPCClient, process: FerusProcess) {.inline.} =
   client.setState(Idling)
   client.poll()
   initConsoleIPC(js)
-  setLogFilter(lvlNone)
+
+  when not defined(release):
+    setLogFilter(lvlAll)
+  else:
+    setLogFilter(lvlNone)
 
   while true:
     js.talk(process)
