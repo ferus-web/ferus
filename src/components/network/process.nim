@@ -20,11 +20,15 @@ func getUAString*: string {.inline.} =
       when defined(linux): 
         "X11; Linux"
       elif defined(win32):
-        "Windows 10"
+        "Windows NT 10; Win32"
       elif defined(win64):
-        "Windows 10"
+        "Windows NT 10; Win64"
       elif defined(macos):
-        "MacOS"
+        "Macintosh"
+      elif defined(freebsd):
+        "X11; FreeBSD"
+      elif defined(openbsd):
+        "X11; OpenBSD"
     ),
     getArchitectureUAString(),
     getVersion()
