@@ -2,3 +2,5 @@
 
 * @xTrayambak
 src/components/layout/* @jtbx
+*.nix @jtbx
+flake.lock @jtbx
