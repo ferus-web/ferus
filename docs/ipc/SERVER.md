@@ -5,7 +5,7 @@ This guide will tell you how to write code that targets the master component.
 <small>Based Off: Ferus 0.2.2</small>
 
 # Receiving Messages
-The message handler is defined in [the master component code](src/components/master/master.nim). You can add IPC magic opcode handlers as you please here, granted that they are defined in the `FerusMagic` enum in the `ferus_ipc` package.
+The message handler is defined in [the master component code](../../src/components/master/master.nim). You can add IPC magic opcode handlers as you please here, granted that they are defined in the `FerusMagic` enum in the `ferus_ipc` package.
 
 # Security Practices
 Treat all data coming from a client with suspicion. We can never be certain if a client has been compromised. \
@@ -46,7 +46,7 @@ proc send*[T](
   data: T
 )
 ```
-Where `T` is any struct or type that is serializable to JSON. Unserializable structs need to be wrapped up (see how the [Renderer component wraps up](src/components/renderer/ipc.nim) ferusgfx's `DisplayList` structs)
+Where `T` is any struct or type that is serializable to JSON. Unserializable structs need to be wrapped up (see how the [Renderer component wraps up](../../src/components/renderer/ipc.nim) ferusgfx's `DisplayList` structs)
 
 # Receiving Messages
 You can use the `receive` procedure to receive a message from a process, but this isn't recommended as it is a blocking procedure.
@@ -71,9 +71,9 @@ proc receive*[T](
 
 The better way to receive messages is to use a "send-if-you-want" model. This model is guaranteed to not block, as it uses the `handler` procedure inside the server
 and the server polls the file descriptor of every process' socket to see if it has sent something. If it has, then that data will be passed on to the `handler` procedure. \
-This code is [over here](src/components/master/master.nim#L402)
+This code is [over here](../../src/components/master/master.nim#L402)
 
 # Data Transfers
 Data transfers are a mechanism used by the IPC layer to transfer data between two child processes without them having to directly establish a connection to each other. \
 Each data transfer is mediated by the master process, and as such, it can apply certain rules and regulations to a transfer to ensure that unnecessary data is not
-transmitted across processes. The data transfer handler is defined in the [`dataTransfer` function](src/components/master/master.nim#335)
+transmitted across processes. The data transfer handler is defined in the [`dataTransfer` function](../../src/components/master/master.nim#335)
