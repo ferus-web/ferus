@@ -5,7 +5,13 @@
   </head>
   <body>
     <script>
-      console.log("appName:", navigator.appName)
+      let serialized = JSON.stringify(navigator)
+      console.log(serialized)
+
+      console.log(navigator.appName)
+      console.log(navigator.appCodeName)
+      console.log(navigator.oscpu)
     </script>
+    <h1>Check your console, you should see cool stuff.</h1>
   </body>
 </html>
