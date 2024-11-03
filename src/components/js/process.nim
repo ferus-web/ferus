@@ -5,7 +5,7 @@ import bali/runtime/prelude
 import bali/stdlib/console
 import jsony
 import ../../components/shared/[nix, sugar]
-# import ../../components/web/[window]
+import ../../components/web/[window]
 import ./ipc
 
 type
@@ -55,7 +55,7 @@ proc talk(js: var JSProcess, process: FerusProcess) =
 
     js.parser = newParser(data.buffer.decode())
     js.runtime = newRuntime(data.name.decode(), js.parser.parse())
-    # window.generateIR(js.runtime)
+    window.generateIR(js.runtime)
     js.runtime.run()
 
     js.ipc.setState(Idling)
