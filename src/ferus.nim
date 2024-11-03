@@ -1,21 +1,48 @@
 import std/[os, strutils, logging, tables]
 import colored_logger
 import components/[
-  build_utils, 
+  build_utils, argparser,
   master/master, network/ipc, renderer/ipc, shared/sugar
 ]
 import components/parsers/html/document
 import sanchar/parse/url
 import pretty
 
-proc setupLogging*() {.inline.} =
+proc setupLogging() {.inline.} =
   addHandler newColoredLogger()
+  setLogFilter(lvlInfo)
+
+proc showHelp(code: int = 1) {.noReturn.} =
+  echo """
+Ferus options
+  --help, -h            Print this message
+  --version, -v         Show the version of Ferus installed
+"""
+  quit(code)
+
+proc showVersion {.noReturn.} =
+  echo """
+Ferus $1
+
+Compiler: $1
+Compile Time: $2
+Target CPU: $3
+""" % [getVersion(), $getCompilerType(), $getCompileDate(), $getArchitecture()]
+  quit(0)
 
 proc main() {.inline.} =
   setupLogging()
+  let input = parseInput()
+  if input.enabled("help", "h"):
+    showHelp(0)
 
-  if paramCount() < 1:
-    quit "Usage: ferus [url/file]"
+  if input.enabled("version", "v"):
+    showVersion()
+
+  if input.arguments.len < 1:
+    error "Usage: ferus <file / URL>"
+    error "Run --help for more information."
+    quit(1)
 
   info "Ferus " & getVersion() & " launching!!"
   info ("Compiled using $1; compiled on $2" % [$getCompilerType(), $getCompileDate()])
@@ -28,8 +55,8 @@ proc main() {.inline.} =
   master.summonNetworkProcess(0)
   master.summonRendererProcess()
   master.loadFont("assets/fonts/IBMPlexSans-Regular.ttf", "Default")
-  
-  let resource = paramStr(1)
+
+  let resource = input.arguments[0]
   var content: string
 
   if resource.startsWith("https://") or resource.startsWith("http://"):
