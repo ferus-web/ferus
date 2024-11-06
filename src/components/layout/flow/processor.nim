@@ -1,5 +1,5 @@
 ## Flow layout processor
-## Copyright (C) 2024 Trayambak Rai and Ferus Authors
+
 
 import std/[strutils, tables, logging, options, base64]
 import vmath, bumpy, pixie, pixie/fonts

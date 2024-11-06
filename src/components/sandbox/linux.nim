@@ -1,5 +1,5 @@
 ## Sandbox implementation for Linux using libseccomp
-## Copyright (C) 2024 Trayambak Rai and Ferus Authors
+
 
 import std/[logging, posix]
 import ferus_ipc/shared

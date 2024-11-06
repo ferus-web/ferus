@@ -1,6 +1,6 @@
 ## Cookies implementation
 ##
-## Copyright (C) 2024 Trayambak Rai and Ferus Authors
+
 
 import std/[strutils, times]
 

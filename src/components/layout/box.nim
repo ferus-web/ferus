@@ -1,5 +1,5 @@
 ## Layout box
-## Copyright (C) 2024 Trayambak Rai and Ferus authors
+
 import vmath, pixie
 
 type
