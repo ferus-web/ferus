@@ -12,6 +12,10 @@ It has rudimentary support for layout and JavaScript.
 
 - Everything is multiprocessed. This ensures that an error in one component (say, the JavaScript engine) won't bring down the entire session*
 
+# Contributing
+I'm always looking for contributors. Every small improvement matters, even if you can't work on the web engine internals itself. \
+If you're interested, join our [Discord server](https://discord.gg/9MwfGn2Jkb) in order to start off. I'll try my best to help you get familiar with this stuff. :^)
+
 # Ferus is getting redesigned!
 For the past few months, I've been writing a CSS3 parser, a HTTP client, a bytecode interpreter, and a renderer for Ferus. It's about time to start assembling everything into one (if you want to be accurate, two) binaries! Everything's getting reworked.
 
