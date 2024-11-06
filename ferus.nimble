@@ -3,7 +3,7 @@
 version       = "0.2.2"
 author        = "xTrayambak"
 description   = "The Ferus Web Engine"
-license       = "MIT"
+license       = "GPL3"
 srcDir        = "src"
 backend       = "cpp"
 bin           = @["ferus", "ferus_process"]
