@@ -24,6 +24,18 @@ proc initConsoleIPC*(js: var JSProcess) =
       )
   )
 
+proc jsExecBuffer*(js: var JSProcess, data: string) =
+  info "Executing JavaScript buffer"
+  js.ipc.setState(Processing)
+  let data = &tryParseJson(data, JSExecPacket)
+
+  js.parser = newParser(data.buffer.decode())
+  js.runtime = newRuntime(data.name.decode(), js.parser.parse())
+  window.generateIR(js.runtime)
+  js.runtime.run()
+
+  js.ipc.setState(Idling)
+
 proc talk(js: var JSProcess, process: FerusProcess) =
   var count: cint
 
@@ -49,16 +61,7 @@ proc talk(js: var JSProcess, process: FerusProcess) =
 
   case &kind
   of feJSExec:
-    info "Executing JavaScript buffer"
-    js.ipc.setState(Processing)
-    let data = &tryParseJson(data, JSExecPacket)
-
-    js.parser = newParser(data.buffer.decode())
-    js.runtime = newRuntime(data.name.decode(), js.parser.parse())
-    window.generateIR(js.runtime)
-    js.runtime.run()
-
-    js.ipc.setState(Idling)
+    jsExecBuffer(js, data)
   else:
     discard
 

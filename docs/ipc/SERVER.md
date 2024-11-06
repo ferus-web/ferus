@@ -1,8 +1,8 @@
 # Guide to writing code for the IPC server (master process)
-This guide will tell you how to write code that targets the master component.
-<small>Author(s): Trayambak Rai (xTrayambak)</small>
-<small>Last Edited: November 2, 2024</small>
-<small>Based Off: Ferus 0.2.2</small>
+This guide will tell you how to write code that targets the master component. \
+<small>**Author(s)**: Trayambak Rai (xTrayambak)</small> \
+<small>**Last Edited**: November 2, 2024</small> \
+<small>**Based Off**: Ferus 0.2.2</small>
 
 # Receiving Messages
 The message handler is defined in [the master component code](../../src/components/master/master.nim). You can add IPC magic opcode handlers as you please here, granted that they are defined in the `FerusMagic` enum in the `ferus_ipc` package.
