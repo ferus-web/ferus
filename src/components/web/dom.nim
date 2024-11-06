@@ -503,7 +503,7 @@ proc parseHTMLFragment*(s: string, element: Element): seq[Node] =
   let inputStream = newStringStream(s)
   let opts = HTML5ParserOpts[Node, DAtom](
     isIframeSrcdoc: false,
-    scripting: false,
+    scripting: true,
     pushInTemplate: element.tagType == TAG_TEMPLATE
   )
   return parseHTMLFragment(inputStream, element, opts)

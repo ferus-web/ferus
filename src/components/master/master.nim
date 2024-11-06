@@ -1,4 +1,4 @@
-import std/[os, logging, osproc, strutils, options, base64, net, sets, terminal]
+import std/[os, logging, osproc, strutils, options, base64, net, sets, terminal, tables]
 import ferus_ipc/server/prelude
 import jsony
 import ./summon
@@ -19,8 +19,7 @@ when defined(unix):
 
 type MasterProcess* = ref object
   server*: IPCServer
-
-  urls*: seq[string]
+  urls*: Table[uint, URL]
 
 proc initialize*(master: MasterProcess) {.inline.} =
   master.server.add(FerusGroup()) # TODO: multi-tab support, although we could just keep adding more FerusGroup(s) and it should *theoretically* scale
@@ -341,7 +340,7 @@ proc dataTransfer*(master: MasterProcess, process: FerusProcess, request: DataTr
 
     var dest = request.location.url
     if not dest.startsWith("http") and not dest.startsWith("https"):
-      dest = master.urls[process.group.int] & dest
+      dest = $master.urls[process.group] & dest
 
     let data = master.fetchNetworkResource(process.group, dest)
 
@@ -373,7 +372,7 @@ proc dataTransfer*(master: MasterProcess, process: FerusProcess, request: DataTr
 proc onConsoleLog*(master: MasterProcess, process: FerusProcess, data: JSConsoleMessage) =
   styledWriteLine(
     stdout,
-    "(", fgYellow, "JS Console", resetStyle, ") ",
+    "(", fgYellow, "Console", resetStyle, ") ",
     (
       case data.level
       of ConsoleLevel.Log:
