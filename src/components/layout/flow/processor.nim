@@ -18,6 +18,7 @@ type
     boxes*: seq[Box]
     viewport*: Rect
     font*: Font
+    imageCache*: Table[string, string]
 
     document*: HTMLDocument
 
@@ -234,35 +235,41 @@ proc constructFromElem*(layout: var Layout, elem: HTMLElement) =
     if not *src:
       warn "layout: <img> element does not contain `src` attribute, ignoring it."
       return
+
+    let cached = layout.imageCache.contains(&src)
     
-    # ask the master to ask the network process for our tab to load an image
-    info "Asking master process to fetch a web asset"
-    let image = layout.ipc.requestDataTransfer(
-      ResourceRequired, DataLocation(kind: DataLocationKind.WebRequest, url: &src)
-    )
-    
-    if *image:
-      let content = decode((&image).data)
-      let widthAttr = elem.attribute("width")
-      let heightAttr = elem.attribute("height")
-
-      var width, height: Option[uint]
-      if *widthAttr:
-        try:
-          width = parseUint(&widthAttr).some()
-        except ValueError:
-          warn "<img> tag has invalid width attribute: " & &widthAttr
-
-      if *heightAttr:
-        try:
-          height = parseUint(&heightAttr).some()
-        except ValueError:
-          warn "<img> tag has invalid height attribute: " & &heightAttr
-
-      layout.addImage(
-        content,
-        width, height
+    let content = if not cached:
+      let transfer = layout.ipc.requestDataTransfer(
+        ResourceRequired, DataLocation(kind: DataLocationKind.WebRequest, url: &src)
       )
+      if *transfer:
+        decode((&transfer).data)
+      else:
+        ""
+    else:
+      layout.imageCache[&src]
+
+    layout.imageCache[&src] = content
+    let widthAttr = elem.attribute("width")
+    let heightAttr = elem.attribute("height")
+
+    var width, height: Option[uint]
+    if *widthAttr:
+      try:
+        width = parseUint(&widthAttr).some()
+      except ValueError:
+        warn "<img> tag has invalid width attribute: " & &widthAttr
+
+    if *heightAttr:
+      try:
+        height = parseUint(&heightAttr).some()
+      except ValueError:
+        warn "<img> tag has invalid height attribute: " & &heightAttr
+
+    layout.addImage(
+      content,
+      width, height
+    )
   of TAG_SCRIPT: discard # we don't care about this - that's the JS runtime's job
   else:
     warn "layout: unhandled tag: " & $elem.tag
