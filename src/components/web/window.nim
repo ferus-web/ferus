@@ -21,5 +21,3 @@ proc generateIR*(runtime: Runtime) =
   runtime.setProperty(JSNavigator, "appVersion", str("5.0 (X11)"))
   runtime.setProperty(JSNavigator, "buildId", str("20181001000000"))
   runtime.setProperty(JSNavigator, "oscpu", str(hostOS & ' ' & getArchitectureUAString()))
-
-  print runtime.types
