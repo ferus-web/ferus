@@ -67,7 +67,9 @@ proc load*(controller: var WebMasterController) =
       controller.document = &((&doc).document)
     else:
       controller.document = default(HTMLDocument)
-
+  
+  controller.document.url = controller.url
+  controller.master.updateDocumentState(controller.tab, controller.document)
   controller.executeJavaScript()
   controller.master.renderDocument(controller.document)
 

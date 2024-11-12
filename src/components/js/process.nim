@@ -6,6 +6,8 @@ import bali/stdlib/console
 import jsony
 import ../../components/shared/[nix, sugar]
 import ../../components/web/[window]
+import ../../components/web/document as jsdoc
+from ../../components/parsers/html/document import HTMLDocument
 import ./ipc
 
 type
@@ -13,6 +15,8 @@ type
     ipc*: IPCClient
     parser*: Parser
     runtime*: Runtime
+
+    document*: HTMLDocument
 
 proc initConsoleIPC*(js: var JSProcess) =
   var pJs = addr(js)
@@ -32,6 +36,8 @@ proc jsExecBuffer*(js: var JSProcess, data: string) =
   js.parser = newParser(data.buffer.decode())
   js.runtime = newRuntime(data.name.decode(), js.parser.parse())
   window.generateIR(js.runtime)
+  jsdoc.generateIR(js.runtime)
+  jsdoc.updateDocumentState(js.runtime, js.document)
   js.runtime.run()
 
   js.ipc.setState(Idling)
@@ -62,6 +68,10 @@ proc talk(js: var JSProcess, process: FerusProcess) =
   case &kind
   of feJSExec:
     jsExecBuffer(js, data)
+  of feJSTakeDocument:
+    let packet = &tryParseJson(data, JSTakeDocument)
+    
+    js.document = packet.document
   else:
     discard
 

@@ -1,6 +1,7 @@
 ## I love chame
 
 import std/[options, logging, tables, base64]
+import chagashi/charset
 import sanchar/parse/url
 import ../../shared/sugar
 import ../../web/dom
@@ -16,6 +17,7 @@ type
     text: Option[string]
 
   HTMLDocument* = ref object
+    encoding*: Charset
     elems*: seq[HTMLElement]
     url*: URL
 
@@ -93,6 +95,7 @@ proc parseHTMLDocument*(
 ): HTMLDocument =
   info "Turning chame HTML document into ferus compatible HTML document"
   var html = HTMLDocument()
+  html.encoding = document.charset
 
   for elem in document.elementNodes:
     html.elems &= document.parseHTMLElement(elem)

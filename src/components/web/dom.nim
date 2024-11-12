@@ -1,7 +1,7 @@
 ## Taken from https://git.sr.ht/~bptato/chame/tree/master/item/chame/minidom.nim
 
 import std/[algorithm, hashes, options, sets, streams, tables, json]
-
+import chagashi/charset
 import chame/[tags, htmlparser]
 
 export tags
@@ -71,6 +71,7 @@ type
 
   Document* = ref object of Node
     factory*: DAtomFactory
+    charset*: Charset
 
   Text* = ref object of CharacterData
 

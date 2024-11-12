@@ -16,8 +16,10 @@ proc indexHandler(request: Request) =
     <title>Ferus User Agent Displayer</title>
   </head>
   <body>
+    <script>
+      console.log(document.baseURI)
+    </script>
     <h1>$1</h1>
-    <p>This uses no JavaScript.</p>
   </body>
 </html>
   """ % [request.headers["User-Agent"]]

@@ -224,6 +224,24 @@ proc setWindowTitle*(master: MasterProcess, title: string) {.inline.} =
     )
   )
 
+proc updateDocumentState*(master: MasterProcess, group: uint, document: HTMLDocument) =
+  ## Send over a document to a JS process to update its internal version of it
+  var process = master.server.groups[group.int].findProcess(JSRuntime, workers = false)
+
+  if not *process:
+    master.summonJSRuntime(group)
+    master.updateDocumentState(group = group, document = document)
+    return
+  
+  var prc = &process
+  assert prc.kind == JSRuntime
+  master.server.send(
+    prc.socket,
+    JSTakeDocument(
+      document: document
+    )
+  )
+
 #proc cacheCookie*(master: MasterProcess, cookie: ParsedCookie)
 
 proc dispatchRender*(master: MasterProcess, list: IPCDisplayList) {.inline.} =

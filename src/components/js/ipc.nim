@@ -1,4 +1,5 @@
 import ferus_ipc/shared
+import ../parsers/html/document
 import bali/stdlib/console
 
 type
@@ -11,5 +12,9 @@ type
     kind: FerusMagic = feJSConsoleMessage
     message*: string
     level*: ConsoleLevel
+
+  JSTakeDocument* = object
+    kind: FerusMagic = feJSTakeDocument
+    document*: HTMLDocument
 
 export ConsoleLevel
