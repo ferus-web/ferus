@@ -1,9 +1,10 @@
 import std/[options, strutils, tables, importutils, logging]
 import ferusgfx, ferus_ipc/client/prelude
-import opengl, pretty
+import opengl, pretty, chroma
 import ../shared/sugar
 import ../parsers/html/document
 import ../layout/[box, processor]
+import ../web/legacy_color
 
 when defined(ferusUseGlfw):
   import glfw
@@ -94,6 +95,16 @@ proc paintLayout*(renderer: FerusRenderer) =
   renderer.scene.camera.setBoundaries(start, ending)
   displayList.commit()
 
+proc handleBackgroundColor*(renderer: FerusRenderer, bgcolor: string) =
+  debug "Handling `bgcolor` attribute on <body> tag: " & bgcolor
+  # TODO: we don't do this with styles yet, make sure to port this over
+  # when we have a working styling engine!
+  
+  let color = parseLegacyColorValue(bgcolor)
+  if *color:
+    let sample = rgb(&color)
+    renderer.scene.setBackgroundColor(rgba(sample.r, sample.g, sample.b, 255))
+
 proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
   info "Rendering HTML document - calculating layout"
     
@@ -110,6 +121,10 @@ proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
           warn "<title> tag has no text content!"
   else:
     info "Document has no <head>"
+
+  let body = &document.body()
+  if (let bgcolorO = body.attribute("bgcolor"); *bgcolorO):
+    renderer.handleBackgroundColor(&bgcolorO)
 
   layout.constructFromDocument(document)
   renderer.layout = move(layout)
