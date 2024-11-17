@@ -31,3 +31,5 @@ when defined(ferusUseGlfw):
   requires "glfw >= 3.4.0.4"
 else:
   requires "windy >= 0.0.0"
+
+requires "waterpark >= 0.1.7"
