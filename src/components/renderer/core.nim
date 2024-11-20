@@ -113,9 +113,7 @@ proc paintLayout*(renderer: FerusRenderer) =
               if button == MouseClick.Left:
                 renderer.onAnchorClick(tags[0]) 
             ),
-            hoverCb = (proc(tags: seq[string]) =
-              echo tags[0]
-            ),
+            hoverCb = nil,# (proc(tags: seq[string]) =
             tags = @[&textBox.href]
           )
         )
