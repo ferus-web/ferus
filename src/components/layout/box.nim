@@ -1,5 +1,5 @@
 ## Layout box
-
+import std/[options]
 import vmath, pixie
 
 type
@@ -17,6 +17,7 @@ type
   TextBox* = ref object of Box
     text*: string
     fontSize*: float32
+    href*: Option[string]
 
   ImageBox* = ref object of Box
     image*: Image # TODO: add streamed image loading

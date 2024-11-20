@@ -94,7 +94,7 @@ proc getMaxHeight*(layout: Layout): uint =
     list &= restChildren
 ]#
 
-proc addText*(layout: var Layout, text: string, fontSize: float32, kind: BoxKind) =
+proc addText*(layout: var Layout, text: string, fontSize: float32, kind: BoxKind, href: Option[string] = none(string)) =
   var lastHeight: float
 
   for word in text.split(' '):
@@ -104,8 +104,6 @@ proc addText*(layout: var Layout, text: string, fontSize: float32, kind: BoxKind
       width = layout.getWordLength(word) + 8
       height = layout.getWordHeight(word) + 8
 
-    echo "place " & word.repr & " at " & $layout.cursor
-
     layout.boxes &=
       TextBox(
         text: word,
@@ -113,6 +111,7 @@ proc addText*(layout: var Layout, text: string, fontSize: float32, kind: BoxKind
         width: width.uint,
         height: height.uint,
         fontSize: fontSize,
+        href: href,
         kind: kind
       )
 
@@ -208,7 +207,7 @@ proc constructFromElem*(layout: var Layout, elem: HTMLElement) =
     layout.addText(&elem.text, 14f, kind = BoxKind.Block)
   of TAG_A:
     expectText
-    layout.addText(&elem.text, 14f, kind = BoxKind.Inline)
+    layout.addText(&elem.text, 14f, kind = BoxKind.Inline, href = elem.attribute("href"))
   of TAG_H1:
     expectText
     layout.addHeading(&elem.text, 1)
