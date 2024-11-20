@@ -1,7 +1,8 @@
 import std/[options, strutils, tables, importutils, logging]
 import ferusgfx, ferus_ipc/client/prelude
-import opengl, pretty, chroma
+import opengl, pretty, chroma, jsony, vmath
 import ../shared/sugar
+import ./ipc
 import ../parsers/html/document
 import ../layout/[box, processor]
 import ../web/legacy_color
@@ -57,6 +58,16 @@ proc setWindowTitle*(renderer: FerusRenderer, title: string) {.inline.} =
   info "Setting window title to \"" & title & "\""
   renderer.window.title = title
 
+proc onAnchorClick*(renderer: FerusRenderer, location: string) =
+  info "Anchor clicked that points to: " & location
+  renderer.ipc.send(
+    RendererGotoURL(
+      url: location
+    )
+  )
+
+  renderer.scene.camera.reset()
+
 proc paintLayout*(renderer: FerusRenderer) =
   var displayList = newDisplayList(addr renderer.scene)
   displayList.doClearAll = true
@@ -73,13 +84,41 @@ proc paintLayout*(renderer: FerusRenderer) =
       ending = deepCopy(box.pos)
 
     if box of TextBox:
-      let textBox = TextBox(box)
+      var textBox = TextBox(box)
       if textBox.width < 1 or textBox.height < 1:
         continue
 
       displayList.add(
-        newTextNode(textBox.text, textBox.pos, vec2(textBox.width.float, textBox.height.float), renderer.scene.fontManager.getTypeface("Default"), textBox.fontSize)
+        newTextNode(
+          textBox.text, textBox.pos, 
+          vec2(textBox.width.float, textBox.height.float), 
+          renderer.scene.fontManager.getTypeface("Default"), 
+          textBox.fontSize, 
+          color = (
+            if *textBox.href:
+              color(0, 0, 1, 1)
+            else:
+              color(0, 0, 0, 1)
+          )
+        )
       )
+
+      if *textBox.href:
+        displayList.add(
+          newTouchInterestNode(
+            rect(
+              textBox.pos, vec2(textBox.width.float, textBox.height.float)
+            ),
+            clickCb = (proc(tags: seq[string], button: MouseClick) =
+              if button == MouseClick.Left:
+                renderer.onAnchorClick(tags[0]) 
+            ),
+            hoverCb = (proc(tags: seq[string]) =
+              echo tags[0]
+            ),
+            tags = @[&textBox.href]
+          )
+        )
     elif box of ImageBox:
       let imageBox = ImageBox(box)
       if imageBox.width < 1 or imageBox.height < 1:
@@ -179,6 +218,15 @@ proc initialize*(renderer: FerusRenderer) {.inline.} =
       # debug "Scrolling (offset: " & $offset & ")"
       let vector = vec2(offset.x, offset.y)
       renderer.scene.onScroll(vector)
+    
+    window.mouseButtonCb = proc(_: Window, button: MouseButton, pressed: bool, mods: set[ModifierKey]) =
+      if button == mbLeft:
+        renderer.scene.onCursorClick(pressed, MouseClick.Left)
+      elif button == mbRight:
+        renderer.scene.onCursorClick(pressed, MouseClick.Right)
+
+    window.cursorPositionCb = proc(_: Window, pos: tuple[x, y: float64]) =
+      renderer.scene.onCursorMotion(vec2(pos.x, pos.y))
 
     # window.registerWindowCallbacks()
     renderer.window = window

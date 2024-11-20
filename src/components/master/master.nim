@@ -11,7 +11,7 @@ import sanchar/parse/url
 import sanchar/proto/http/shared
 
 import ../../components/shared/[nix, sugar]
-import ../../components/[network/ipc, renderer/ipc, cookie_worker/ipc, parsers/html/ipc, parsers/html/document, js/ipc]
+import ../../components/[network/ipc, renderer/ipc, parsers/html/ipc, parsers/html/document, js/ipc]
 import ../../components/web/cookie/parsed_cookie
 
 when defined(unix):
@@ -86,11 +86,17 @@ proc waitUntilReady*(
   info "$1 process is now in $2 state, ending wait. It took $3 wait iterations to signal itself as ready." % [$kind, $process.state, $numWait]
 
 proc summonNetworkProcess*(master: MasterProcess, group: uint) =
+  if *master.server.groups[group.int].findProcess(Network, workers = false):
+    return
+
   info "Summoning network process for group " & $group
   let summoned = summon(Network, ipcPath = master.server.path).dispatch()
   master.launchAndWait(summoned)
 
 proc summonHTMLParser*(master: MasterProcess, group: uint) =
+  if *master.server.groups[group.int].findProcess(Parser, pkHTML, workers = false):
+    return
+
   info "Summoning HTML parser process for group " & $group
   let summoned = summon(Parser, pkHTML, master.server.path).dispatch()
   master.launchAndWait(summoned)
@@ -137,12 +143,10 @@ proc parseHTML*(
 
   res
 
-proc summonCookieWorker*(master: MasterProcess) {.inline.} =
-  info "Summoning cookie worker."
-  let summoned = summon(CookieWorker, ipcPath = master.server.path).dispatch()
-  master.launchAndWait(summoned)
-
 proc summonJSRuntime*(master: MasterProcess, group: uint) {.inline.} =
+  if *master.server.groups[group.int].findProcess(JSRuntime, workers = false):
+    return
+
   info "Summoning JS runtime process for group " & $group
   let summoned = summon(JSRuntime, ipcPath = master.server.path).dispatch()
   master.launchAndWait(summoned)
@@ -410,6 +414,56 @@ proc onConsoleLog*(master: MasterProcess, process: FerusProcess, data: JSConsole
     resetStyle
   )
 
+proc packetHandler*(master: MasterProcess, process: FerusProcess, kind: FerusMagic, data: string) =
+  case kind
+  of feJSConsoleMessage:
+    let data = tryParseJson(data, JSConsoleMessage)
+
+    if process.kind != JSRuntime:
+      master.server.reportBadMessage(
+        process,
+        "Non-JS runtime process attempted to use `feJSConsoleMessage`!",
+        High
+      )
+      return
+
+    if !data:
+      master.server.reportBadMessage(process,
+        "Cannot reinterpret data for kind `feJSConsoleLog` as `JSConsoleMessage`",
+        Low
+      )
+      return
+
+    master.onConsoleLog(process, &data)
+  of feRendererGotoURL:
+    let data = tryParseJson(data, RendererGotoURL)
+
+    if process.kind != Renderer:
+      master.server.reportBadMessage(
+        process,
+        "Non-renderer process attempted to use `feRendererGotoURL`!",
+        High
+      )
+      return
+
+    if !data:
+      master.server.reportBadMessage(
+        process,
+        "Cannot reinterpret data for kind `feRendererGotoURL` as `RendererGotoURL`",
+        Low
+      )
+      return
+
+    var location = (&data).url
+    if not location.startsWith("http") and not location.startsWith("https"):
+      let base = master.urls[process.group]
+      location = base.scheme() & "://" & base.hostname() & '/' & location
+
+    master.urls[process.group] = parse(location)
+  else:
+    warn "Unhandled IPC protocol magic: " & $kind
+    return
+
 proc newMasterProcess*(): MasterProcess {.inline.} =
   var master = MasterProcess(server: newIPCServer())
 
@@ -417,20 +471,6 @@ proc newMasterProcess*(): MasterProcess {.inline.} =
     master.dataTransfer(process, request)
 
   master.server.handler = proc(process: FerusProcess, kind: FerusMagic, data: string) =
-    case kind
-    of feJSConsoleMessage:
-      let data = tryParseJson(data, JSConsoleMessage)
-
-      if !data:
-        master.server.reportBadMessage(process,
-          "Cannot reinterpret data for kind `feJSConsoleLog` as `JSConsoleMessage`",
-          Low
-        )
-        return
-
-      master.onConsoleLog(process, &data)
-    else:
-      warn "Unhandled IPC protocol magic: " & $kind
-      return
+    master.packetHandler(process, kind, data)
   
   master

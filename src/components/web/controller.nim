@@ -75,7 +75,10 @@ proc load*(controller: var WebMasterController) =
 
 proc heartbeat*(controller: var WebMasterController) =
   # This is run in Ferus' main loop
-  discard
+  if controller.master.urls[controller.tab] != controller.url:
+    # the renderer called `feRendererGotoURL`, probably
+    controller.url = controller.master.urls[controller.tab]
+    controller.load()
 
 func newWebMasterController*(
   url: URL,

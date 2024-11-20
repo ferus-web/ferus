@@ -39,6 +39,10 @@ type
     kind: FerusMagic = feRendererRenderDocument
     document*: HTMLDocument
 
+  RendererGotoURL* = ref object
+    kind: FerusMagic = feRendererGotoURL
+    url*: string
+
   IPCDisplayList* = GDisplayList[Drawable] ## IPC display list
 
 # omitting pointer to scene provided by GDisplayList (server-side)
