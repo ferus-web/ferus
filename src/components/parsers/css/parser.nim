@@ -1,6 +1,7 @@
-import std/[strutils, options]
+import std/[strutils, tables, options]
 import stylus/[parser, shared, tokenizer], results
-import ./[types, selector_parser, anb]
+import pkg/pretty
+import ./[types, selector_parser, anb, keywords, units]
 import ../../shared/sugar
 
 type CSSParser* = ref object
@@ -19,114 +20,107 @@ proc eof*(parser: CSSParser): bool {.inline, noSideEffect, gcsafe.} =
 proc reconsume*(parser: CSSParser, state: ParserState) {.inline.} =
   parser.state.reset(state)
 
-proc reconsume*(parser: CSSParser) {.inline.} =
-  dec parser.state.input.tokenizer.pos
+proc parseValueFromToken*(parser: CSSParser, token: Token): CSSValue =
+  case token.kind
+  of tkFunction: assert(false, "Nested CSS functions not supported yet")
+  of tkDimension:
+    if token.unit in Units:
+      return dimension(token.dValue, &token.unit.parseUnit())
+    else:
+      # FIXME: this is a bug in stylus. Numbers are marked as dimensions
+      if !token.dIntVal:
+        return decimal(token.dValue)
+      else:
+        return number(&token.dIntVal)
+  of tkIdent:
+    return str(token.ident)
+  else: print token; unreachable
 
-proc consumeFunction*(parser: CSSParser): ComponentValue =
-  let fn = parser.state.input.tokenizer.nextToken()
+proc parseFunction*(parser: CSSParser, nameTok: Token): Option[CSSValue] {.inline.} =
+  let name = nameTok.fnName
+  var args: seq[CSSValue]
 
-  Function(
-    name: fn.fnName
-  )
-
-proc consumeComponentValue*(parser: CSSParser): ComponentValue
-
-proc consumeSimpleBlock*(parser: CSSParser): SimpleBlock =
-  parser.reconsume()
-  let 
-    t = parser.state.next().get()
-    ending = case t.kind
-    of tkCurlyBracketBlock:
-      tkCloseCurlyBracket
-    of tkParenBlock:
-      tkCloseParen
-    of tkSquareBracketBlock:
-      tkCloseSquareBracket
-    else: t.kind
-
-  result = SimpleBlock(
-    token: t
-  )
+  if !parser.state.expectParenBlock():
+    return
 
   while not parser.eof:
-    let t = parser.state.next()
+    let next = &parser.state.next()
+    if next.kind == tkComma:
+      continue
 
-    if !t:
+    if next.kind == tkCloseParen:
       break
 
-    if t.get().kind == ending:
-      return result
-    else:
-      if t.get().kind in [tkCurlyBracketBlock, tkSquareBracketBlock, tkParenBlock]:
-        result.value.add(parser.consumeSimpleBlock())
-      else:
-        parser.reconsume()
-        result.value.add(parser.consumeComponentValue())
-
-proc consumeComponentValue*(parser: CSSParser): ComponentValue =
-  if @(parser.state.expectCurlyBracketBlock()) or
-    @(parser.state.expectParenBlock()) or
-    @(parser.state.expectSquareBracketBlock()):
-    return parser.consumeSimpleBlock()
-  elif @(parser.state.expectFunction()):
-    parser.reconsume()
-    return parser.consumeFunction()
-
-  ComponentValue()
-
-proc consumeDeclaration*(parser: CSSParser, name: string): Option[Declaration] =
-  if !parser.state.expectColon():
-    return
+    let value = parser.parseValueFromToken(next)
+    args &= value
   
-  var decl = Declaration(name: name)
+  parser.state.atStartOf = none(BlockType)
+
+  if !parser.state.expectSemicolon():
+    return
+
+  some(
+    function(name, move(args))
+  )
+
+proc parseRule*(parser: CSSParser): Option[Rule] =
+  let ident = parser.state.expectIdent()
+
+  if !ident:
+    return
+
+  let colon = parser.state.expectColon()
+
+  if !colon:
+    return
+
+  let ovalue = parser.state.next()
+  
+  if !ovalue:
+    return
+
+  let value = &ovalue
+  var parsedValue: CSSValue
+
+  case value.kind
+  of tkFunction:
+    parsedValue = &parser.parseFunction(value)
+  of tkDimension, tkIdent:
+    parsedValue = parser.parseValueFromToken(value)
+  else: print value.kind; unreachable
+
+  return some(Rule(
+    key: (&ident),
+    value: parsedValue
+  ))
+
+proc onEncounterIdentifier*(parser: CSSParser, ident: Token): Stylesheet =
+  if !parser.state.expectCurlyBracketBlock():
+    return
+
+  var rules: seq[Rule]
+  let name = ident.ident
 
   while not parser.eof:
-    decl.value.add(parser.consumeComponentValue())
+    let rule = parser.parseRule()
+    var parsed = &rule
+    parsed.selector = tagSelector(name)
 
-proc consumeQualifiedRule*(parser: CSSParser): Option[QualifiedRule] =
-  var qRule = QualifiedRule()
+    rules &= parsed
+    
+    let next = &parser.state.deepcopy().next()
+    if next.kind == tkCloseCurlyBracket:
+      break
+  
+  rules
 
-  while not parser.eof:
-    let t = parser.state.next()
+proc consumeRules*(parser: CSSParser): Stylesheet =
+  var stylesheet: Stylesheet
 
-    if @t and &t is SimpleBlock and (&t).kind == tkCurlyBracketBlock:
-      qRule.oblock = SimpleBlock(token: &t, value: @[])
-      return some(qRule)
-    elif @t and (&t).kind == tkCurlyBracketBlock:
-      qRule.oblock = parser.consumeSimpleBlock()
-      return some(qRule)
-    else:
-      parser.reconsume()
-      qRule.prelude &=
-        parser.consumeComponentValue()
+  let init = &parser.state.next()
+  case init.kind
+  of tkIdent:
+    stylesheet &= parser.onEncounterIdentifier(init)
+  else: discard
 
-  none(QualifiedRule)
-
-proc consumeAtRule*(parser: CSSParser): AtRule =
-  let t = parser.input.next()
-
-  result = AtRule(name: t.value)
-
-proc consumeListOfRules*(parser: CSSParser, topLevel: bool = false): seq[Rule] =
-  while not parser.eof:
-    let beforeNext = parser.state.state()
-    let t = parser.state.next().get()
-
-    case t.kind
-    of tkCDC, tkCDO:
-      if topLevel: continue
-      else:
-        parser.reconsume(beforeNext)
-        
-        let qRule = parser.consumeQualifiedRule()
-
-        if *qRule:
-          result.add(&qRule)
-    of tkAtKeyword:
-      parser.reconsume(beforeNext)
-      result.add(parser.consumeAtRule())
-    else:
-      parser.reconsume(beforeNext)
-      let qRule = parser.consumeQualifiedRule()
-      if *qRule:
-        result.add(&qRule)
+  stylesheet

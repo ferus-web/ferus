@@ -1,17 +1,11 @@
+import std/[options]
 import stylus/[shared, tokenizer]
+import ./units
 
 type
-  Stylesheet* = ref object
-    rules*: seq[Rule]
-
-  Declaration* = ref object of ComponentValue
-    name*: string
-    value*: seq[ComponentValue]
-    important*: bool
-
   SelectorKind* = enum
     skType, skId, skAttr, skClass, skUniversal,
-    skPseudoClass, skPseudoElem
+    # skPseudoClass, skPseudoElem
 
   Selector* = ref object
     case kind*: SelectorKind
@@ -24,42 +18,20 @@ type
     of skAttr:
       attr*: string
     of skUniversal: discard
-    of skPseudoClass:
-      pclass*: PseudoData
-    of skPseudoElem:
-      elem*: PseudoElem
 
   PseudoClass* = enum
     pcFirstChild, pcLastChild, pcOnlyChild, pcHover, pcRoot, pcNthChild,
     pcNthLastChild, pcChecked, pcFocus, pcIs, pcNot, pcWhere, pcLang, pcLink,
     pcVisited
 
-  ParsedItem* = ref object of RootObj
-  ComponentValue* = ref object of ParsedItem
-  
-  Rule* = ref object of ParsedItem
-    prelude*: seq[ComponentValue]
-    oblock*: SimpleBlock
-
  # CSSBlock* = ref object
  #   tokens*: seq[Token]
  
-  AtRule* = ref object of Rule
+  AtRule* = object of Rule
     name*: string
 
   AnB* = object
     a*, b*: int32
-
-  PseudoData* = ref object
-    case class*: PseudoClass
-    of pcNthChild, pcNthLastChild:
-      anb*: AnB
-      ofsels*: SelectorList
-    of pcIs, pcWhere, pcNot:
-      fsels*: SelectorList
-    of pcLang:
-      s*: string
-    else: discard
 
   CombinatorKind* = enum
     ckNone, ckDescendant, ckChild, ckNextSibling, ckSubsequentSibling
@@ -67,38 +39,95 @@ type
   PseudoElem* = enum
     peNone, peBefore, peAfter
 
-  CompoundSelector* = object
-    kind*: CombinatorKind
-    selectors*: seq[Selector]
+  CSSValueKind* = enum
+    cssFunction
+    cssInteger
+    cssFloat
+    cssString
+    cssDimension
+    cssHex
 
-  ComplexSelector* = seq[CompoundSelector]
-  SelectorList* = seq[ComplexSelector]
+  CSSUnit* {.pure.} = enum
+    Px
+    Cm
+    Mm
+    In
 
-  Function* = ref object of ComponentValue
+  CSSDimension* = object
+    value*: float32
+    unit*: CSSUnit
+
+  CSSFunction* = object
     name*: string
-    value*: seq[ComponentValue]
+    arguments*: seq[CSSValue]
 
-  QualifiedRule* = ref object of Rule
+  CSSValue* = object
+    case kind*: CSSValueKind
+    of cssFunction:
+      fn*: CSSFunction
+    of cssInteger:
+      num*: int32
+    of cssFloat:
+      flt*: float32
+    of cssString:
+      str*: string
+    of cssHex:
+      hex*: string
+    of cssDimension:
+      dim*: CSSDimension
+  
+  Stylesheet* = seq[Rule]
 
-  SimpleBlock* = ref object of ComponentValue
-    token*: Token
-    value*: seq[ComponentValue]
+  Rule* = object of RootObj
+    selector*: Selector
+    key*: string
+    value*: CSSValue
 
-proc anb*(a, b: int32): AnB {.inline, noSideEffect, gcsafe.} =
-  AnB(a: a, b: b)
+func function*(name: string, arguments: seq[CSSValue]): CSSValue {.inline.} =
+  CSSValue(
+    kind: cssFunction,
+    fn: CSSFunction(name: name, arguments: arguments)
+  )
 
-iterator items*(sels: CompoundSelector): Selector {.inline.} =
-  for it in sels.selectors:
-    yield it
+func number*(num: int32): CSSValue {.inline.} =
+  CSSValue(
+    kind: cssInteger,
+    num: num
+  )
 
-proc `[]`*(sels: CompoundSelector; i: int): Selector {.inline.} =
-  return sels.selectors[i]
+func decimal*(dec: float32): CSSValue {.inline.} =
+  CSSValue(
+    kind: cssFloat,
+    flt: dec
+  )
 
-proc `[]`*(sels: CompoundSelector; i: BackwardsIndex): Selector {.inline.} =
-  return sels.selectors[i]
+func dimension*(value: float32, unit: CSSUnit): CSSValue {.inline.} =
+  CSSValue(
+    kind: cssDimension,
+    dim: CSSDimension(
+      value: value,
+      unit: unit
+    )
+  )
 
-proc len*(sels: CompoundSelector): int {.inline.} =
-  return sels.selectors.len
+func parseUnit*(str: string): Option[CSSUnit] =
+  if not Units.contains(str):
+    return
 
-proc add*(sels: var CompoundSelector; sel: Selector) {.inline.} =
-  sels.selectors.add(sel)
+  case str
+  of "px": return some(CSSUnit.Px)
+  of "mm": return some(CSSUnit.Mm)
+  of "cm": return some(CSSUnit.Cm)
+  of "in": return some(CSSUnit.In)
+  else: discard
+
+func str*(str: string): CSSValue {.inline.} =
+  CSSValue(
+    kind: cssString,
+    str: str
+  )
+
+func tagSelector*(tag: string): Selector {.inline.} =
+  Selector(kind: skType, tag: tag)
+
+func anb*(a, b: int32): AnB {.inline.} = AnB(a: a, b: b)
