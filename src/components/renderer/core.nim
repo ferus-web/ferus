@@ -142,6 +142,9 @@ proc handleBackgroundColor*(renderer: FerusRenderer, bgcolor: string) =
     let sample = rgb(&color)
     renderer.scene.setBackgroundColor(rgba(sample.r, sample.g, sample.b, 255))
 
+proc shouldClose*(renderer: FerusRenderer): bool =
+  renderer.window.shouldClose
+
 proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
   info "Rendering HTML document - calculating layout"
     
@@ -226,7 +229,6 @@ proc initialize*(renderer: FerusRenderer) {.inline.} =
     window.cursorPositionCb = proc(_: Window, pos: tuple[x, y: float64]) =
       renderer.scene.onCursorMotion(vec2(pos.x, pos.y))
 
-    # window.registerWindowCallbacks()
     renderer.window = window
   else:
     window.onResize = proc =

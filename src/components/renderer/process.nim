@@ -180,7 +180,7 @@ proc renderProcessLogic*(client: var IPCClient, process: FerusProcess) {.inline.
   client.setState(Idling)
   sandbox(Renderer)
 
-  while true:
+  while not renderer.shouldClose:
     client.talk(renderer, process)
     renderer.tick()
 
