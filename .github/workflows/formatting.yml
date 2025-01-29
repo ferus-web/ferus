@@ -24,8 +24,10 @@ jobs:
           nim-version: '2.0.0' # 2.2.x cannot compile nph due to a regression
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Format the code
+      - name: Install the formatter
         run: |
-          nimble install nph &&
-          nph --version &&
-          nph .
+          nimble install nph -y &&
+          nph --version
+
+      - name: Format the code
+        run: nph src/
