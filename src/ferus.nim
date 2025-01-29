@@ -9,6 +9,9 @@ import components/parsers/html/document
 import sanchar/parse/url
 import pretty
 
+{.passC: gorge("pkg-config --cflags openssl").strip().}
+{.passL: gorge("pkg-config --libs openssl").strip().}
+
 proc setupLogging() {.inline.} =
   addHandler newColoredLogger()
   setLogFilter(lvlInfo)

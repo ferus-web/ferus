@@ -1,5 +1,5 @@
 {
-  description = "web engine";
+  description = "Ferus is a web engine (HTML/CSS viewer) with JavaScript support written in Nim.";
 
   inputs = {
     nixpkgs.url = github:NixOS/nixpkgs/nixpkgs-unstable;
@@ -25,9 +25,10 @@
 
             nativeBuildInputs = with pkgs; [
               makeBinaryWrapper
-              nimble
+              # nimble
               wayland-protocols
               wayland-scanner
+              openssl
             ];
 
             buildInputs = with pkgs; [
@@ -39,6 +40,9 @@
               curl.dev
 
               xorg.libX11
+              icu76
+              libseccomp.dev
+              gmp
               openssl.dev
               xorg.libXext
 
@@ -48,12 +52,26 @@
             LD_LIBRARY_PATH = with pkgs; lib.makeLibraryPath [
               libGL
               simdutf
+              openssl
               curl.dev
+              libseccomp.dev
+              gmp.dev
+              icu76.dev
             ];
 
-            env = {
-              # pkg-config cannot find simdutf without this, weird.
-              PKG_CONFIG_PATH = "${with pkgs; lib.makeLibraryPath [pkgs.simdutf]}/pkgconfig";
+            env = with pkgs; {
+              PKG_CONFIG_PATH = builtins.concatStringsSep ":" (map (pkg: "${lib.makeLibraryPath [pkg]}/pkgconfig") 
+                [ 
+                  libGL
+                  simdutf
+                  openssl.dev
+                  curl.dev
+                  libseccomp.dev
+                  gmp.dev
+                  glfw
+                  icu76.dev
+                ]
+              );
             };
 
             wrapFerus =
