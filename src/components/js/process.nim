@@ -10,22 +10,19 @@ import ../../components/web/document as jsdoc
 from ../../components/parsers/html/document import HTMLDocument
 import ./ipc
 
-type
-  JSProcess* = object
-    ipc*: IPCClient
-    parser*: Parser
-    runtime*: Runtime
+type JSProcess* = object
+  ipc*: IPCClient
+  parser*: Parser
+  runtime*: Runtime
 
-    document*: HTMLDocument
+  document*: HTMLDocument
 
 proc initConsoleIPC*(js: var JSProcess) =
   var pJs = addr(js)
 
   attachConsoleDelegate(
     proc(level: ConsoleLevel, msg: string) =
-      pJs[].ipc.send(
-        JSConsoleMessage(message: msg, level: level)
-      )
+      pJs[].ipc.send(JSConsoleMessage(message: msg, level: level))
   )
 
 proc jsExecBuffer*(js: var JSProcess, data: string) =
@@ -53,7 +50,7 @@ proc talk(js: var JSProcess, process: FerusProcess) =
   let
     data = js.ipc.receive()
     jdata = tryParseJson(data, JsonNode)
-    
+
   if not *jdata:
     warn "Did not get any valid JSON data."
     warn data
@@ -70,7 +67,7 @@ proc talk(js: var JSProcess, process: FerusProcess) =
     jsExecBuffer(js, data)
   of feJSTakeDocument:
     let packet = &tryParseJson(data, JSTakeDocument)
-    
+
     js.document = packet.document
   else:
     discard

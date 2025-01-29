@@ -26,31 +26,33 @@ iterator items*(elem: HTMLElement): HTMLElement =
     yield child
 
 func body*(doc: HTMLDocument): Option[HTMLElement] {.inline.} =
-  if doc.elems.len < 1: return
+  if doc.elems.len < 1:
+    return
 
   for elem in doc.elems[0]:
     if elem.tag == TAG_BODY:
       return some(elem)
 
 func head*(doc: HTMLDocument): Option[HTMLElement] {.inline.} =
-  if doc.elems.len < 1: return
+  if doc.elems.len < 1:
+    return
 
   for elem in doc.elems[0]:
     if elem.tag == TAG_HEAD:
       return some(elem)
 
-func findAll*(element: HTMLElement, tag: TagType, descend: bool = false): seq[HTMLElement] =
+func findAll*(
+    element: HTMLElement, tag: TagType, descend: bool = false
+): seq[HTMLElement] =
   var res: seq[HTMLElement]
 
   for elem in element.children:
     if elem.tag == tag:
-      res &=
-        elem
-    
+      res &= elem
+
     if descend:
-      res &=
-        elem.findAll(tag, descend = true)
-  
+      res &= elem.findAll(tag, descend = true)
+
   res
 
 func text*(elem: HTMLElement): Option[string] {.inline.} =
@@ -61,10 +63,7 @@ func attribute*(elem: HTMLElement, name: string): Option[string] {.inline.} =
   if name in elem.attributes:
     return some(decode(elem.attributes[name]))
 
-proc parseHTMLElement*(
-  document: Document,
-  element: Element
-): HTMLElement =
+proc parseHTMLElement*(document: Document, element: Element): HTMLElement =
   var elem = HTMLElement()
   let tag = element.tagType()
   debug "html: tag is " & $tag
@@ -76,23 +75,30 @@ proc parseHTMLElement*(
     elem.attributes[mappedName] = encode(value)
 
   case tag
-  of TAG_P, { TAG_H1 .. TAG_H6 }, TAG_TITLE, TAG_SCRIPT, TAG_B, TAG_SPAN, TAG_STRONG, TAG_LI, TAG_A:
+  of TAG_P,
+      {TAG_H1 .. TAG_H6},
+      TAG_TITLE,
+      TAG_SCRIPT,
+      TAG_B,
+      TAG_SPAN,
+      TAG_STRONG,
+      TAG_LI,
+      TAG_A:
     var text: string
 
     for txt in element.textNodes:
       text &= txt.data
 
     elem.text = some(encode(text))
-  else: discard
+  else:
+    discard
 
   for child in element.elementNodes:
     elem.children &= document.parseHTMLElement(child)
 
   elem
-  
-proc parseHTMLDocument*(
-  document: Document
-): HTMLDocument =
+
+proc parseHTMLDocument*(document: Document): HTMLDocument =
   info "Turning chame HTML document into ferus compatible HTML document"
   var html = HTMLDocument()
   html.encoding = document.charset

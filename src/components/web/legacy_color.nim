@@ -11,8 +11,9 @@ proc parseLegacyColorValue*(str: string): Option[Color] =
   var input = str.internalTrim(strutils.Whitespace, TrimMode.Both)
   if input.toLowerAscii() == "transparent":
     return
-  
+
   try:
     return chroma.parseHex(str[1 ..< str.len]).some()
   except chroma.InvalidColor as exc:
-    warn "parseLegacyColorValue(" & str & "): chroma raised an error whilst parsing hex string: " & exc.msg
+    warn "parseLegacyColorValue(" & str &
+      "): chroma raised an error whilst parsing hex string: " & exc.msg

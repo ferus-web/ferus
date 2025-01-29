@@ -1,6 +1,5 @@
 ## Sandbox implementation for Linux using libseccomp
 
-
 import std/[logging, posix]
 import ferus_ipc/shared
 import seccomp, seccomp/seccomp_lowlevel
@@ -32,21 +31,20 @@ const FORBIDDEN_SYSCALLS* = [
 ]
 
 const ALLOWED_SYSCALLS* = [
-  "exit_group", "getuid", "getpid", "rt_sigreturn", "exit", "mmap",
-  "munmap", "mprotect", "brk", "madvise", "shmat",
-  "pipe2", "recvmsg", "recvfrom", "sendto", "sendmsg",
-  "shmdt", "mlock", "mlock2", "munlock", "mlockall",
-  "munlockall", "futex", "sched_yield", "clone", "wait4", "close", "readlink", "write", "read", "restart_syscall",
-  "openat"
+  "exit_group", "getuid", "getpid", "rt_sigreturn", "exit", "mmap", "munmap",
+  "mprotect", "brk", "madvise", "shmat", "pipe2", "recvmsg", "recvfrom", "sendto",
+  "sendmsg", "shmdt", "mlock", "mlock2", "munlock", "mlockall", "munlockall", "futex",
+  "sched_yield", "clone", "wait4", "close", "readlink", "write", "read",
+  "restart_syscall", "openat",
 ]
 
 proc networkProcessSandbox*(ctx: ScmpFilterCtx) =
   for generalSyscall in ALLOWED_SYSCALLS:
     ctx.addRule(Allow, generalSyscall)
-  
+
   for generalSyscall in FORBIDDEN_SYSCALLS:
     ctx.addRule(Kill, generalSyscall)
-  
+
   # Socket functions, as this process will make sockets, connect with them, and destroy them
   ctx.addRule(Allow, "socket")
   ctx.addRule(Allow, "connect")
@@ -56,7 +54,7 @@ proc rendererProcessSandbox*(ctx: ScmpFilterCtx) =
   ## The renderer process' sandbox is to be applied after the window has been initialized, otherwise calls via libwayland-client and libxcb would fail.
   for generalSyscall in ALLOWED_SYSCALLS:
     ctx.addRule(Allow, generalSyscall)
-  
+
   for generalSyscall in FORBIDDEN_SYSCALLS:
     ctx.addRule(Kill, generalSyscall)
 
@@ -68,7 +66,7 @@ proc rendererProcessSandbox*(ctx: ScmpFilterCtx) =
   ctx.addRule(Allow, "sched_setaffinity")
   ctx.addRule(Allow, "rt_sigprocmask")
   ctx.addRule(Allow, "clone3")
-  
+
   ctx.addRule(Kill, "socket")
   ctx.addRule(Kill, "connect")
   ctx.addRule(Kill, "open")
@@ -77,7 +75,7 @@ proc parserProcessSandbox*(ctx: ScmpFilterCtx) =
   ## This is one of the most locked down processes as it is the most unsafe one (dealing with unsanitized input), but it also barely needs any syscalls to work.
   for generalSyscall in ALLOWED_SYSCALLS:
     ctx.addRule(Allow, generalSyscall)
-  
+
   for generalSyscall in FORBIDDEN_SYSCALLS:
     ctx.addRule(Kill, generalSyscall)
 
@@ -95,11 +93,12 @@ proc sandbox*(kind: FerusProcessKind) {.noinline.} =
 
   info "Using seccomp@" & $ver[0] & '.' & $ver[1] & '.' & $ver[2]
   let ctx = seccompCtx(Kill)
-  
+
   case kind
   of Network:
     networkProcessSandbox(ctx)
-  of Renderer: rendererProcessSandbox(ctx)
+  of Renderer:
+    rendererProcessSandbox(ctx)
   of Parser:
     parserProcessSandbox(ctx)
   else:
@@ -109,6 +108,6 @@ proc sandbox*(kind: FerusProcessKind) {.noinline.} =
 
   onSignal SIGSYS:
     error "A syscall was executed which is in violation of the filter for this process"
-  
+
   info "Applying context. Any violations beyond this point will result in program termination."
   load ctx

@@ -5,7 +5,7 @@ import pixie
 when defined(linux):
   import ../../components/sandbox/linux
 
-import ../../components/renderer/[core] 
+import ../../components/renderer/[core]
 import ../../components/shared/[nix, sugar]
 import ../../components/renderer/ipc except newDisplayList
 
@@ -15,24 +15,24 @@ proc readTypeface*(data, format: string): Typeface {.raises: [PixieError].} =
   ## Loads a typeface from data.
   try:
     result =
-      case format:
-        of "ttf":
-          parseTtf(data)
-        of "otf":
-          parseOtf(data)
-        of "svg":
-          parseSvgFont(data)
-        else:
-          raise newException(PixieError, "Unsupported font format")
+      case format
+      of "ttf":
+        parseTtf(data)
+      of "otf":
+        parseOtf(data)
+      of "svg":
+        parseSvgFont(data)
+      else:
+        raise newException(PixieError, "Unsupported font format")
   except IOError as e:
     raise newException(PixieError, e.msg, e)
 
   result.filePath = "<in-memory typeface>"
 
 proc loadFont*(
-  client: var IPCClient,
-  renderer: FerusRenderer,
-  loadFontPacket: Option[RendererLoadFontPacket]
+    client: var IPCClient,
+    renderer: FerusRenderer,
+    loadFontPacket: Option[RendererLoadFontPacket],
 ) {.inline.} =
   let
     packet = &loadFontPacket
@@ -50,22 +50,20 @@ proc loadFont*(
     return
 
   try:
-    font = newFont(
-      &typeface
-    ).some()
+    font = newFont(&typeface).some()
   except PixieError as exc:
-    error "Failed to load font: " & exc.msg & ": fmt=" & packet.format 
+    error "Failed to load font: " & exc.msg & ": fmt=" & packet.format
     return
-  
+
   if *font:
     renderer.scene.fontManager.setTypeface(name, &typeface)
     renderer.scene.fontManager.set(name, &font)
     info "Loaded font \"" & name & "\" successfully!"
 
 proc mutateTree*(
-  client: var IPCClient,
-  renderer: FerusRenderer,
-  packet: Option[RendererMutationPacket]
+    client: var IPCClient,
+    renderer: FerusRenderer,
+    packet: Option[RendererMutationPacket],
 ) {.inline.} =
   if not *packet:
     warn "Failed to mutate scene tree: cannot reinterpret data as `RendererMutationPacket`!"
@@ -79,42 +77,26 @@ proc mutateTree*(
     case adds.kind
     of TextNode:
       let content = decode adds.content
-      list.add(
-        newTextNode(
-          content, 
-          adds.position, 
-          renderer.scene.fontManager
-        )
-      )
+      list.add(newTextNode(content, adds.position, renderer.scene.fontManager))
     of ImageNode:
       let content = decode adds.imgContent
 
-      list.add(
-        newImageNodeFromMemory(
-          content,
-          adds.position
-        )
-      )
+      list.add(newImageNodeFromMemory(content, adds.position))
     of GIFNode:
       let content = decode adds.gifContent
 
-      list.add(
-        newGIFNodeFromMemory(
-          content,
-          adds.position
-        )
-      )
+      list.add(newGIFNodeFromMemory(content, adds.position))
 
   info "Committing display list."
   commit list
-  
+
 proc talk(
     client: var IPCClient, renderer: FerusRenderer, process: FerusProcess
 ) {.inline.} =
   var count: cint
-  
+
   discard nix.ioctl(client.socket.getFd().cint, nix.FIONREAD, addr count)
-  
+
   if count < 1:
     return
 
@@ -129,10 +111,7 @@ proc talk(
     warn data
     return
 
-  let kind = (&jdata)
-    .getOrDefault("kind")
-    .getStr()
-    .magicFromStr()
+  let kind = (&jdata).getOrDefault("kind").getStr().magicFromStr()
 
   if not *kind:
     warn "No `kind` field inside JSON data provided."
@@ -153,7 +132,7 @@ proc talk(
     if not *reinterpreted:
       warn "Cannot reinterpret JSON data as `RendererSetWindowTitle` packet!"
       return
-    
+
     client.setState(Processing)
     renderer.setWindowTitle((&reinterpreted).title.decode())
     client.setState(Idling)
@@ -162,7 +141,7 @@ proc talk(
     if not *reinterpreted:
       warn "Cannot reinterpret JSON data as `RendererRenderDocument` packet!"
       return
-    
+
     client.setState(Processing)
     renderer.renderDocument((&reinterpreted).document)
     client.setState(Idling)

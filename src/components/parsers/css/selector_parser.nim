@@ -4,9 +4,7 @@ import ./types
 # proc getSpecificity*(selectors: CompoundSelector): int {.inline.}
 # proc getSpecificity*(selectors: ComplexSelector): int {.inline.}
 
-proc getSpecificity*(
-  selector: Selector
-): int =
+proc getSpecificity*(selector: Selector): int =
   case selector.kind
   of skId:
     result += 1000000
@@ -14,7 +12,8 @@ proc getSpecificity*(
     result += 1000
   of skType:
     result += 1
-  of skUniversal: discard
+  of skUniversal:
+    discard
 
 #[ proc getSpecificity*(
   selectors: CompoundSelector

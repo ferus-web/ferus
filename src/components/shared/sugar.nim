@@ -1,7 +1,7 @@
 import std/options
 import results
 
-proc `*`*[T](opt: Option[T]): bool {.inline.} = 
+proc `*`*[T](opt: Option[T]): bool {.inline.} =
   opt.isSome
 
 proc `!`*[T](opt: Option[T]): bool {.inline.} =

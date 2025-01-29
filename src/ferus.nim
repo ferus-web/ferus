@@ -1,10 +1,15 @@
 import std/[os, strutils, logging, tables]
 import colored_logger
-import components/[
-  build_utils, argparser,
-  master/master, network/ipc, renderer/ipc, shared/sugar,
-  web/controller
-]
+import
+  components/[
+    build_utils,
+    argparser,
+    master/master,
+    network/ipc,
+    renderer/ipc,
+    shared/sugar,
+    web/controller,
+  ]
 import components/parsers/html/document
 import sanchar/parse/url
 import pretty
@@ -24,20 +29,19 @@ Ferus options
 """
   quit(code)
 
-proc showVersion {.noReturn.} =
+proc showVersion() {.noReturn.} =
   echo """
 Ferus $1
 
 Compiler: $1
 Compile Time: $2
 Target CPU: $3
-""" % [getVersion(), $getCompilerType(), $getCompileDate(), $getArchitecture()]
+""" %
+    [getVersion(), $getCompilerType(), $getCompileDate(), $getArchitecture()]
   quit(0)
 
 proc main() {.inline.} =
-  setupLogging(
-
-  )
+  setupLogging()
   let input = parseInput()
   if input.enabled("help", "h"):
     showHelp(0)
@@ -59,7 +63,7 @@ proc main() {.inline.} =
 
   var master = newMasterProcess()
   master.initialize()
-  
+
   if not resource.startsWith("http") and not resource.startsWith("https"):
     resource = "file://" & resource
 

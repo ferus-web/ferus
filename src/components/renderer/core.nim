@@ -7,10 +7,7 @@ import ../parsers/html/document
 import ../layout/[box, processor]
 import ../web/legacy_color
 
-when defined(ferusUseGlfw):
-  import glfw
-else:
-  import windy
+when defined(ferusUseGlfw): import glfw else: import windy
 
 type FerusRenderer* = ref object
   window*: Window
@@ -60,24 +57,21 @@ proc setWindowTitle*(renderer: FerusRenderer, title: string) {.inline.} =
 
 proc onAnchorClick*(renderer: FerusRenderer, location: string) =
   info "Anchor clicked that points to: " & location
-  renderer.ipc.send(
-    RendererGotoURL(
-      url: location
-    )
-  )
+  renderer.ipc.send(RendererGotoURL(url: location))
 
   renderer.scene.camera.reset()
 
 proc paintLayout*(renderer: FerusRenderer) =
   var displayList = newDisplayList(addr renderer.scene)
   displayList.doClearAll = true
-  
+
   var start, ending: Vec2
   for i, box in renderer.layout.boxes:
     if i == 0 or box.pos.y < start.y:
       `=destroy`(start)
       wasMoved(start)
-      start = vec2(box.pos.x, box.pos.y - (box.height.float + 32)) # FIXME: more precise document start detection
+      start = vec2(box.pos.x, box.pos.y - (box.height.float + 32))
+        # FIXME: more precise document start detection
     elif box.pos.y > ending.y:
       `=destroy`(ending)
       wasMoved(ending)
@@ -90,31 +84,31 @@ proc paintLayout*(renderer: FerusRenderer) =
 
       displayList.add(
         newTextNode(
-          textBox.text, textBox.pos, 
-          vec2(textBox.width.float, textBox.height.float), 
-          renderer.scene.fontManager.getTypeface("Default"), 
-          textBox.fontSize, 
+          textBox.text,
+          textBox.pos,
+          vec2(textBox.width.float, textBox.height.float),
+          renderer.scene.fontManager.getTypeface("Default"),
+          textBox.fontSize,
           color = (
             if *textBox.href:
               color(0, 0, 1, 1)
             else:
               color(0, 0, 0, 1)
-          )
+          ),
         )
       )
 
       if *textBox.href:
         displayList.add(
           newTouchInterestNode(
-            rect(
-              textBox.pos, vec2(textBox.width.float, textBox.height.float)
+            rect(textBox.pos, vec2(textBox.width.float, textBox.height.float)),
+            clickCb = (
+              proc(tags: seq[string], button: MouseClick) =
+                if button == MouseClick.Left:
+                  renderer.onAnchorClick(tags[0])
             ),
-            clickCb = (proc(tags: seq[string], button: MouseClick) =
-              if button == MouseClick.Left:
-                renderer.onAnchorClick(tags[0]) 
-            ),
-            hoverCb = nil,# (proc(tags: seq[string]) =
-            tags = @[&textBox.href]
+            hoverCb = nil, # (proc(tags: seq[string]) =
+            tags = @[&textBox.href],
           )
         )
     elif box of ImageBox:
@@ -122,13 +116,12 @@ proc paintLayout*(renderer: FerusRenderer) =
       if imageBox.width < 1 or imageBox.height < 1:
         continue
 
-      var node = newImageNodeFromMemory(imageBox.content, imageBox.pos) # FIXME: this is wasteful! We already have the image loaded into memory!
+      var node = newImageNodeFromMemory(imageBox.content, imageBox.pos)
+        # FIXME: this is wasteful! We already have the image loaded into memory!
       node.image = imageBox.image
 
-      displayList.add(
-        node
-      )
-  
+      displayList.add(node)
+
   renderer.scene.camera.setBoundaries(start, ending)
   displayList.commit()
 
@@ -136,7 +129,7 @@ proc handleBackgroundColor*(renderer: FerusRenderer, bgcolor: string) =
   debug "Handling `bgcolor` attribute on <body> tag: " & bgcolor
   # TODO: we don't do this with styles yet, make sure to port this over
   # when we have a working styling engine!
-  
+
   let color = parseLegacyColorValue(bgcolor)
   if *color:
     let sample = rgb(&color)
@@ -147,7 +140,7 @@ proc shouldClose*(renderer: FerusRenderer): bool =
 
 proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
   info "Rendering HTML document - calculating layout"
-    
+
   var layout = newLayout(renderer.ipc, renderer.scene.fontManager.get("Default"))
   layout.width = renderer.scene.camera.bounds.w.int
 
@@ -176,7 +169,8 @@ proc resize*(renderer: FerusRenderer, dims: tuple[w, h: int32]) {.inline.} =
   let casted = (w: dims.w.int, h: dims.h.int)
   renderer.scene.onResize(casted)
 
-  if renderer.layout.width != dims.w.int: # Only recalculate layout when width changes. We don't care about the height.
+  if renderer.layout.width != dims.w.int:
+    # Only recalculate layout when width changes. We don't care about the height.
     renderer.layout.width = dims.w.int
     renderer.layout.cursor.reset()
     renderer.layout.update()
@@ -184,12 +178,12 @@ proc resize*(renderer: FerusRenderer, dims: tuple[w, h: int32]) {.inline.} =
 
 proc initialize*(renderer: FerusRenderer) {.inline.} =
   info "Initializing renderer."
-  
+
   when defined(ferusUseGlfw):
     glfw.initialize()
 
   loadExtensions()
-  
+
   when defined(ferusUseGlfw):
     var conf = DefaultOpenglWindowConfig
     conf.title = "Ferus"
@@ -197,17 +191,16 @@ proc initialize*(renderer: FerusRenderer) {.inline.} =
     conf.makeContextCurrent = true
     conf.version = glv30
 
-    var window = try:
-      newWindow(conf)
-    except GLFWError as exc:
-      error "Failed to initialize GLFW window: " & exc.msg
-      quit(8)
+    var window =
+      try:
+        newWindow(conf)
+      except GLFWError as exc:
+        error "Failed to initialize GLFW window: " & exc.msg
+        quit(8)
   else:
-    var window = newWindow(
-      "Initializing", ivec2(1280, 720)
-    )
+    var window = newWindow("Initializing", ivec2(1280, 720))
     window.makeContextCurrent()
-  
+
   renderer.window = window
   renderer.scene = newScene(1280, 1080)
 
@@ -219,8 +212,10 @@ proc initialize*(renderer: FerusRenderer) {.inline.} =
       # debug "Scrolling (offset: " & $offset & ")"
       let vector = vec2(offset.x, offset.y)
       renderer.scene.onScroll(vector)
-    
-    window.mouseButtonCb = proc(_: Window, button: MouseButton, pressed: bool, mods: set[ModifierKey]) =
+
+    window.mouseButtonCb = proc(
+        _: Window, button: MouseButton, pressed: bool, mods: set[ModifierKey]
+    ) =
       if button == mbLeft:
         renderer.scene.onCursorClick(pressed, MouseClick.Left)
       elif button == mbRight:
@@ -231,13 +226,11 @@ proc initialize*(renderer: FerusRenderer) {.inline.} =
 
     renderer.window = window
   else:
-    window.onResize = proc =
+    window.onResize = proc() =
       renderer.resize((w: window.size.x.int32, h: window.size.x.int32))
 
-    window.onScroll = proc =
-      renderer.scene.onScroll(
-        vec2(window.scrollDelta.x, window.scrollDelta.y)
-      )
+    window.onScroll = proc() =
+      renderer.scene.onScroll(vec2(window.scrollDelta.x, window.scrollDelta.y))
 
 proc newFerusRenderer*(client: var IPCClient): FerusRenderer {.inline.} =
   FerusRenderer(ipc: client)

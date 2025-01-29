@@ -4,8 +4,11 @@ import ./units
 
 type
   SelectorKind* = enum
-    skType, skId, skAttr, skClass, skUniversal,
-    # skPseudoClass, skPseudoElem
+    skType
+    skId
+    skAttr
+    skClass
+    skUniversal # skPseudoClass, skPseudoElem
 
   Selector* = ref object
     case kind*: SelectorKind
@@ -20,13 +23,24 @@ type
     of skUniversal: discard
 
   PseudoClass* = enum
-    pcFirstChild, pcLastChild, pcOnlyChild, pcHover, pcRoot, pcNthChild,
-    pcNthLastChild, pcChecked, pcFocus, pcIs, pcNot, pcWhere, pcLang, pcLink,
+    pcFirstChild
+    pcLastChild
+    pcOnlyChild
+    pcHover
+    pcRoot
+    pcNthChild
+    pcNthLastChild
+    pcChecked
+    pcFocus
+    pcIs
+    pcNot
+    pcWhere
+    pcLang
+    pcLink
     pcVisited
 
- # CSSBlock* = ref object
- #   tokens*: seq[Token]
- 
+  # CSSBlock* = ref object
+  #   tokens*: seq[Token]
   AtRule* = object of Rule
     name*: string
 
@@ -34,10 +48,16 @@ type
     a*, b*: int32
 
   CombinatorKind* = enum
-    ckNone, ckDescendant, ckChild, ckNextSibling, ckSubsequentSibling
+    ckNone
+    ckDescendant
+    ckChild
+    ckNextSibling
+    ckSubsequentSibling
 
   PseudoElem* = enum
-    peNone, peBefore, peAfter
+    peNone
+    peBefore
+    peAfter
 
   CSSValueKind* = enum
     cssFunction
@@ -75,7 +95,7 @@ type
       hex*: string
     of cssDimension:
       dim*: CSSDimension
-  
+
   Stylesheet* = seq[Rule]
 
   Rule* = object of RootObj
@@ -84,50 +104,38 @@ type
     value*: CSSValue
 
 func function*(name: string, arguments: seq[CSSValue]): CSSValue {.inline.} =
-  CSSValue(
-    kind: cssFunction,
-    fn: CSSFunction(name: name, arguments: arguments)
-  )
+  CSSValue(kind: cssFunction, fn: CSSFunction(name: name, arguments: arguments))
 
 func number*(num: int32): CSSValue {.inline.} =
-  CSSValue(
-    kind: cssInteger,
-    num: num
-  )
+  CSSValue(kind: cssInteger, num: num)
 
 func decimal*(dec: float32): CSSValue {.inline.} =
-  CSSValue(
-    kind: cssFloat,
-    flt: dec
-  )
+  CSSValue(kind: cssFloat, flt: dec)
 
 func dimension*(value: float32, unit: CSSUnit): CSSValue {.inline.} =
-  CSSValue(
-    kind: cssDimension,
-    dim: CSSDimension(
-      value: value,
-      unit: unit
-    )
-  )
+  CSSValue(kind: cssDimension, dim: CSSDimension(value: value, unit: unit))
 
 func parseUnit*(str: string): Option[CSSUnit] =
   if not Units.contains(str):
     return
 
   case str
-  of "px": return some(CSSUnit.Px)
-  of "mm": return some(CSSUnit.Mm)
-  of "cm": return some(CSSUnit.Cm)
-  of "in": return some(CSSUnit.In)
-  else: discard
+  of "px":
+    return some(CSSUnit.Px)
+  of "mm":
+    return some(CSSUnit.Mm)
+  of "cm":
+    return some(CSSUnit.Cm)
+  of "in":
+    return some(CSSUnit.In)
+  else:
+    discard
 
 func str*(str: string): CSSValue {.inline.} =
-  CSSValue(
-    kind: cssString,
-    str: str
-  )
+  CSSValue(kind: cssString, str: str)
 
 func tagSelector*(tag: string): Selector {.inline.} =
   Selector(kind: skType, tag: tag)
 
-func anb*(a, b: int32): AnB {.inline.} = AnB(a: a, b: b)
+func anb*(a, b: int32): AnB {.inline.} =
+  AnB(a: a, b: b)

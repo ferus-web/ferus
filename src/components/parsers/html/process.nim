@@ -6,27 +6,23 @@ import ../../shared/[nix, sugar]
 import ferus_ipc/client/prelude
 import jsony
 
-proc htmlParse*(
-  oparsingData: Option[ParseHTMLPacket]
-): HTMLParseResult =
+proc htmlParse*(oparsingData: Option[ParseHTMLPacket]): HTMLParseResult =
   if !oparsingData:
     warn "Cannot reinterpret JSON data as `ParseHTMLPacket`!"
     return
 
   let parsingData = &oparsingData
-  
+
   info "Parsing HTML with source length: " & $parsingData.source.len & " chars"
-  
-  let 
+
+  let
     startTime = getMonoTime()
     document = parseHTML(newStringStream(decode(parsingData.source)))
     endTime = getMonoTime()
 
   info "Parsed HTML in " & $(endTime - startTime)
- 
-  HTMLParseResult(
-    document: some(document.parseHTMLDocument())
-  )
+
+  HTMLParseResult(document: some(document.parseHTMLDocument()))
 
 proc talk(client: var IPCClient, process: FerusProcess) {.inline.} =
   var count: cint
@@ -38,7 +34,7 @@ proc talk(client: var IPCClient, process: FerusProcess) {.inline.} =
   let
     data = client.receive()
     jdata = tryParseJson(data, JsonNode)
-  
+
   if not *jdata:
     warn "Did not get any valid JSON data."
     warn data

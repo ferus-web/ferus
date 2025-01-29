@@ -1,8 +1,7 @@
 import std/os
 import ferus_ipc/server/prelude
 
-const
-  FerusInstallPath {.strdefine: "".} = "./"
+const FerusInstallPath {.strdefine: "".} = "./"
 
 type Summon* = ref object
   process*: FerusProcess
@@ -28,9 +27,9 @@ proc dispatch*(summon: Summon): string {.inline.} =
   s
 
 proc summon*(
-  kind: FerusProcessKind,
-  pKind: ParserKind = pkHTML, # TODO: implement pkNone
-  ipcPath: string,
+    kind: FerusProcessKind,
+    pKind: ParserKind = pkHTML, # TODO: implement pkNone
+    ipcPath: string,
 ): Summon {.inline.} =
   var process = FerusProcess(kind: kind)
 

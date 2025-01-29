@@ -28,9 +28,7 @@ func strToAtom*(factory: DAtomFactory, s: string): DAtom
 
 proc newDAtomFactory*(): DAtomFactory =
   const minCap = int(TagType.high) + 1
-  let factory = DAtomFactory(
-    atomMap: newSeqOfCap[string](minCap),
-  )
+  let factory = DAtomFactory(atomMap: newSeqOfCap[string](minCap))
   factory.atomMap.add("") # skip TAG_UNKNOWN
   for tagType in TagType(int(TAG_UNKNOWN) + 1) .. TagType.high:
     discard factory.strToAtom($tagType)
@@ -91,10 +89,9 @@ type
   HTMLTemplateElement* = ref object of Element
     content*: DocumentFragment
 
-type
-  FerusDOMBuilder* = ref object of DOMBuilder[Node, DAtom]
-    document*: Document
-    factory*: DAtomFactory
+type FerusDOMBuilder* = ref object of DOMBuilder[Node, DAtom]
+  document*: Document
+  factory*: DAtomFactory
 
 type
   DOMBuilderImpl = FerusDOMBuilder
@@ -131,8 +128,7 @@ proc toValidUTF8(s: string): string =
         result &= "\uFFFD"
       i += 2
     elif int(s[i]) shr 4 == 0xE:
-      if i + 2 < s.len and int(s[i + 1]) shr 6 == 2 and
-          int(s[i + 2]) shr 6 == 2:
+      if i + 2 < s.len and int(s[i + 1]) shr 6 == 2 and int(s[i + 2]) shr 6 == 2:
         result &= s[i]
         result &= s[i + 1]
         result &= s[i + 2]
@@ -140,8 +136,8 @@ proc toValidUTF8(s: string): string =
         result &= "\uFFFD"
       i += 3
     elif int(s[i]) shr 3 == 0x1E:
-      if i + 3 < s.len and int(s[i + 1]) shr 6 == 2 and
-          int(s[i + 2]) shr 6 == 2 and int(s[i + 3]) shr 6 == 2:
+      if i + 3 < s.len and int(s[i + 1]) shr 6 == 2 and int(s[i + 2]) shr 6 == 2 and
+          int(s[i + 3]) shr 6 == 2:
         result &= s[i]
         result &= s[i + 1]
         result &= s[i + 2]
@@ -208,15 +204,14 @@ proc getDocumentImpl(builder: FerusDOMBuilder): Node =
 proc getParentNodeImpl(builder: FerusDOMBuilder, handle: Node): Option[Node] =
   return option(handle.parentNode)
 
-proc createElement(document: Document, localName: DAtom, namespace: Namespace):
-    Element =
-  let element = if localName.toTagType() == TAG_TEMPLATE and
-      namespace == Namespace.HTML:
-    HTMLTemplateElement(
-      content: DocumentFragment()
-    )
-  else:
-    Element()
+proc createElement(
+    document: Document, localName: DAtom, namespace: Namespace
+): Element =
+  let element =
+    if localName.toTagType() == TAG_TEMPLATE and namespace == Namespace.HTML:
+      HTMLTemplateElement(content: DocumentFragment())
+    else:
+      Element()
   element.localName = localName
   element.namespace = namespace
   element.document = document
@@ -226,14 +221,22 @@ proc createHTMLElementImpl(builder: FerusDOMBuilder): Node =
   let localName = builder.factory.tagTypeToAtom(TAG_HTML)
   return builder.document.createElement(localName, Namespace.HTML)
 
-proc createElementForTokenImpl(builder: FerusDOMBuilder, localName: DAtom,
-    namespace: Namespace, intendedParent: Node, htmlAttrs: Table[DAtom, string],
-    xmlAttrs: seq[Attribute]): Node =
+proc createElementForTokenImpl(
+    builder: FerusDOMBuilder,
+    localName: DAtom,
+    namespace: Namespace,
+    intendedParent: Node,
+    htmlAttrs: Table[DAtom, string],
+    xmlAttrs: seq[Attribute],
+): Node =
   let element = builder.document.createElement(localName, namespace)
   element.attrs = xmlAttrs
   for k, v in htmlAttrs:
     element.attrs.add((NO_PREFIX, NO_NAMESPACE, k, v.toValidUTF8()))
-  element.attrs.sort(func(a, b: Attribute): int = cmp(a.name, b.name))
+  element.attrs.sort(
+    func (a, b: Attribute): int =
+      cmp(a.name, b.name)
+  )
   return element
 
 proc getLocalNameImpl(builder: FerusDOMBuilder, handle: Node): DAtom =
@@ -248,12 +251,13 @@ proc getTemplateContentImpl(builder: FerusDOMBuilder, handle: Node): Node =
 proc createCommentImpl(builder: FerusDOMBuilder, text: string): Node =
   return Comment(data: text.toValidUTF8())
 
-proc createDocumentTypeImpl(builder: FerusDOMBuilder, name, publicId,
-    systemId: string): Node =
+proc createDocumentTypeImpl(
+    builder: FerusDOMBuilder, name, publicId, systemId: string
+): Node =
   return DocumentType(
     name: name.toValidUTF8(),
     publicId: publicId.toValidUTF8(),
-    systemId: systemId.toValidUTF8()
+    systemId: systemId.toValidUTF8(),
   )
 
 func countElementChildren(node: Node): int =
@@ -329,15 +333,18 @@ func preInsertionValidity*(parent, node: Node, before: Node): bool =
       let elems = node.countElementChildren()
       if elems > 1 or node.hasTextChild():
         return false
-      elif elems == 1 and (parent.hasElementChild() or
-          before != nil and
-          (before of DocumentType or before.hasNextDocumentTypeSibling())):
+      elif elems == 1 and (
+        parent.hasElementChild() or
+        before != nil and (
+          before of DocumentType or before.hasNextDocumentTypeSibling()
+        )
+      ):
         return false
     elif node of Element:
       if parent.hasElementChild():
         return false
-      elif before != nil and (before of DocumentType or
-            before.hasNextDocumentTypeSibling()):
+      elif before != nil and
+          (before of DocumentType or before.hasNextDocumentTypeSibling()):
         return false
     elif node of DocumentType:
       if parent.hasDocumentTypeChild() or
@@ -357,24 +364,27 @@ proc insertBefore(parent, child: Node, before: Option[Node]) =
       parent.childList.insert(child, i)
     child.parentNode = parent
 
-proc insertBeforeImpl(builder: FerusDOMBuilder, parent, child: Node,
-    before: Option[Node]) =
+proc insertBeforeImpl(
+    builder: FerusDOMBuilder, parent, child: Node, before: Option[Node]
+) =
   parent.insertBefore(child, before)
 
-proc insertTextImpl(builder: FerusDOMBuilder, parent: Node, text: string,
-    before: Option[Node]) =
+proc insertTextImpl(
+    builder: FerusDOMBuilder, parent: Node, text: string, before: Option[Node]
+) =
   let text = text.toValidUTF8()
   let before = before.get(nil)
-  let prevSibling = if before != nil:
-    let i = parent.childList.find(before)
-    if i == 0:
-      nil
+  let prevSibling =
+    if before != nil:
+      let i = parent.childList.find(before)
+      if i == 0:
+        nil
+      else:
+        parent.childList[i - 1]
+    elif parent.childList.len > 0:
+      parent.childList[^1]
     else:
-      parent.childList[i - 1]
-  elif parent.childList.len > 0:
-    parent.childList[^1]
-  else:
-    nil
+      nil
   if prevSibling != nil and prevSibling of Text:
     Text(prevSibling).data &= text
   else:
@@ -394,8 +404,9 @@ proc moveChildrenImpl(builder: FerusDOMBuilder, fromNode, toNode: Node) =
     child.parentNode = nil
     toNode.insertBefore(child, none(Node))
 
-proc addAttrsIfMissingImpl(builder: FerusDOMBuilder, handle: Node,
-    attrs: Table[DAtom, string]) =
+proc addAttrsIfMissingImpl(
+    builder: FerusDOMBuilder, handle: Node, attrs: Table[DAtom, string]
+) =
   let element = Element(handle)
   var oldNames: HashSet[DAtom]
   for attr in element.attrs:
@@ -403,27 +414,28 @@ proc addAttrsIfMissingImpl(builder: FerusDOMBuilder, handle: Node,
   for name, value in attrs:
     if name notin oldNames:
       element.attrs.add((NO_PREFIX, NO_NAMESPACE, name, value.toValidUTF8()))
-  element.attrs.sort(func(a, b: Attribute): int = cmp(a.name, b.name))
+  element.attrs.sort(
+    func (a, b: Attribute): int =
+      cmp(a.name, b.name)
+  )
 
-method setEncodingImpl(builder: FerusDOMBuilder, encoding: string):
-    SetEncodingResult {.base.} =
+method setEncodingImpl(
+    builder: FerusDOMBuilder, encoding: string
+): SetEncodingResult {.base.} =
   # Provided as a method for minidom_cs to override.
   return SET_ENCODING_CONTINUE
 
 proc newFerusDOMBuilder*(factory: DAtomFactory): FerusDOMBuilder =
   let document = Document(factory: factory)
-  let builder = FerusDOMBuilder(
-    document: document,
-    factory: factory
-  )
+  let builder = FerusDOMBuilder(document: document, factory: factory)
   return builder
 
-proc parseFromStream(parser: var HTML5Parser[Node, DAtom],
-    inputStream: Stream) =
+proc parseFromStream(parser: var HTML5Parser[Node, DAtom], inputStream: Stream) =
   var buffer: array[4096, char]
   while true:
     let n = inputStream.readData(addr buffer[0], buffer.len)
-    if n == 0: break
+    if n == 0:
+      break
     # res can be PRES_CONTINUE or PRES_SCRIPTING. PRES_STOP is only returned
     # on charset switching, and minidom does not support that.
     var res = parser.parseChunk(toOpenArray(buffer, 0, n - 1))
@@ -437,8 +449,11 @@ proc parseFromStream(parser: var HTML5Parser[Node, DAtom],
       res = parser.parseChunk(buffer.toOpenArray(ip, n - 1))
   parser.finish()
 
-proc parseHTML*(inputStream: Stream, opts = HTML5ParserOpts[Node, DAtom](),
-    factory = newDAtomFactory()): Document =
+proc parseHTML*(
+    inputStream: Stream,
+    opts = HTML5ParserOpts[Node, DAtom](),
+    factory = newDAtomFactory(),
+): Document =
   ## Read, parse and return an HTML document from `inputStream`, using
   ## parser options `opts` and MAtom factory `factory`.
   ##
@@ -451,9 +466,12 @@ proc parseHTML*(inputStream: Stream, opts = HTML5ParserOpts[Node, DAtom](),
   parser.parseFromStream(inputStream)
   return builder.document
 
-proc parseHTMLFragment*(inputStream: Stream, element: Element,
-    opts: HTML5ParserOpts[Node, DAtom], factory = newDAtomFactory()):
-    seq[Node] =
+proc parseHTMLFragment*(
+    inputStream: Stream,
+    element: Element,
+    opts: HTML5ParserOpts[Node, DAtom],
+    factory = newDAtomFactory(),
+): seq[Node] =
   ## Read, parse and return the children of an HTML fragment from `inputStream`,
   ## using context element `element` and parser options `opts`.
   ##
@@ -467,22 +485,26 @@ proc parseHTMLFragment*(inputStream: Stream, element: Element,
   ## `pushInTemplate` of `opts` are overridden (in accordance with the standard).
   let builder = newFerusDOMBuilder(factory)
   let document = builder.document
-  let state = if element.namespace != Namespace.HTML:
-    DATA
-  else:
-    case element.tagType
-    of TAG_TITLE, TAG_TEXTAREA: RCDATA
-    of TAG_STYLE, TAG_XMP, TAG_IFRAME, TAG_NOEMBED, TAG_NOFRAMES: RAWTEXT
-    of TAG_SCRIPT: SCRIPT_DATA
-    of TAG_NOSCRIPT: DATA # no scripting
-    of TAG_PLAINTEXT: PLAINTEXT
-    else: DATA
+  let state =
+    if element.namespace != Namespace.HTML:
+      DATA
+    else:
+      case element.tagType
+      of TAG_TITLE, TAG_TEXTAREA:
+        RCDATA
+      of TAG_STYLE, TAG_XMP, TAG_IFRAME, TAG_NOEMBED, TAG_NOFRAMES:
+        RAWTEXT
+      of TAG_SCRIPT:
+        SCRIPT_DATA
+      of TAG_NOSCRIPT:
+        DATA
+      # no scripting
+      of TAG_PLAINTEXT:
+        PLAINTEXT
+      else:
+        DATA
   let htmlAtom = builder.factory.tagTypeToAtom(TAG_HTML)
-  let root = Element(
-    localName: htmlAtom,
-    namespace: HTML,
-    document: document
-  )
+  let root = Element(localName: htmlAtom, namespace: HTML, document: document)
   document.childList = @[Node(root)]
   var opts = opts
   opts.ctx = some((Node(element), element.localName))
@@ -505,7 +527,7 @@ proc parseHTMLFragment*(s: string, element: Element): seq[Node] =
   let opts = HTML5ParserOpts[Node, DAtom](
     isIframeSrcdoc: false,
     scripting: true,
-    pushInTemplate: element.tagType == TAG_TEMPLATE
+    pushInTemplate: element.tagType == TAG_TEMPLATE,
   )
   return parseHTMLFragment(inputStream, element, opts)
 

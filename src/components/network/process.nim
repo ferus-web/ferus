@@ -14,10 +14,10 @@ import ../../components/build_utils
 when defined(ferusUseCurl):
   var curl = newCurly()
 
-func getUAString*: string {.inline.} =
+func getUAString*(): string {.inline.} =
   "Mozilla/5.0 ($1 $2) Ferus/$3 (Ferus, like Gecko) Ferus/$3 Firefox/129.0" % [
     (
-      when defined(linux): 
+      when defined(linux):
         "X11; Linux"
       elif defined(win32):
         "Windows NT 10; Win32"
@@ -31,7 +31,7 @@ func getUAString*: string {.inline.} =
         "X11; OpenBSD"
     ),
     getArchitectureUAString(),
-    getVersion()
+    getVersion(),
   ]
 
 proc networkFetch*(
@@ -41,14 +41,14 @@ proc networkFetch*(
   if not *fetchData:
     error "Could not reinterpret JSON data as `NetworkFetchPacket`!"
     return
-  
-  let 
+
+  let
     url = (&fetchData).url
     ua = getUAString()
 
   # info "User agent is set to \"" & ua & '"'
   info "Getting ready to send HTTP/GET request to: " & $url
-  
+
   when defined(ferusUseCurl):
     var headers: HttpHeaders
     headers["User-Agent"] = ua
@@ -57,29 +57,30 @@ proc networkFetch*(
       let response = curl.get($url, headers = headers)
 
       result = NetworkFetchResult(
-        response: some(HTTPResponse(
-          httpVersion: response.request.verb,
-          code: response.code.uint32,
-          content: response.body,
-          headers: (proc: Headers =
-            var headers: Headers
-            let baseHeaders = response.headers.toBase()
+        response: some(
+          HTTPResponse(
+            httpVersion: response.request.verb,
+            code: response.code.uint32,
+            content: response.body,
+            headers: (
+              proc(): Headers =
+                var headers: Headers
+                let baseHeaders = response.headers.toBase()
 
-            for (key, value) in baseHeaders:
-              headers.add(Header(key: key, value: value))
+                for (key, value) in baseHeaders:
+                  headers.add(Header(key: key, value: value))
 
-            headers
-          )()
-        ))
+                headers
+            )(),
+          )
+        )
       )
     except CatchableError as exc:
       error "Failed to send HTTP/GET response to: " & $url
       error exc.msg
       result = NetworkFetchResult(response: none(HTTPResponse))
   else:
-    var webClient = httpClient(@[
-      header("User-Agent", ua)
-    ])
+    var webClient = httpClient(@[header("User-Agent", ua)])
 
     result = NetworkFetchResult(response: webClient.get((&fetchData).url).some())
 
@@ -109,7 +110,7 @@ proc talk(client: var IPCClient, process: FerusProcess) {.inline.} =
   if not *kind:
     warn "No `kind` field inside JSON data provided."
     return
-  
+
   case &kind
   of feNetworkFetch:
     var odata = client.networkFetch(tryParseJson(data, NetworkFetchPacket))

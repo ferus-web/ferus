@@ -30,11 +30,11 @@ type
   RendererLoadFontPacket* = ref object
     kind: FerusMagic = feRendererLoadFont
     name*, content*, format*: string
-  
+
   RendererSetWindowTitle* = ref object
     kind: FerusMagic = feRendererSetWindowTitle
     title*: string
-  
+
   RendererRenderDocument* = ref object
     kind: FerusMagic = feRendererRenderDocument
     document*: HTMLDocument
@@ -55,30 +55,17 @@ proc parseHook*(s: string, i: int, v2: ptr Scene) {.inline.} =
 
 proc newTextNode*(content: string, position: Vec2, font: string): Drawable {.inline.} =
   Drawable(
-    kind: TextNode,
-    content: content.encode(safe = true),
-    position: position,
-    font: font
+    kind: TextNode, content: content.encode(safe = true), position: position, font: font
   )
 
-proc newImageNode*(
-  path: string,
-  position: Vec2
-): Drawable {.inline.} =
+proc newImageNode*(path: string, position: Vec2): Drawable {.inline.} =
   Drawable(
-    kind: ImageNode,
-    imgContent: path.readFile().encode(safe = true),
-    position: position
+    kind: ImageNode, imgContent: path.readFile().encode(safe = true), position: position
   )
 
-proc newGIFNode*(
-  path: string,
-  position: Vec2
-): Drawable {.inline.} =
+proc newGIFNode*(path: string, position: Vec2): Drawable {.inline.} =
   Drawable(
-    kind: GIFNode,
-    gifContent: path.readFile().encode(safe = true),
-    position: position
+    kind: GIFNode, gifContent: path.readFile().encode(safe = true), position: position
   )
 
 proc newDisplayList*(clearAll: bool = false): IPCDisplayList {.inline.} =

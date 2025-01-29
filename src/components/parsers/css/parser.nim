@@ -8,11 +8,7 @@ type CSSParser* = ref object
   state*: Parser
 
 proc newCSSParser*(source: string): CSSParser {.inline.} =
-  CSSParser(
-    state: newParser(
-      newParserInput source
-    )
-  )
+  CSSParser(state: newParser(newParserInput source))
 
 proc eof*(parser: CSSParser): bool {.inline, noSideEffect, gcsafe.} =
   parser.state.input.tokenizer.isEof
@@ -22,7 +18,8 @@ proc reconsume*(parser: CSSParser, state: ParserState) {.inline.} =
 
 proc parseValueFromToken*(parser: CSSParser, token: Token): CSSValue =
   case token.kind
-  of tkFunction: assert(false, "Nested CSS functions not supported yet")
+  of tkFunction:
+    assert(false, "Nested CSS functions not supported yet")
   of tkDimension:
     if token.unit in Units:
       return dimension(token.dValue, &token.unit.parseUnit())
@@ -34,7 +31,9 @@ proc parseValueFromToken*(parser: CSSParser, token: Token): CSSValue =
         return number(&token.dIntVal)
   of tkIdent:
     return str(token.ident)
-  else: print token; unreachable
+  else:
+    print token
+    unreachable
 
 proc parseFunction*(parser: CSSParser, nameTok: Token): Option[CSSValue] {.inline.} =
   let name = nameTok.fnName
@@ -53,15 +52,13 @@ proc parseFunction*(parser: CSSParser, nameTok: Token): Option[CSSValue] {.inlin
 
     let value = parser.parseValueFromToken(next)
     args &= value
-  
+
   parser.state.atStartOf = none(BlockType)
 
   if !parser.state.expectSemicolon():
     return
 
-  some(
-    function(name, move(args))
-  )
+  some(function(name, move(args)))
 
 proc parseRule*(parser: CSSParser): Option[Rule] =
   let ident = parser.state.expectIdent()
@@ -75,7 +72,7 @@ proc parseRule*(parser: CSSParser): Option[Rule] =
     return
 
   let ovalue = parser.state.next()
-  
+
   if !ovalue:
     return
 
@@ -87,12 +84,11 @@ proc parseRule*(parser: CSSParser): Option[Rule] =
     parsedValue = &parser.parseFunction(value)
   of tkDimension, tkIdent:
     parsedValue = parser.parseValueFromToken(value)
-  else: print value.kind; unreachable
+  else:
+    print value.kind
+    unreachable
 
-  return some(Rule(
-    key: (&ident),
-    value: parsedValue
-  ))
+  return some(Rule(key: (&ident), value: parsedValue))
 
 proc onEncounterIdentifier*(parser: CSSParser, ident: Token): Stylesheet =
   if !parser.state.expectCurlyBracketBlock():
@@ -107,11 +103,11 @@ proc onEncounterIdentifier*(parser: CSSParser, ident: Token): Stylesheet =
     parsed.selector = tagSelector(name)
 
     rules &= parsed
-    
+
     let next = &parser.state.deepcopy().next()
     if next.kind == tkCloseCurlyBracket:
       break
-  
+
   rules
 
 proc consumeRules*(parser: CSSParser): Stylesheet =
@@ -121,6 +117,7 @@ proc consumeRules*(parser: CSSParser): Stylesheet =
   case init.kind
   of tkIdent:
     stylesheet &= parser.onEncounterIdentifier(init)
-  else: discard
+  else:
+    discard
 
   stylesheet

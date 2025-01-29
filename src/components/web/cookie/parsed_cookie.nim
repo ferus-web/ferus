@@ -2,29 +2,31 @@ import std/[options, sequtils, strutils, times]
 import ./cookie
 import ../../shared/[sugar, parse_ints]
 
-type
-  ParsedCookie* = object
-    name*, value*: string
-    sameSiteAttribute*: SameSite = ssDefault
+type ParsedCookie* = object
+  name*, value*: string
+  sameSiteAttribute*: SameSite = ssDefault
 
-    expiryTimeFromExpiresAttribute*: Option[DateTime]
-    expiryTimeFromMaxAgeAttribute*: Option[DateTime]
+  expiryTimeFromExpiresAttribute*: Option[DateTime]
+  expiryTimeFromMaxAgeAttribute*: Option[DateTime]
 
-    domain*, path*: Option[string]
+  domain*, path*: Option[string]
 
-    secureAttributePresent*, httpOnlyAttributePresent*: bool = false
+  secureAttributePresent*, httpOnlyAttributePresent*: bool = false
 
 const
   MaxCookieSize {.intdefine: "WebMaxCookieSize".} = 4096
-  ShortMonthNames = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
+  ShortMonthNames =
+    ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"]
 
 {.push checks: off, inline.}
 proc find(haystack: string, needle: char, ignores: seq[int] = @[]): Option[int] =
   for i, c in haystack:
-    if i in ignores: continue
+    if i in ignores:
+      continue
 
     if c == needle:
       return some(i)
+
 {.pop.}
 
 proc parseDateTime*(value: string): Option[DateTime] {.inline.} =
@@ -36,7 +38,7 @@ proc parseDateTime*(value: string): Option[DateTime] {.inline.} =
       true
     except ValueError:
       false
-  
+
   proc parseTime(token: string): bool =
     let parts = token.split(':')
     if parts.len < 3:
@@ -69,11 +71,8 @@ proc parseDateTime*(value: string): Option[DateTime] {.inline.} =
       toUint(token, year)
 
   proc isDelim(c: char): bool {.inline.} =
-    c == '\t' or
-    c >= ' ' and c <= '/' or
-    c >= ';' and c <= '@' or
-    c >= '[' and c <= '`' or
-    c >= '{' and c <= '~'
+    c == '\t' or c >= ' ' and c <= '/' or c >= ';' and c <= '@' or c >= '[' and c <= '`' or
+      c >= '{' and c <= '~'
 
   var
     foundTime = false
@@ -85,17 +84,18 @@ proc parseDateTime*(value: string): Option[DateTime] {.inline.} =
     var
       curr: string
       s: seq[string]
-    
+
     for i, c in value:
       if not c.isDelim():
         curr &= c
       else:
-        curr.removePrefix(' ') # FIXME: dumb, awful, pungent, disgusting, crappy and very bad way to fix this, fix it!
+        curr.removePrefix(' ')
+          # FIXME: dumb, awful, pungent, disgusting, crappy and very bad way to fix this, fix it!
         s &= curr
         curr = "" & c
-    
+
     s
- 
+
   for dateTok in dateTokens:
     if not foundTime and parseTime(dateTok):
       foundTime = true
@@ -111,13 +111,10 @@ proc parseDateTime*(value: string): Option[DateTime] {.inline.} =
 
   if year <= 69:
     year += 2000
-  
-  if not foundTime or 
-    not foundDayOfMonth or
-    not foundMonth or
-    not foundYear:
+
+  if not foundTime or not foundDayOfMonth or not foundMonth or not foundYear:
     return
-  
+
   # Perform some sanity checks to ensure that some values don't go beyond their intended ranges
   if dayOfMonth < 1 and dayOfMonth > 31:
     return
@@ -137,7 +134,9 @@ proc parseDateTime*(value: string): Option[DateTime] {.inline.} =
   if dayOfMonth > getDaysInMonth(month.Month, year.int).uint:
     return
 
-  some dateTime(year.int, month.Month, dayOfMonth.int, hour.int, minute.int, second.int, 0, local())
+  some dateTime(
+    year.int, month.Month, dayOfMonth.int, hour.int, minute.int, second.int, 0, local()
+  )
 
 proc onExpiresAttribute*(cookie: var ParsedCookie, value: string) {.inline.} =
   if (let expiryTime = parseDateTime(value); *expiryTime):
@@ -149,7 +148,8 @@ proc onMaxAgeAttribute*(cookie: var ParsedCookie, value: string) {.inline.} =
 
   if (let deltaSeconds = value.tryParseInt(); *deltaSeconds):
     if &deltaSeconds <= 0:
-      cookie.expiryTimeFromMaxAgeAttribute = some(dateTime(1970, mJan, 1)) # January 1st, 1970
+      cookie.expiryTimeFromMaxAgeAttribute = some(dateTime(1970, mJan, 1))
+        # January 1st, 1970
     else:
       cookie.expiryTimeFromMaxAgeAttribute = some(now() + seconds(&deltaSeconds))
 
@@ -217,19 +217,19 @@ proc parseAttributes*(cookie: var ParsedCookie, input: string) =
   var attrName, attrVal: string
   if (let position = cookieAv.find('='); *position):
     attrName = cookieAv[0 ..< &position]
-    
+
     if &position < cookieAv.len - 1:
       attrVal = cookieAv[&position + 1 ..< cookieAv.len]
   else:
     attrName = cookieAv
-  
+
   for c in Whitespace:
     attrName.removePrefix(c)
     attrName.removeSuffix(c)
-    
+
     attrVal.removePrefix(c)
     attrVal.removeSuffix(c)
-  
+
   # echo attrName & " = " & attrVal
   processAttributes(cookie, attrName, attrVal)
   parseAttributes(cookie, input)
@@ -258,28 +258,17 @@ proc parseCookie*(input: string): Option[ParsedCookie] {.inline.} =
   else:
     # If the name value pair lacks a `=`, ignore the cookie entirely.
     return
-  
+
   # Remove any trailing whitespace from the name and value
-  name = cast[string](
-    name.filterIt(
-      it notin Whitespace
-    )
-  )
-  
-  value = cast[string](
-    value.filterIt(
-      it notin Whitespace
-    )
-  )
-  
+  name = cast[string](name.filterIt(it notin Whitespace))
+
+  value = cast[string](value.filterIt(it notin Whitespace))
+
   # If the name's empty, ignore the cookie entirely.
   if name.len < 1:
     return
-  
-  var parsed = ParsedCookie(
-    name: name,
-    value: value
-  )
+
+  var parsed = ParsedCookie(name: name, value: value)
 
   parseAttributes(parsed, unparsedAttrs)
   parsed.some()

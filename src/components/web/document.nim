@@ -5,11 +5,10 @@ import chagashi/charset
 import sanchar/parse/url
 import pretty
 
-type
-  JSDocument* = object
-    baseURI*: string
-    domain*: string
-    characterSet*: string
+type JSDocument* = object
+  baseURI*: string
+  domain*: string
+  characterSet*: string
 
 proc generateIR*(runtime: Runtime) =
   debug "components/web/document: generating interfaces"

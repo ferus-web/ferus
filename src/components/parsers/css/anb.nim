@@ -11,7 +11,7 @@ proc match(s: string, fn: proc(c: char): bool): bool {.inline.} =
   true
 
 proc parseSignlessB*(
-  parser: Parser, a: int32, bSign: int32
+    parser: Parser, a: int32, bSign: int32
 ): Result[AnB, BasicParseError] {.inline.} =
   let rnext = parser.next()
 
@@ -24,12 +24,13 @@ proc parseSignlessB*(
   of tkNumber:
     if not next.nHasSign and next.nIntVal.isSome:
       return ok(anb(a, bSign * next.nIntVal.unsafeGet()))
-  else: discard
+  else:
+    discard
 
   err(parser.newBasicUnexpectedTokenError(next))
 
 proc parseNumberSaturate*(str: string): Result[int32, void] =
-  var 
+  var
     input = newParserInput(str)
     parserObj = newParser(input)
 
@@ -38,12 +39,13 @@ proc parseNumberSaturate*(str: string): Result[int32, void] =
   if rnextwc.isErr:
     return err()
 
-  let 
+  let
     nextwc = get rnextwc
-    integer = if nextwc.kind == tkNumber and nextwc.nIntVal.isSome:
-      nextwc.nIntVal.unsafeGet()
-    else:
-      return err()
+    integer =
+      if nextwc.kind == tkNumber and nextwc.nIntVal.isSome:
+        nextwc.nIntVal.unsafeGet()
+      else:
+        return err()
 
   # FIXME: implement this
   #if not parserObj.isExhausted():
@@ -52,17 +54,14 @@ proc parseNumberSaturate*(str: string): Result[int32, void] =
   ok integer
 
 proc parseNDashDigits*(str: string): Result[int32, void] =
-  if str.len >= 3 and
-    str[0..2].toLowerAscii() == "n-" and
-    str[2..str.len-1].match(
-      (c) => c in {'0'..'9'}
-  ):
-    parseNumberSaturate(str[1..str.len-1])
+  if str.len >= 3 and str[0 .. 2].toLowerAscii() == "n-" and
+      str[2 .. str.len - 1].match((c) => c in {'0' .. '9'}):
+    parseNumberSaturate(str[1 .. str.len - 1])
   else:
     err()
 
 proc parseB*(input: Parser, a: int32): Result[AnB, BasicParseError] =
-  let 
+  let
     start = input.state()
     rnext = input.next()
 
@@ -76,19 +75,19 @@ proc parseB*(input: Parser, a: int32): Result[AnB, BasicParseError] =
         return parseSignlessB(input, a, 1)
       of '-':
         return parseSignlessB(input, a, -1)
-      else: discard
+      else:
+        discard
     of tkNumber:
       if next.nHasSign and next.nIntVal.isSome:
         return ok(anb(a, next.nIntVal.unsafeGet()))
-    else: discard
+    else:
+      discard
 
   input.reset(start)
   ok(anb(a, 0))
 
 proc parseNth*(input: Parser): Result[AnB, BasicParseError] =
-  let next = input
-    .next()
-    .get()
+  let next = input.next().get()
 
   case next.kind
   of tkNumber:
@@ -96,7 +95,7 @@ proc parseNth*(input: Parser): Result[AnB, BasicParseError] =
       return ok(anb(0'i32, next.nIntVal.unsafeGet()))
   of tkDimension:
     if next.dIntVal.isSome:
-      let 
+      let
         intVal = next.dIntVal.unsafeGet()
         unit = next.unit
 
@@ -111,9 +110,8 @@ proc parseNth*(input: Parser): Result[AnB, BasicParseError] =
         if pres.isOk:
           return ok(anb(next.dIntVal.unsafeGet(), pres.get()))
         else:
-          return err(
-            input.newBasicUnexpectedTokenError(Token(kind: tkIdent, ident: unit))
-          )
+          return
+            err(input.newBasicUnexpectedTokenError(Token(kind: tkIdent, ident: unit)))
   of tkIdent:
     let value = next.ident
 
@@ -131,18 +129,18 @@ proc parseNth*(input: Parser): Result[AnB, BasicParseError] =
     of "-n-":
       return parseSignlessB(input, -1'i32, -1'i32)
     else:
-      let (slice, a) = if value.startsWith("-"):
-        (value[1..value.len-1], -1'i32)
-      else:
-        (value, 1'i32) # FIXME: this is not standards compliant, I think
+      let (slice, a) =
+        if value.startsWith("-"):
+          (value[1 .. value.len - 1], -1'i32)
+        else:
+          (value, 1'i32) # FIXME: this is not standards compliant, I think
 
       let pres = parseNDashDigits(slice)
       if pres.isOk:
         return ok(anb(a, pres.get()))
       else:
-        return err(
-          input.newBasicUnexpectedTokenError(Token(kind: tkIdent, ident: value))
-        )
+        return
+          err(input.newBasicUnexpectedTokenError(Token(kind: tkIdent, ident: value)))
   of tkDelim:
     if next.delim == '+':
       let rdnext = input.nextIncludingWhitespace()
@@ -162,8 +160,10 @@ proc parseNth*(input: Parser): Result[AnB, BasicParseError] =
             if pres.isOk:
               return ok(anb(1'i32, pres.get()))
             else:
-              return err(input.newBasicUnexpectedTokenError(Token(kind: tkIdent, ident: value)))
+              return err(
+                input.newBasicUnexpectedTokenError(Token(kind: tkIdent, ident: value))
+              )
   else:
     discard
-  
+
   err(input.newBasicUnexpectedTokenError(next))

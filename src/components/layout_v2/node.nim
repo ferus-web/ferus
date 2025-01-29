@@ -20,7 +20,7 @@ type
     Before
     Inside
     After
-  
+
   HitTestResult* = object
     node*: ref Node
     indexInNode*: int = 0

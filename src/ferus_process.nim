@@ -32,7 +32,8 @@ proc bootstrap(
       of "ipc-path":
         path = some p.val
       of "pKind":
-        assert process.kind == Parser, "`parser-kind` was specified, but `kind` is NOT `Parser`! Something has went horribly, horribly wrong!"
+        assert process.kind == Parser,
+          "`parser-kind` was specified, but `kind` is NOT `Parser`! Something has went horribly, horribly wrong!"
         try:
           process = FerusProcess(kind: Parser, pKind: ParserKind(p.val.parseInt()))
         except ValueError:
@@ -48,7 +49,7 @@ proc main() {.inline.} =
     process = FerusProcess(pid: uint64 getCurrentProcessId())
     client = newIPCClient()
     path: Option[string]
-  
+
   addHandler newColoredLogger()
   bootstrap(p, process, path)
 
@@ -61,10 +62,10 @@ proc main() {.inline.} =
     info "Bootstrap: Parser Kind: " & $process.pKind
   discard client.connect(path)
   client.handshake()
-  
+
   # addHandler newIPCLogger(lvlAll, client)
   setLogFilter(lvlInfo)
-  
+
   if process.kind != Renderer:
     sandbox(process.kind)
 

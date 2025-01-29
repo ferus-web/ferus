@@ -1,5 +1,3 @@
 import pkg/[vmath]
 
-type
-  BlockBox* = object
-
+type BlockBox* = object

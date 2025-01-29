@@ -1,7 +1,6 @@
 ## Cookies implementation
 ##
 
-
 import std/[strutils, times]
 
 type
@@ -37,10 +36,7 @@ proc `$`*(ss: SameSite): string {.inline.} =
 
 proc sameSite*(str: string): SameSite {.inline.} =
   case str.toLowerAscii()
-  of "none":
-    ssNone
-  of "strict":
-    ssStrict
-  of "lax":
-    ssLax
+  of "none": ssNone
+  of "strict": ssStrict
+  of "lax": ssLax
   else: ssDefault

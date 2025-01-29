@@ -1,6 +1,5 @@
 ## Flow layout processor
 
-
 import std/[strutils, tables, logging, options, base64]
 import vmath, bumpy, pixie, pixie/fonts
 import ../box
@@ -9,18 +8,17 @@ import ../../shared/sugar
 import ferus_ipc/[client/prelude, shared]
 import pretty
 
-type
-  Layout* = object
-    cursor*: Vec2
-    ipc*: IPCClient
-    width*: int
-    
-    boxes*: seq[Box]
-    viewport*: Rect
-    font*: Font
-    imageCache*: Table[string, string]
+type Layout* = object
+  cursor*: Vec2
+  ipc*: IPCClient
+  width*: int
 
-    document*: HTMLDocument
+  boxes*: seq[Box]
+  viewport*: Rect
+  font*: Font
+  imageCache*: Table[string, string]
+
+  document*: HTMLDocument
 
 var
   WordLengths: Table[string, int]
@@ -35,7 +33,7 @@ proc getWordLength*(layout: var Layout, word: string): int =
 
     WordLengths[word] = length
     WordHeights[word] = bounds.y.int
-    
+
     debug "layout: computed layout width for text \"" & word & "\": " & $length
   else:
     length = WordLengths[word]
@@ -68,7 +66,7 @@ proc newLayout*(ipc: IPCClient, font: Font): Layout {.inline.} =
 
   layout.cursor.reset()
   layout.boxes.reset()
-  
+
   WordLengths[""] = 8
   WordHeights[""] = 8
 
@@ -94,7 +92,13 @@ proc getMaxHeight*(layout: Layout): uint =
     list &= restChildren
 ]#
 
-proc addText*(layout: var Layout, text: string, fontSize: float32, kind: BoxKind, href: Option[string] = none(string)) =
+proc addText*(
+    layout: var Layout,
+    text: string,
+    fontSize: float32,
+    kind: BoxKind,
+    href: Option[string] = none(string),
+) =
   var lastHeight: float
 
   for word in text.split(' '):
@@ -112,11 +116,11 @@ proc addText*(layout: var Layout, text: string, fontSize: float32, kind: BoxKind
         height: height.uint,
         fontSize: fontSize,
         href: href,
-        kind: kind
+        kind: kind,
       )
 
     # echo width
-    
+
     layout.cursor = vec2(layout.cursor.x + width.float, layout.cursor.y)
 
     if lastHeight < height.float:
@@ -134,23 +138,30 @@ proc addBreak*(layout: var Layout) =
 
 proc addHeading*(layout: var Layout, text: string, level: uint = 1) =
   layout.addText(
-    text, case level
-    of 1: 32f
-    of 2: 28f
-    of 3: 24f
-    of 4: 18f
-    of 5: 16f
-    else: raise newException(ValueError, "addHeading given invalid range for level: " & $level); 0f,
-    kind = BoxKind.Block
+    text,
+    case level
+    of 1:
+      32f
+    of 2:
+      28f
+    of 3:
+      24f
+    of 4:
+      18f
+    of 5:
+      16f
+    else:
+      raise
+        newException(ValueError, "addHeading given invalid range for level: " & $level)
+      0f,
+    kind = BoxKind.Block,
   )
 
 {.push warning[ImplicitDefaultValue]: off.}
 proc addImage*(
-  layout: var Layout, 
-  content: string, 
-  width, height: Option[uint] = none(uint)
+    layout: var Layout, content: string, width, height: Option[uint] = none(uint)
 ) =
-  let image: Option[Image] = 
+  let image: Option[Image] =
     try:
       some decodeImage(content)
     except PixieError as exc:
@@ -163,16 +174,18 @@ proc addImage*(
 
   var img = &image
   let
-    width = if *width:
-      &width
-    else:
-      img.width.uint
-    
-    height = if *height:
-      &height
-    else:
-      img.height.uint
-  
+    width =
+      if *width:
+        &width
+      else:
+        img.width.uint
+
+    height =
+      if *height:
+        &height
+      else:
+        img.height.uint
+
   img = img.resize(width.int, height.int)
   info "Adding image (" & $width & 'x' & $height & ')'
 
@@ -183,16 +196,18 @@ proc addImage*(
       pos: layout.cursor,
       width: width,
       height: height,
-      kind: BoxKind.Inline
+      kind: BoxKind.Inline,
     )
 
   layout.cursor = vec2(0f, height.float + 4f)
+
 {.pop.}
 
 proc constructFromElem*(layout: var Layout, elem: HTMLElement) =
-  template expectText =
+  template expectText() =
     if not *elem.text:
-      warn "layout: <" & $elem.tag & "> element does not contain any text data, ignoring it."
+      warn "layout: <" & $elem.tag &
+        "> element does not contain any text data, ignoring it."
       return
 
   case elem.tag
@@ -207,7 +222,9 @@ proc constructFromElem*(layout: var Layout, elem: HTMLElement) =
     layout.addText(&elem.text, 14f, kind = BoxKind.Block)
   of TAG_A:
     expectText
-    layout.addText(&elem.text, 14f, kind = BoxKind.Inline, href = elem.attribute("href"))
+    layout.addText(
+      &elem.text, 14f, kind = BoxKind.Inline, href = elem.attribute("href")
+    )
   of TAG_H1:
     expectText
     layout.addHeading(&elem.text, 1)
@@ -236,17 +253,18 @@ proc constructFromElem*(layout: var Layout, elem: HTMLElement) =
       return
 
     let cached = layout.imageCache.contains(&src)
-    
-    let content = if not cached:
-      let transfer = layout.ipc.requestDataTransfer(
-        ResourceRequired, DataLocation(kind: DataLocationKind.WebRequest, url: &src)
-      )
-      if *transfer:
-        decode((&transfer).data)
+
+    let content =
+      if not cached:
+        let transfer = layout.ipc.requestDataTransfer(
+          ResourceRequired, DataLocation(kind: DataLocationKind.WebRequest, url: &src)
+        )
+        if *transfer:
+          decode((&transfer).data)
+        else:
+          ""
       else:
-        ""
-    else:
-      layout.imageCache[&src]
+        layout.imageCache[&src]
 
     layout.imageCache[&src] = content
     let widthAttr = elem.attribute("width")
@@ -265,11 +283,10 @@ proc constructFromElem*(layout: var Layout, elem: HTMLElement) =
       except ValueError:
         warn "<img> tag has invalid height attribute: " & &heightAttr
 
-    layout.addImage(
-      content,
-      width, height
-    )
-  of TAG_SCRIPT: discard # we don't care about this - that's the JS runtime's job
+    layout.addImage(content, width, height)
+  of TAG_SCRIPT:
+    discard
+  # we don't care about this - that's the JS runtime's job
   else:
     warn "layout: unhandled tag: " & $elem.tag
 
@@ -281,7 +298,7 @@ proc constructFromDocument*(layout: var Layout, document: HTMLDocument) =
   layout.cursor.reset()
 
   layout.document = document
-  
+
   let head = document.elems[0].children[0]
   let body = document.elems[0].children[1]
 

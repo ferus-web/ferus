@@ -54,12 +54,16 @@ func getCompilerType*(): CompilerType =
 func getArchitecture*(): string {.inline, compileTime.} =
   hostCPU
 
-func getArchitectureUAString*: string {.inline, compileTime.} =
+func getArchitectureUAString*(): string {.inline, compileTime.} =
   case getArchitecture()
-  of "i386": "x86"
-  of "alpha", "powerpc", "powerpc64", "sparc", "mips", "mipsel", "mips64": "risc"
-  of "amd64": "x86_64"
-  else: getArchitecture()
+  of "i386":
+    "x86"
+  of "alpha", "powerpc", "powerpc64", "sparc", "mips", "mipsel", "mips64":
+    "risc"
+  of "amd64":
+    "x86_64"
+  else:
+    getArchitecture()
 
 func getHostOS*(): string {.inline, compileTime.} =
   hostOS
