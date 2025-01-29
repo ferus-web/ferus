@@ -11,7 +11,7 @@ exit_val="0"
 # Format the source code.
 nph src || exit_val="$?"
 
-if [[ "${exit_val}" -ne "0" ]]
+if [[ "${exit_val}" -ne "0" ]] then
   echo "format-code: nph exited with non-zero exit code $exit_val"
   echo "format-code: this workflow has failed."
   exit 1
