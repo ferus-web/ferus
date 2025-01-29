@@ -30,4 +30,4 @@ jobs:
           nph --version
 
       - name: Format the code
-        run: nph src/
+        run: ${{ github.workspace }}/scripts/format-code.sh
