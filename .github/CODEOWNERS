@@ -1,6 +1,3 @@
 ## Owners of their respective subsystems/components must add their names here alongside the directory that they own.
 
 * @xTrayambak
-src/components/layout/* @jtbx
-*.nix @jtbx
-flake.lock @jtbx

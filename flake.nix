@@ -26,6 +26,7 @@
             nativeBuildInputs = with pkgs; [
               makeBinaryWrapper
               # nimble
+              nph
               wayland-protocols
               wayland-scanner
               openssl
