@@ -1,0 +1,31 @@
+name: Format Code
+
+on: [ push, pull_request ]
+
+jobs:
+  fmt:
+    runs-on: ubuntu-latest
+    if: github.repository == 'ferus-web/ferus'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache nimble
+        id: cache-nimble
+        uses: actions/cache@v4
+        with:
+          path: ~/.nimble
+          key: ${{ runner.os }}-nimble-${{ hashFiles('*.nimble') }}
+          restore-keys: |
+            ${{ runner.os }}-nimble-
+
+      - uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: '2.0.0' # 2.2.x cannot compile nph due to a regression
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Format the code
+        run: |
+          nimble install nph &&
+          nph --version &&
+          nph .
