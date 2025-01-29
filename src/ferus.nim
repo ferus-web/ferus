@@ -35,7 +35,9 @@ Target CPU: $3
   quit(0)
 
 proc main() {.inline.} =
-  setupLogging()
+  setupLogging(
+
+  )
   let input = parseInput()
   if input.enabled("help", "h"):
     showHelp(0)
