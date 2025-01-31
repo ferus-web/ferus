@@ -1,5 +1,5 @@
 import std/[os, logging, osproc, strutils, options, base64, net, sets, terminal, tables]
-import ferus_ipc/server/prelude
+import ../../components/ipc/server/prelude
 import jsony
 import ./summon
 import pretty
@@ -279,7 +279,8 @@ proc loadFont*(
   info ("Sending renderer process a font to load: $1 as \"$2\"" % [file, name])
   let encoded = encode(
     # encode the data in base64 to ensure that it doesn't mess up the JSON packet
-    readFile file, safe = true
+    readFile file,
+    safe = true,
   )
   master.server.send(
     (&process).socket,

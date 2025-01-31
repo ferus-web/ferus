@@ -1,7 +1,7 @@
 import std/options
 import ./document
 import ../../web/dom
-import sanchar/proto/http/shared, ferus_ipc/shared
+import sanchar/proto/http/shared, ../../../components/ipc/shared
 
 type
   ParseHTMLPacket* = ref object

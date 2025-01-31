@@ -1,5 +1,5 @@
 import std/[logging, json, base64, net]
-import ferus_ipc/client/prelude
+import ../../components/ipc/client/prelude
 import bali/grammar/prelude
 import bali/runtime/prelude
 import bali/stdlib/console
@@ -68,6 +68,7 @@ proc talk(js: var JSProcess, process: FerusProcess) =
   of feJSTakeDocument:
     let packet = &tryParseJson(data, JSTakeDocument)
 
+    debug "Got document for this tab - passing it to JS land."
     js.document = packet.document
   else:
     discard
@@ -80,7 +81,7 @@ proc jsProcessLogic*(client: var IPCClient, process: FerusProcess) {.inline.} =
   initConsoleIPC(js)
 
   when not defined(release):
-    setLogFilter(lvlAll)
+    setLogFilter(lvlNone)
   else:
     setLogFilter(lvlNone)
 

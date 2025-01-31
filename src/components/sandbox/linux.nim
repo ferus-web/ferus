@@ -1,8 +1,8 @@
 ## Sandbox implementation for Linux using libseccomp
 
 import std/[logging, posix]
-import ferus_ipc/shared
-import seccomp, seccomp/seccomp_lowlevel
+import pkg/[seccomp, seccomp/seccomp_lowlevel]
+import ../../components/ipc/shared
 
 const FORBIDDEN_SYSCALLS* = [
   # Don't allow the process to start a TCP server

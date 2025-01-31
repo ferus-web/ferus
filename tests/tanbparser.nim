@@ -2,7 +2,8 @@ import std/options
 import stylus/parser, results, pretty
 import components/parsers/css/anb
 
-const src = """
+const src =
+  """
 p:nth-child(2n) {
   background-color: rgb(255, 255, 255);
 }
@@ -17,5 +18,5 @@ print get(ident)
 print parserObj.expectColon()
 let fn = parserObj.expectFunctionMatching "nth-child"
 print parserObj.expectParenBlock()
-let res = parserObj.parseNth() 
+let res = parserObj.parseNth()
 print get res

@@ -14,6 +14,14 @@ proc generateIR*(runtime: Runtime) =
   debug "components/web/document: generating interfaces"
   runtime.registerType("document", JSDocument)
 
+  runtime.definePrototypeFn(
+    JSDocument,
+    "hasFocus",
+    proc(doc: MAtom) =
+      ret true
+    ,
+  )
+
 proc updateDocumentState*(runtime: Runtime, document: HTMLDocument) =
   debug "components/web/document: document has been updated, updating internal state"
   runtime.setProperty(JSDocument, "baseURI", str($document.url))

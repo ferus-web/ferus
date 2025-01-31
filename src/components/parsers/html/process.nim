@@ -3,7 +3,7 @@ import ./ipc
 import ./document
 import ../../web/dom
 import ../../shared/[nix, sugar]
-import ferus_ipc/client/prelude
+import ../../../components/ipc/client/prelude
 import jsony
 
 proc htmlParse*(oparsingData: Option[ParseHTMLPacket]): HTMLParseResult =

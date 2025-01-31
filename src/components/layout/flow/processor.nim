@@ -3,9 +3,9 @@
 import std/[strutils, tables, logging, options, base64]
 import vmath, bumpy, pixie, pixie/fonts
 import ../box
-import ../../parsers/html/document
-import ../../shared/sugar
-import ferus_ipc/[client/prelude, shared]
+import ../../../components/parsers/html/document
+import ../../../components/shared/sugar
+import ../../../components/ipc/[client/prelude, shared]
 import pretty
 
 type Layout* = object

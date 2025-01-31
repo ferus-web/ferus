@@ -1,4 +1,4 @@
-import ferus_ipc/shared
+import ../../components/ipc/shared
 import ../parsers/html/document
 import bali/stdlib/console
 

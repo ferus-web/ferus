@@ -2,7 +2,8 @@ import std/[tables]
 import components/parsers/css/parser
 import pretty
 
-const src = """
+const src =
+  """
 body {
   background-color: rgb(255, 255, 255);
 }

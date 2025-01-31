@@ -1,6 +1,6 @@
 import std/[os, options, strutils, parseopt, logging]
 import colored_logger
-import ferus_ipc/client/[prelude, logger]
+import ./components/ipc/client/[prelude, logger]
 import components/[network/process, renderer/process, parsers/html/process, js/process]
 
 {.passC: gorge("pkg-config --cflags openssl libcurl libseccomp glfw3").strip().}

@@ -1,5 +1,5 @@
 import std/os
-import ferus_ipc/server/prelude
+import ../../components/ipc/server/prelude
 
 const FerusInstallPath {.strdefine: "".} = "./"
 

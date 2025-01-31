@@ -9,7 +9,8 @@ proc indexHandler(request: Request) =
   echo "Address: " & request.remoteAddress
   var headers: HttpHeaders
   headers["Content-Type"] = "text/html"
-  let content = """
+  let content =
+    """
 <!DOCTYPE html>
 <html>
   <head>
@@ -22,7 +23,8 @@ proc indexHandler(request: Request) =
     <h1>$1</h1>
   </body>
 </html>
-  """ % [request.headers["User-Agent"]]
+  """ %
+    [request.headers["User-Agent"]]
   request.respond(200, headers, content)
 
 var router: Router

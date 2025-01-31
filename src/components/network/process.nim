@@ -1,5 +1,5 @@
 import std/[base64, strutils, logging, options, json, net]
-import sanchar/[http, proto/http/shared], sanchar/parse/url, ferus_ipc/client/prelude
+import sanchar/[http, proto/http/shared], sanchar/parse/url
 import pretty
 
 when defined(ferusUseCurl):
@@ -10,6 +10,7 @@ import jsony
 import ../../components/shared/[nix, sugar]
 import ../../components/network/ipc
 import ../../components/build_utils
+import ../../components/ipc/client/prelude
 
 when defined(ferusUseCurl):
   var curl = newCurly()

@@ -2,7 +2,8 @@ import std/[streams]
 import components/web/dom
 import pretty
 
-let strm = newStringStream("""
+let strm = newStringStream(
+  """
 <!DOCTYPE html>
 <html>
   <head>
@@ -13,7 +14,8 @@ let strm = newStringStream("""
     <img src="hehehehaw.jpg"></img>
   </body>
 </html>
-""")
+"""
+)
 
 let document = parseHtml(strm)
 

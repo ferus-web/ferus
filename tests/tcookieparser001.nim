@@ -3,11 +3,13 @@ import components/web/cookie/parsed_cookie
 import components/shared/sugar
 
 suite "basic cookie parsing":
-  let ck = parseCookie("password=supersafepassword; Expires=Wed, 09 Jun 2024 10:18:14 GMT; Path=/; Domain=example.com; Secure; HttpOnly; SameSite=Strict")
+  let ck = parseCookie(
+    "password=supersafepassword; Expires=Wed, 09 Jun 2024 10:18:14 GMT; Path=/; Domain=example.com; Secure; HttpOnly; SameSite=Strict"
+  )
   assert *ck, "Cookie couldn't be parsed"
 
   let cookie = &ck
-  
+
   test "can parse domain":
     assert &cookie.domain == "example.com"
 

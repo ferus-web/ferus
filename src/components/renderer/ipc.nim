@@ -1,6 +1,6 @@
 import std/base64
 
-import ferus_ipc/shared, vmath
+import ../../components/ipc/shared, vmath
 from ferusgfx import Scene
 import ferusgfx/displaylist
 

@@ -5,7 +5,8 @@ import pixie, pretty, colored_logger
 
 addHandler(newColoredLogger())
 
-let strm = newStringStream("""
+let strm = newStringStream(
+  """
 <!DOCTYPE html>
 <html>
   <head>
@@ -15,10 +16,12 @@ let strm = newStringStream("""
     <p>Hello Ferus!</p>
   </body>
 </html>
-""")
+"""
+)
 
 let document = parseHtml(strm)
-var layout = newLayout(readFont("assets/fonts/IBMPlexSans-Regular.ttf"), rect(0, 0, 1280, 720))
+var layout =
+  newLayout(readFont("assets/fonts/IBMPlexSans-Regular.ttf"), rect(0, 0, 1280, 720))
 layout.constructFromDocument(document)
 print layout.boxes
 

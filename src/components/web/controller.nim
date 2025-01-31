@@ -43,7 +43,7 @@ proc load*(controller: var WebMasterController) =
       quit(1)
 
     data = readFile(location)
-  else:
+  elif controller.url.scheme in ["http", "https"]:
     controller.master.urls[controller.tab] = controller.url
     let content =
       controller.master.fetchNetworkResource(controller.tab, $controller.url)
@@ -53,6 +53,8 @@ proc load*(controller: var WebMasterController) =
       quit(1)
 
     data = (&content).content()
+  elif controller.url.scheme == "about":
+    unreachable
 
   let doc = controller.master.parseHTML(controller.tab, data)
 

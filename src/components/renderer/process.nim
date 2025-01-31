@@ -1,5 +1,5 @@
 import std/[options, json, logging, base64, importutils, logging, posix, net]
-import ferus_ipc/client/prelude, jsony
+import jsony
 import ferusgfx/[displaylist, fontmgr, textnode, imagenode, gifnode]
 import pixie
 when defined(linux):
@@ -8,6 +8,7 @@ when defined(linux):
 import ../../components/renderer/[core]
 import ../../components/shared/[nix, sugar]
 import ../../components/renderer/ipc except newDisplayList
+import ../../components/ipc/client/prelude
 
 {.passL: "-lwayland-client -lwayland-cursor -lwayland-egl -lxkbcommon -lGL".}
 

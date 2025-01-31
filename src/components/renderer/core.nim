@@ -1,11 +1,12 @@
 import std/[options, strutils, tables, importutils, logging]
-import ferusgfx, ferus_ipc/client/prelude
+import ferusgfx
 import opengl, pretty, chroma, jsony, vmath
 import ../shared/sugar
 import ./ipc
-import ../parsers/html/document
-import ../layout/[box, processor]
-import ../web/legacy_color
+import ../../components/parsers/html/document
+import ../../components/layout/[box, processor]
+import ../../components/web/legacy_color
+import ../../components/ipc/client/prelude
 
 when defined(ferusUseGlfw): import glfw else: import windy
 
