@@ -407,7 +407,7 @@ proc bindServerPath*(server: var IPCServer): string =
 
 proc initialize*(server: var IPCServer, path: Option[string] = none string) {.inline.} =
   debug "IPC server initializing"
-  server.socket.setSockOpt(OptReusePort, true)
+  # server.socket.setSockOpt(OptReusePort, true)
   if path.isSome:
     server.socket.bindUnix(path.unsafeGet())
     server.path = unsafeGet path
