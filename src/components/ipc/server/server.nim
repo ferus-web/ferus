@@ -159,16 +159,10 @@ proc findDeadProcesses*(server: var IPCServer) {.noinline.} =
   for gi, group in server.groups:
     for i, fproc in group:
       var mfproc = group.processes[i]
-        # TODO: rename this garbage, I keep it reading it as "motherfucking process"
       let delta = epoch - fproc.lastContact
 
       if fproc.state != Unreachable and fproc.state != Dead:
         if delta > FerusIpcUnresponsiveThreshold:
-          info "Marking process as unreachable: group=$1, pid=$2, kind=$3, worker=$4" %
-            [$fproc.group, $fproc.pid, $fproc.kind, $fproc.worker]
-          if fproc.kind == Parser:
-            info " ... (parser kind: " & $fproc.pKind & ')'
-
           mfproc.state = Unreachable
       else:
         if fproc.state != Dead and delta > FerusIpcDeadThreshold and
