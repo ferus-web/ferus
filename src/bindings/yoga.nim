@@ -120,6 +120,8 @@ proc setHeightMaxContent*(node: YGNodeRef) {.importc: "YGNodeStyleSetHeightMaxCo
 proc setHeightFitContent*(node: YGNodeRef) {.importc: "YGNodeStyleSetHeightFitContent".}
 proc setHeightStretch*(node: YGNodeRef) {.importc: "YGNodeStyleSetHeightStretch".}
 
+proc setAlignSelf*(node: YGNodeRef, align: YGAlign) {.importc: "YGNodeStyleSetAlignSelf".}
+
 {.pop.}
 
 # Wrapping code, just for convenience.

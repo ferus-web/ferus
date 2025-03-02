@@ -16,6 +16,7 @@ type FerusRenderer* = ref object
   scene*: Scene
 
   needsNewContent*: bool = true
+  viewport*: Vec2
 
   layout*: Layout
 
@@ -78,6 +79,17 @@ proc buildDisplayList*(renderer: FerusRenderer, list: var DisplayList, node: Lay
         node.processed.dimensions,
         renderer.scene.fontManager.getTypeface("Default"),
         24,
+        color = color(0, 0, 0, 1)
+      )
+    )
+  of { TAG_H1, TAG_H2, TAG_H3, TAG_H4, TAG_H5, TAG_H6 }:
+    list.add(
+      newTextNode(
+        &node.element.text,
+        node.processed.position,
+        node.processed.dimensions,
+        renderer.scene.fontManager.getTypeface("Default"),
+        32,
         color = color(0, 0, 0, 1)
       )
     )
@@ -171,7 +183,7 @@ proc shouldClose*(renderer: FerusRenderer): bool =
 proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
   info "Rendering HTML document - calculating layout"
 
-  var layout = Layout(ipc: renderer.ipc, font: renderer.scene.fontManager.get("Default"))
+  var layout = Layout(ipc: renderer.ipc, font: renderer.scene.fontManager.get("Default"), viewport: renderer.viewport)
   assert(layout.font != nil)
 
   if *document.head():
@@ -200,6 +212,7 @@ proc resize*(renderer: FerusRenderer, dims: tuple[w, h: int32]) {.inline.} =
   info "Resizing renderer viewport to $1x$2" % [$dims.w, $dims.h]
   let casted = (w: dims.w.int, h: dims.h.int)
   renderer.scene.onResize(casted)
+  renderer.viewport = vec2(dims.w.float, dims.h.float)
 
   #[ if renderer.layout.width != dims.w.int:
     # Only recalculate layout when width changes. We don't care about the height.
@@ -265,4 +278,4 @@ proc initialize*(renderer: FerusRenderer) {.inline.} =
       renderer.scene.onScroll(vec2(window.scrollDelta.x, window.scrollDelta.y))
 
 proc newFerusRenderer*(client: var IPCClient): FerusRenderer {.inline.} =
-  FerusRenderer(ipc: client)
+  FerusRenderer(ipc: client, viewport: vec2(1280, 1080))

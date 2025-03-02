@@ -60,7 +60,18 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
     node.font.size = 24
     let bounds = node.font.layoutBounds(text)
 
-    node.attached.setWidth(bounds.x)
+    node.attached.setWidthPercent(100) # Take up 100% of the parent's width, like a block element.
+    node.attached.setFlexDirection(YGFlexDirectionColumn)
+    node.attached.setAlignSelf(YGAlignStretch)
+    node.attached.setHeight(bounds.y)
+    node.processed.dimensions = bounds
+  of { TAG_H1, TAG_H2, TAG_H3, TAG_H4, TAG_H5, TAG_H6 }:
+    let text = &node.element.text()
+    node.font.size = 32
+    let bounds = node.font.layoutBounds(text)
+    
+    node.attached.setWidthPercent(100) # Take up 100% of the parent's width, like a block element.
+    node.attached.setAlignSelf(YGAlignStretch)
     node.attached.setHeight(bounds.y)
     node.processed.dimensions = bounds
   else: discard
@@ -84,6 +95,8 @@ proc traversePass2*(node: var LayoutNode) =
 
 proc finalizeLayout*(layout: var Layout) =
   layout.traverse(layout.tree) # Attach a Yoga node to all the nodes in the layout tree
+  layout.tree.attached.setWidth(layout.viewport.x)
+  layout.tree.attached.setHeight(layout.viewport.y)
   layout.tree.attached.calculateLayout(
     layout.viewport.x, layout.viewport.y,
     YGDirectionLTR
