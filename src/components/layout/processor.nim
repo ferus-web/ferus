@@ -54,15 +54,18 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
   node.attached = yogaNode
   node.font = layout.font
 
+  template blockElem =
+    node.attached.setWidthPercent(100) # Take up 100% of the parent's width - force all new content to start from the next line.
+    node.attached.setFlexDirection(YGFlexDirectionColumn)
+    node.attached.setAlignSelf(YGAlignStretch)
+
   case node.element.tag
   of TAG_P:
     let text = &node.element.text()
     node.font.size = 24
     let bounds = node.font.layoutBounds(text)
-
-    node.attached.setWidthPercent(100) # Take up 100% of the parent's width, like a block element.
-    node.attached.setFlexDirection(YGFlexDirectionColumn)
-    node.attached.setAlignSelf(YGAlignStretch)
+    
+    blockElem
     node.attached.setHeight(bounds.y)
     node.processed.dimensions = bounds
   of { TAG_H1, TAG_H2, TAG_H3, TAG_H4, TAG_H5, TAG_H6 }:
@@ -70,8 +73,7 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
     node.font.size = 32
     let bounds = node.font.layoutBounds(text)
     
-    node.attached.setWidthPercent(100) # Take up 100% of the parent's width, like a block element.
-    node.attached.setAlignSelf(YGAlignStretch)
+    blockElem
     node.attached.setHeight(bounds.y)
     node.processed.dimensions = bounds
   else: discard

@@ -17,6 +17,7 @@ type FerusRenderer* = ref object
 
   needsNewContent*: bool = true
   viewport*: Vec2
+  document*: HTMLDocument
 
   layout*: Layout
 
@@ -65,38 +66,35 @@ proc onAnchorClick*(renderer: FerusRenderer, location: string) =
 
 proc buildDisplayList*(renderer: FerusRenderer, list: var DisplayList, node: LayoutNode) =
   assert node.element != nil, "BUG: Layout node does not have a HTML element attached to it!"
-  print node.element.tag
-  print node.children.len
 
-  case node.element.tag
-  of TAG_P:
-    echo "PARAGRAPH mit text: " & &node.element.text
-    print node.processed
-    list.add(
-      newTextNode(
-        &node.element.text,
-        node.processed.position,
-        node.processed.dimensions,
-        renderer.scene.fontManager.getTypeface("Default"),
-        24,
-        color = color(0, 0, 0, 1)
+  if node.processed.dimensions.x > 0 and node.processed.dimensions.y > 0:
+    case node.element.tag
+    of TAG_P:
+      list.add(
+        newTextNode(
+          &node.element.text,
+          node.processed.position,
+          node.processed.dimensions,
+          renderer.scene.fontManager.getTypeface("Default"),
+          24,
+          color = color(0, 0, 0, 1)
+        )
       )
-    )
-  of { TAG_H1, TAG_H2, TAG_H3, TAG_H4, TAG_H5, TAG_H6 }:
-    list.add(
-      newTextNode(
-        &node.element.text,
-        node.processed.position,
-        node.processed.dimensions,
-        renderer.scene.fontManager.getTypeface("Default"),
-        32,
-        color = color(0, 0, 0, 1)
+    of { TAG_H1, TAG_H2, TAG_H3, TAG_H4, TAG_H5, TAG_H6 }:
+      list.add(
+        newTextNode(
+          &node.element.text,
+          node.processed.position,
+          node.processed.dimensions,
+          renderer.scene.fontManager.getTypeface("Default"),
+          32,
+          color = color(0, 0, 0, 1)
+        )
       )
-    )
-  else: discard
+    else: discard
 
-  for child in node.children:
-    renderer.buildDisplayList(list, child)
+    for child in node.children:
+      renderer.buildDisplayList(list, child)
 
 proc paintLayout*(renderer: FerusRenderer) =
   var displayList = newDisplayList(addr renderer.scene)
@@ -162,9 +160,8 @@ proc paintLayout*(renderer: FerusRenderer) =
       displayList.add(node)
   ]#
 
+  ending = renderer.viewport
   renderer.scene.camera.setBoundaries(start, ending)
-
-  echo "commit"
   displayList.commit()
 
 proc handleBackgroundColor*(renderer: FerusRenderer, bgcolor: string) =
@@ -201,7 +198,7 @@ proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
   if (let bgcolorO = body.attribute("bgcolor"); *bgcolorO):
     renderer.handleBackgroundColor(&bgcolorO)
 
-  #layout.constructFromDocument(document)
+  renderer.document = document
   renderer.layout = move(layout)
   renderer.layout.constructTree(document)
   renderer.layout.finalizeLayout()
@@ -214,12 +211,14 @@ proc resize*(renderer: FerusRenderer, dims: tuple[w, h: int32]) {.inline.} =
   renderer.scene.onResize(casted)
   renderer.viewport = vec2(dims.w.float, dims.h.float)
 
-  #[ if renderer.layout.width != dims.w.int:
-    # Only recalculate layout when width changes. We don't care about the height.
-    renderer.layout.width = dims.w.int
-    renderer.layout.cursor.reset()
-    renderer.layout.update()
-    renderer.paintLayout()]#
+  if renderer.layout.viewport.x != renderer.viewport.x:
+    # TODO: use some logic to mark nodes that need to be relayouted as "dirty"
+    # currently, we're recomputing the entire page's layout upon resizing
+    # which is horribly inefficient...
+
+    renderer.layout.constructTree(renderer.document)
+    renderer.layout.finalizeLayout()
+    renderer.paintLayout()
 
 proc initialize*(renderer: FerusRenderer) {.inline.} =
   info "Initializing renderer."
