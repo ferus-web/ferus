@@ -4,6 +4,7 @@ import opengl, pretty, chroma, jsony, vmath
 import ../shared/sugar
 import ./ipc
 import ../../components/parsers/html/document
+import ../../components/parsers/css/[parser]
 import ../../components/layout/[processor]
 import ../../components/web/legacy_color
 import ../../components/ipc/client/prelude
@@ -197,6 +198,16 @@ proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
   let body = &document.body()
   if (let bgcolorO = body.attribute("bgcolor"); *bgcolorO):
     renderer.handleBackgroundColor(&bgcolorO)
+  
+  # Load our user agent CSS stylesheet.
+  # It provides the basic "sane default" measurements
+  renderer.layout.stylesheet &= newCSSParser(readFile("assets/user-agent.css")).consumeRules()
+
+  # FIXME: do this in a compliant way.
+  for child in body.children:
+    if child.tag == TAG_STYLE:
+      var parser = newCSSParser(&child.text())
+      renderer.layout.stylesheet &= parser.consumeRules()
   
   renderer.layout.recalculating = false
   renderer.document = document

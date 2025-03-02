@@ -115,6 +115,23 @@ func decimal*(dec: float32): CSSValue {.inline.} =
 func dimension*(value: float32, unit: CSSUnit): CSSValue {.inline.} =
   CSSValue(kind: cssDimension, dim: CSSDimension(value: value, unit: unit))
 
+func toPixels*(value: CSSValue): float =
+  assert(value.kind == cssDimension, "BUG: toPixels() called on non-dimensional CSS value!")
+
+  case value.dim.unit
+  of CSSUnit.Px:
+    return value.dim.value
+  of CSSUnit.Mm:
+    # FIXME: very silly calculations
+    # we're assuming the display will only have 96 pixels per inch...
+    return (value.dim.value * 96) / 25.4
+  of CSSUnit.Cm:
+    # FIXME: very silly calculations, part 2
+    return (value.dim.value * 96) / 2.54
+  of CSSUnit.In:
+    # FIXME: very silly calculations: electric boogaloo
+    return value.dim.value * 96
+
 func parseUnit*(str: string): Option[CSSUnit] =
   if not Units.contains(str):
     return

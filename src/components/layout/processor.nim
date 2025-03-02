@@ -3,6 +3,8 @@ import std/[logging, tables]
 import pkg/[pixie, vmath]
 import ../../bindings/yoga
 import ../../components/parsers/html/document
+import ../../components/parsers/css/[parser, anb, types]
+import ../../components/style/[selector_engine, style_matcher]
 import ../../components/shared/sugar
 import ../../components/ipc/[client/prelude, shared]
 
@@ -30,6 +32,7 @@ type
     viewport*: Vec2
     font*: Font
     recalculating*: bool = false
+    stylesheet*: Stylesheet
 
 proc constructFromElem*(layout: var Layout, elem: HTMLElement): LayoutNode =
   var node: LayoutNode
@@ -48,7 +51,8 @@ proc constructTree*(layout: var Layout, document: HTMLDocument) =
   
   if layout.recalculating:
     layout.tree.attached.freeRecursive()
-
+  
+  layout.stylesheet.sortStylesheetBySpecificity()
   layout.tree = layout.constructFromElem(&body)
 
   # print layout.tree
@@ -70,7 +74,7 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
   case node.element.tag
   of TAG_P:
     let text = &node.element.text()
-    node.font.size = 24
+    node.font.size = toPixels(&layout.stylesheet.getProperty(node.element, Property.FontSize))
     let bounds = node.font.layoutBounds(text)
     
     blockElem
@@ -78,7 +82,7 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
     node.processed.dimensions = bounds
   of { TAG_H1, TAG_H2, TAG_H3, TAG_H4, TAG_H5, TAG_H6 }:
     let text = &node.element.text()
-    node.font.size = 32
+    node.font.size = toPixels(&layout.stylesheet.getProperty(node.element, Property.FontSize))
     let bounds = node.font.layoutBounds(text)
     
     blockElem
@@ -86,7 +90,7 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
     node.processed.dimensions = bounds
   of TAG_STRONG:
     let text = &node.element.text()
-    node.font.size = 24
+    node.font.size = toPixels(&layout.stylesheet.getProperty(node.element, Property.FontSize))
     let bounds = node.font.layoutBounds(text)
 
     inlineElem
