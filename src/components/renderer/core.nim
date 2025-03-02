@@ -1,10 +1,10 @@
-import std/[options, strutils, tables, importutils, logging]
+import std/[options, strutils, tables, importutils, logging, sets]
 import ferusgfx
 import opengl, pretty, chroma, jsony, vmath
 import ../shared/sugar
 import ./ipc
 import ../../components/parsers/html/document
-import ../../components/layout/[box, processor]
+import ../../components/layout/[processor]
 import ../../components/web/legacy_color
 import ../../components/ipc/client/prelude
 
@@ -62,12 +62,38 @@ proc onAnchorClick*(renderer: FerusRenderer, location: string) =
 
   renderer.scene.camera.reset()
 
+proc buildDisplayList*(renderer: FerusRenderer, list: var DisplayList, node: LayoutNode) =
+  assert node.element != nil, "BUG: Layout node does not have a HTML element attached to it!"
+  print node.element.tag
+  print node.children.len
+
+  case node.element.tag
+  of TAG_P:
+    echo "PARAGRAPH mit text: " & &node.element.text
+    print node.processed
+    list.add(
+      newTextNode(
+        &node.element.text,
+        node.processed.position,
+        node.processed.dimensions,
+        renderer.scene.fontManager.getTypeface("Default"),
+        24,
+        color = color(0, 0, 0, 1)
+      )
+    )
+  else: discard
+
+  for child in node.children:
+    renderer.buildDisplayList(list, child)
+
 proc paintLayout*(renderer: FerusRenderer) =
   var displayList = newDisplayList(addr renderer.scene)
   displayList.doClearAll = true
 
   var start, ending: Vec2
-  for i, box in renderer.layout.boxes:
+  renderer.buildDisplayList(displayList, renderer.layout.tree)
+
+  #[ for i, box in renderer.layout.boxes:
     if i == 0 or box.pos.y < start.y:
       `=destroy`(start)
       wasMoved(start)
@@ -122,8 +148,11 @@ proc paintLayout*(renderer: FerusRenderer) =
       node.image = imageBox.image
 
       displayList.add(node)
+  ]#
 
   renderer.scene.camera.setBoundaries(start, ending)
+
+  echo "commit"
   displayList.commit()
 
 proc handleBackgroundColor*(renderer: FerusRenderer, bgcolor: string) =
@@ -142,8 +171,8 @@ proc shouldClose*(renderer: FerusRenderer): bool =
 proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
   info "Rendering HTML document - calculating layout"
 
-  var layout = newLayout(renderer.ipc, renderer.scene.fontManager.get("Default"))
-  layout.width = renderer.scene.camera.bounds.w.int
+  var layout = Layout(ipc: renderer.ipc, font: renderer.scene.fontManager.get("Default"))
+  assert(layout.font != nil)
 
   if *document.head():
     for child in &document.head():
@@ -160,8 +189,10 @@ proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
   if (let bgcolorO = body.attribute("bgcolor"); *bgcolorO):
     renderer.handleBackgroundColor(&bgcolorO)
 
-  layout.constructFromDocument(document)
+  #layout.constructFromDocument(document)
   renderer.layout = move(layout)
+  renderer.layout.constructTree(document)
+  renderer.layout.finalizeLayout()
 
   renderer.paintLayout()
 
@@ -170,12 +201,12 @@ proc resize*(renderer: FerusRenderer, dims: tuple[w, h: int32]) {.inline.} =
   let casted = (w: dims.w.int, h: dims.h.int)
   renderer.scene.onResize(casted)
 
-  if renderer.layout.width != dims.w.int:
+  #[ if renderer.layout.width != dims.w.int:
     # Only recalculate layout when width changes. We don't care about the height.
     renderer.layout.width = dims.w.int
     renderer.layout.cursor.reset()
     renderer.layout.update()
-    renderer.paintLayout()
+    renderer.paintLayout()]#
 
 proc initialize*(renderer: FerusRenderer) {.inline.} =
   info "Initializing renderer."

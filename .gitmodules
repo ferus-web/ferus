@@ -1,0 +1,3 @@
+[submodule "src/third_party/yoga"]
+	path = src/third_party/yoga
+	url = https://github.com/facebook/yoga.git
