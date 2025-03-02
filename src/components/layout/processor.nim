@@ -29,6 +29,7 @@ type
     tree*: LayoutNode           ## Pass 1: Raw node
     viewport*: Vec2
     font*: Font
+    recalculating*: bool = false
 
 proc constructFromElem*(layout: var Layout, elem: HTMLElement): LayoutNode =
   var node: LayoutNode
@@ -44,6 +45,9 @@ proc constructFromElem*(layout: var Layout, elem: HTMLElement): LayoutNode =
 proc constructTree*(layout: var Layout, document: HTMLDocument) =
   var body = document.body()
   assert(*body)
+  
+  if layout.recalculating:
+    layout.tree.attached.freeRecursive()
 
   layout.tree = layout.constructFromElem(&body)
 
@@ -58,6 +62,10 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
     node.attached.setWidthPercent(100) # Take up 100% of the parent's width - force all new content to start from the next line.
     node.attached.setFlexDirection(YGFlexDirectionColumn)
     node.attached.setAlignSelf(YGAlignStretch)
+
+  template inlineElem =
+    node.attached.setWidth(bounds.x) # Only take up as much space this element needs.
+    node.attached.setHeight(bounds.y)
 
   case node.element.tag
   of TAG_P:
@@ -75,6 +83,13 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
     
     blockElem
     node.attached.setHeight(bounds.y)
+    node.processed.dimensions = bounds
+  of TAG_STRONG:
+    let text = &node.element.text()
+    node.font.size = 24
+    let bounds = node.font.layoutBounds(text)
+
+    inlineElem
     node.processed.dimensions = bounds
   else: discard
 

@@ -197,7 +197,8 @@ proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
   let body = &document.body()
   if (let bgcolorO = body.attribute("bgcolor"); *bgcolorO):
     renderer.handleBackgroundColor(&bgcolorO)
-
+  
+  renderer.layout.recalculating = false
   renderer.document = document
   renderer.layout = move(layout)
   renderer.layout.constructTree(document)
@@ -215,10 +216,12 @@ proc resize*(renderer: FerusRenderer, dims: tuple[w, h: int32]) {.inline.} =
     # TODO: use some logic to mark nodes that need to be relayouted as "dirty"
     # currently, we're recomputing the entire page's layout upon resizing
     # which is horribly inefficient...
-
-    renderer.layout.constructTree(renderer.document)
-    renderer.layout.finalizeLayout()
-    renderer.paintLayout()
+    
+    if renderer.document != nil:
+      renderer.layout.recalculating = true
+      renderer.layout.constructTree(renderer.document)
+      renderer.layout.finalizeLayout()
+      renderer.paintLayout()
 
 proc initialize*(renderer: FerusRenderer) {.inline.} =
   info "Initializing renderer."
