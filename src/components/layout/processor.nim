@@ -7,7 +7,6 @@ import ../../components/parsers/css/[parser, anb, types]
 import ../../components/style/[selector_engine, style_matcher]
 import ../../components/shared/sugar
 import ../../components/ipc/[client/prelude, shared]
-import pretty
 
 type
   Style* = object
@@ -63,7 +62,6 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
   var yogaNode = newYGNode()
   node.attached = yogaNode
   node.font = layout.font
-  print layout.stylesheet
 
   template blockElem =
     node.attached.setWidthPercent(100) # Take up 100% of the parent's width - force all new content to start from the next line.
