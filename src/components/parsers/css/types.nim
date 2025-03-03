@@ -116,7 +116,9 @@ func dimension*(value: float32, unit: CSSUnit): CSSValue {.inline.} =
   CSSValue(kind: cssDimension, dim: CSSDimension(value: value, unit: unit))
 
 func toPixels*(value: CSSValue): float32 =
-  assert(value.kind == cssDimension, "BUG: toPixels() called on non-dimensional CSS value!")
+  assert(
+    value.kind == cssDimension, "BUG: toPixels() called on non-dimensional CSS value!"
+  )
 
   case value.dim.unit
   of CSSUnit.Px:

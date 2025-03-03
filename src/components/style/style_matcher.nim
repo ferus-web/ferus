@@ -32,7 +32,9 @@ proc getMatchingRules*(target: HTMLElement, sheet: Stylesheet): Stylesheet =
 
   ensureMove(matching)
 
-proc getProperty*(sheet: Stylesheet, target: HTMLElement, property: Property): Option[CSSValue] =
+proc getProperty*(
+    sheet: Stylesheet, target: HTMLElement, property: Property
+): Option[CSSValue] =
   let rules = target.getMatchingRules(sheet)
 
   for rule in rules:

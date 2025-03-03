@@ -1,5 +1,4 @@
 import pkg/[jsony]
 
-type
-  Property* {.pure.} = enum
-    FontSize = "font-size"
+type Property* {.pure.} = enum
+  FontSize = "font-size"

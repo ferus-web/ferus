@@ -89,7 +89,7 @@ proc parseRule*(parser: CSSParser): Option[Rule] =
 
   if !parser.state.expectSemicolon():
     return
-  
+
   return some(Rule(key: (&ident), value: parsedValue))
 
 proc onEncounterIdentifier*(parser: CSSParser, ident: Token): Stylesheet =
@@ -116,12 +116,13 @@ proc onEncounterIdentifier*(parser: CSSParser, ident: Token): Stylesheet =
 
 proc consumeRules*(parser: CSSParser): Stylesheet =
   var stylesheet: Stylesheet
-  
+
   while not parser.eof:
     let init = &parser.state.next()
     case init.kind
     of tkIdent:
       stylesheet &= parser.onEncounterIdentifier(init)
-    else: assert off, $init.kind
-  
+    else:
+      assert off, $init.kind
+
   stylesheet

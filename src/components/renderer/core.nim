@@ -65,8 +65,11 @@ proc onAnchorClick*(renderer: FerusRenderer, location: string) =
 
   renderer.scene.camera.reset()
 
-proc buildDisplayList*(renderer: FerusRenderer, list: var DisplayList, node: LayoutNode) =
-  assert node.element != nil, "BUG: Layout node does not have a HTML element attached to it!"
+proc buildDisplayList*(
+    renderer: FerusRenderer, list: var DisplayList, node: LayoutNode
+) =
+  assert node.element != nil,
+    "BUG: Layout node does not have a HTML element attached to it!"
 
   if node.processed.dimensions.x > 0 and node.processed.dimensions.y > 0:
     case node.element.tag
@@ -79,10 +82,10 @@ proc buildDisplayList*(renderer: FerusRenderer, list: var DisplayList, node: Lay
           node.processed.dimensions,
           renderer.scene.fontManager.getTypeface("Default"),
           node.processed.fontSize,
-          color = color(0, 0, 0, 1)
+          color = color(0, 0, 0, 1),
         )
       )
-    of { TAG_H1, TAG_H2, TAG_H3, TAG_H4, TAG_H5, TAG_H6 }:
+    of {TAG_H1, TAG_H2, TAG_H3, TAG_H4, TAG_H5, TAG_H6}:
       list.add(
         newTextNode(
           &node.element.text,
@@ -90,10 +93,11 @@ proc buildDisplayList*(renderer: FerusRenderer, list: var DisplayList, node: Lay
           node.processed.dimensions,
           renderer.scene.fontManager.getTypeface("Default"),
           node.processed.fontSize,
-          color = color(0, 0, 0, 1)
+          color = color(0, 0, 0, 1),
         )
       )
-    else: discard
+    else:
+      discard
 
     for child in node.children:
       renderer.buildDisplayList(list, child)
@@ -182,7 +186,11 @@ proc shouldClose*(renderer: FerusRenderer): bool =
 proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
   info "Rendering HTML document - calculating layout"
 
-  var layout = Layout(ipc: renderer.ipc, font: renderer.scene.fontManager.get("Default"), viewport: renderer.viewport)
+  var layout = Layout(
+    ipc: renderer.ipc,
+    font: renderer.scene.fontManager.get("Default"),
+    viewport: renderer.viewport,
+  )
   assert(layout.font != nil)
 
   if *document.head():
@@ -199,7 +207,7 @@ proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
   let body = &document.body()
   if (let bgcolorO = body.attribute("bgcolor"); *bgcolorO):
     renderer.handleBackgroundColor(&bgcolorO)
-  
+
   # Load our user agent CSS stylesheet.
   # It provides the basic "sane default" measurements
   layout.stylesheet &= newCSSParser(readFile("assets/user-agent.css")).consumeRules()
@@ -209,7 +217,7 @@ proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
     if child.tag == TAG_STYLE:
       var parser = newCSSParser(&child.text())
       layout.stylesheet &= parser.consumeRules()
-  
+
   renderer.document = document
   renderer.layout = move(layout)
   renderer.layout.constructTree(document)
@@ -227,7 +235,7 @@ proc resize*(renderer: FerusRenderer, dims: tuple[w, h: int32]) {.inline.} =
     # TODO: use some logic to mark nodes that need to be relayouted as "dirty"
     # currently, we're recomputing the entire page's layout upon resizing
     # which is horribly inefficient...
-    
+
     if renderer.document != nil:
       renderer.layout.recalculating = true
       renderer.layout.constructTree(renderer.document)
