@@ -30,6 +30,8 @@
               wayland-protocols
               wayland-scanner
               openssl
+              cmake
+              gnumake
             ];
 
             buildInputs = with pkgs; [
@@ -43,6 +45,7 @@
               xorg.libX11
               icu76
               libseccomp.dev
+              boehmgc
               gmp
               openssl.dev
               xorg.libXext
@@ -54,6 +57,7 @@
               libGL
               simdutf
               openssl
+              boehmgc
               curl.dev
               libseccomp.dev
               gmp.dev
@@ -67,6 +71,7 @@
                   simdutf
                   openssl.dev
                   curl.dev
+                  boehmgc.dev
                   libseccomp.dev
                   gmp.dev
                   glfw

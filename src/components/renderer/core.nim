@@ -1,10 +1,11 @@
-import std/[options, strutils, tables, importutils, logging]
+import std/[options, strutils, tables, importutils, logging, sets]
 import ferusgfx
 import opengl, pretty, chroma, jsony, vmath
 import ../shared/sugar
 import ./ipc
 import ../../components/parsers/html/document
-import ../../components/layout/[box, processor]
+import ../../components/parsers/css/[parser]
+import ../../components/layout/[processor]
 import ../../components/web/legacy_color
 import ../../components/ipc/client/prelude
 
@@ -16,6 +17,8 @@ type FerusRenderer* = ref object
   scene*: Scene
 
   needsNewContent*: bool = true
+  viewport*: Vec2
+  document*: HTMLDocument
 
   layout*: Layout
 
@@ -62,12 +65,51 @@ proc onAnchorClick*(renderer: FerusRenderer, location: string) =
 
   renderer.scene.camera.reset()
 
+proc buildDisplayList*(
+    renderer: FerusRenderer, list: var DisplayList, node: LayoutNode
+) =
+  assert node.element != nil,
+    "BUG: Layout node does not have a HTML element attached to it!"
+
+  if node.processed.dimensions.x > 0 and node.processed.dimensions.y > 0:
+    case node.element.tag
+    of TAG_P:
+      assert node.processed.fontSize != 0f
+      list.add(
+        newTextNode(
+          &node.element.text,
+          node.processed.position,
+          node.processed.dimensions,
+          renderer.scene.fontManager.getTypeface("Default"),
+          node.processed.fontSize,
+          color = color(0, 0, 0, 1),
+        )
+      )
+    of {TAG_H1, TAG_H2, TAG_H3, TAG_H4, TAG_H5, TAG_H6}:
+      list.add(
+        newTextNode(
+          &node.element.text,
+          node.processed.position,
+          node.processed.dimensions,
+          renderer.scene.fontManager.getTypeface("Default"),
+          node.processed.fontSize,
+          color = color(0, 0, 0, 1),
+        )
+      )
+    else:
+      discard
+
+    for child in node.children:
+      renderer.buildDisplayList(list, child)
+
 proc paintLayout*(renderer: FerusRenderer) =
   var displayList = newDisplayList(addr renderer.scene)
   displayList.doClearAll = true
 
   var start, ending: Vec2
-  for i, box in renderer.layout.boxes:
+  renderer.buildDisplayList(displayList, renderer.layout.tree)
+
+  #[ for i, box in renderer.layout.boxes:
     if i == 0 or box.pos.y < start.y:
       `=destroy`(start)
       wasMoved(start)
@@ -122,7 +164,9 @@ proc paintLayout*(renderer: FerusRenderer) =
       node.image = imageBox.image
 
       displayList.add(node)
+  ]#
 
+  ending = renderer.viewport
   renderer.scene.camera.setBoundaries(start, ending)
   displayList.commit()
 
@@ -142,8 +186,12 @@ proc shouldClose*(renderer: FerusRenderer): bool =
 proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
   info "Rendering HTML document - calculating layout"
 
-  var layout = newLayout(renderer.ipc, renderer.scene.fontManager.get("Default"))
-  layout.width = renderer.scene.camera.bounds.w.int
+  var layout = Layout(
+    ipc: renderer.ipc,
+    font: renderer.scene.fontManager.get("Default"),
+    viewport: renderer.viewport,
+  )
+  assert(layout.font != nil)
 
   if *document.head():
     for child in &document.head():
@@ -160,8 +208,20 @@ proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
   if (let bgcolorO = body.attribute("bgcolor"); *bgcolorO):
     renderer.handleBackgroundColor(&bgcolorO)
 
-  layout.constructFromDocument(document)
+  # Load our user agent CSS stylesheet.
+  # It provides the basic "sane default" measurements
+  layout.stylesheet &= newCSSParser(readFile("assets/user-agent.css")).consumeRules()
+
+  # FIXME: do this in a compliant way.
+  for child in body.children:
+    if child.tag == TAG_STYLE:
+      var parser = newCSSParser(&child.text())
+      layout.stylesheet &= parser.consumeRules()
+
+  renderer.document = document
   renderer.layout = move(layout)
+  renderer.layout.constructTree(document)
+  renderer.layout.finalizeLayout()
 
   renderer.paintLayout()
 
@@ -169,13 +229,18 @@ proc resize*(renderer: FerusRenderer, dims: tuple[w, h: int32]) {.inline.} =
   info "Resizing renderer viewport to $1x$2" % [$dims.w, $dims.h]
   let casted = (w: dims.w.int, h: dims.h.int)
   renderer.scene.onResize(casted)
+  renderer.viewport = vec2(dims.w.float, dims.h.float)
 
-  if renderer.layout.width != dims.w.int:
-    # Only recalculate layout when width changes. We don't care about the height.
-    renderer.layout.width = dims.w.int
-    renderer.layout.cursor.reset()
-    renderer.layout.update()
-    renderer.paintLayout()
+  if renderer.layout.viewport.x != renderer.viewport.x:
+    # TODO: use some logic to mark nodes that need to be relayouted as "dirty"
+    # currently, we're recomputing the entire page's layout upon resizing
+    # which is horribly inefficient...
+
+    if renderer.document != nil:
+      renderer.layout.recalculating = true
+      renderer.layout.constructTree(renderer.document)
+      renderer.layout.finalizeLayout()
+      renderer.paintLayout()
 
 proc initialize*(renderer: FerusRenderer) {.inline.} =
   info "Initializing renderer."
@@ -234,4 +299,4 @@ proc initialize*(renderer: FerusRenderer) {.inline.} =
       renderer.scene.onScroll(vec2(window.scrollDelta.x, window.scrollDelta.y))
 
 proc newFerusRenderer*(client: var IPCClient): FerusRenderer {.inline.} =
-  FerusRenderer(ipc: client)
+  FerusRenderer(ipc: client, viewport: vec2(1280, 1080))

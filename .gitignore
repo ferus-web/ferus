@@ -5,3 +5,4 @@
 !.github/*
 !LICENSE
 result
+src/bindings/install

@@ -1,6 +1,6 @@
 ## I love chame
 
-import std/[options, logging, tables, base64]
+import std/[options, logging, strutils, tables, base64]
 import chagashi/charset
 import sanchar/parse/url
 import ../../shared/sugar
@@ -62,6 +62,13 @@ func text*(elem: HTMLElement): Option[string] {.inline.} =
 func attribute*(elem: HTMLElement, name: string): Option[string] {.inline.} =
   if name in elem.attributes:
     return some(decode(elem.attributes[name]))
+
+func classes*(elem: HTMLElement): seq[string] {.inline.} =
+  let classAttr = elem.attribute("class")
+  if !classAttr:
+    return
+
+  split(&classAttr, ' ')
 
 proc parseHTMLElement*(document: Document, element: Element): HTMLElement =
   var elem = HTMLElement()

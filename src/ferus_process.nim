@@ -64,7 +64,10 @@ proc main() {.inline.} =
   client.handshake()
 
   # addHandler newIPCLogger(lvlAll, client)
-  setLogFilter(lvlInfo)
+  when not defined(release):
+    setLogFilter(lvlAll)
+  else:
+    setLogFilter(lvlInfo)
 
   if process.kind != Renderer:
     sandbox(process.kind)

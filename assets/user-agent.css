@@ -1,0 +1,24 @@
+/*
+ * Ferus' user agent stylesheet.
+ * This is the first stylesheet loaded into the layout engine.
+ * 
+ * Author(s):
+ * Trayambak Rai (xtrayambak at disroot dot org)
+*/
+
+/* Paragraphs */
+p {
+  font-size: 24px;
+}
+
+strong { font-size: 24px; } /* FIXME: add support for multiple class matchers in one selector */
+
+/* Headings
+ * They progressively get smaller with each level.
+*/
+h1 { font-size: 32px; }
+h2 { font-size: 30px; }
+h3 { font-size: 28px; }
+h4 { font-size: 24px; }
+h5 { font-size: 22px; }
+h6 { font-size: 20px; }

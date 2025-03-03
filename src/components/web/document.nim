@@ -17,7 +17,7 @@ proc generateIR*(runtime: Runtime) =
   runtime.definePrototypeFn(
     JSDocument,
     "hasFocus",
-    proc(doc: MAtom) =
+    proc(doc: JSValue) =
       ret true
     ,
   )
