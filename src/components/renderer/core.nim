@@ -71,13 +71,14 @@ proc buildDisplayList*(renderer: FerusRenderer, list: var DisplayList, node: Lay
   if node.processed.dimensions.x > 0 and node.processed.dimensions.y > 0:
     case node.element.tag
     of TAG_P:
+      assert node.processed.fontSize != 0f
       list.add(
         newTextNode(
           &node.element.text,
           node.processed.position,
           node.processed.dimensions,
           renderer.scene.fontManager.getTypeface("Default"),
-          24,
+          node.processed.fontSize,
           color = color(0, 0, 0, 1)
         )
       )
@@ -88,7 +89,7 @@ proc buildDisplayList*(renderer: FerusRenderer, list: var DisplayList, node: Lay
           node.processed.position,
           node.processed.dimensions,
           renderer.scene.fontManager.getTypeface("Default"),
-          32,
+          node.processed.fontSize,
           color = color(0, 0, 0, 1)
         )
       )
@@ -201,15 +202,14 @@ proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
   
   # Load our user agent CSS stylesheet.
   # It provides the basic "sane default" measurements
-  renderer.layout.stylesheet &= newCSSParser(readFile("assets/user-agent.css")).consumeRules()
+  layout.stylesheet &= newCSSParser(readFile("assets/user-agent.css")).consumeRules()
 
   # FIXME: do this in a compliant way.
   for child in body.children:
     if child.tag == TAG_STYLE:
       var parser = newCSSParser(&child.text())
-      renderer.layout.stylesheet &= parser.consumeRules()
+      layout.stylesheet &= parser.consumeRules()
   
-  renderer.layout.recalculating = false
   renderer.document = document
   renderer.layout = move(layout)
   renderer.layout.constructTree(document)

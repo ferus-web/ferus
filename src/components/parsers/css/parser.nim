@@ -85,9 +85,11 @@ proc parseRule*(parser: CSSParser): Option[Rule] =
   of tkDimension, tkIdent:
     parsedValue = parser.parseValueFromToken(value)
   else:
-    print value.kind
     unreachable
 
+  if !parser.state.expectSemicolon():
+    return
+  
   return some(Rule(key: (&ident), value: parsedValue))
 
 proc onEncounterIdentifier*(parser: CSSParser, ident: Token): Stylesheet =
@@ -104,20 +106,22 @@ proc onEncounterIdentifier*(parser: CSSParser, ident: Token): Stylesheet =
 
     rules &= parsed
 
-    let next = &parser.state.deepcopy().next()
-    if next.kind == tkCloseCurlyBracket:
+    let copied = parser.state.deepCopy()
+    if parser.state.expectCloseCurlyBracket.isOk:
       break
+    else:
+      parser.state = copied
 
   rules
 
 proc consumeRules*(parser: CSSParser): Stylesheet =
   var stylesheet: Stylesheet
-
-  let init = &parser.state.next()
-  case init.kind
-  of tkIdent:
-    stylesheet &= parser.onEncounterIdentifier(init)
-  else:
-    discard
-
+  
+  while not parser.eof:
+    let init = &parser.state.next()
+    case init.kind
+    of tkIdent:
+      stylesheet &= parser.onEncounterIdentifier(init)
+    else: assert off, $init.kind
+  
   stylesheet

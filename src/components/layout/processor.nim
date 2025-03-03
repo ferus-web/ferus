@@ -7,6 +7,7 @@ import ../../components/parsers/css/[parser, anb, types]
 import ../../components/style/[selector_engine, style_matcher]
 import ../../components/shared/sugar
 import ../../components/ipc/[client/prelude, shared]
+import pretty
 
 type
   Style* = object
@@ -15,6 +16,7 @@ type
   ProcessedData* = object
     position*: Vec2
     dimensions*: Vec2
+    fontSize*: float32
 
   LayoutNode* = object
     parent*: ptr LayoutNode
@@ -61,6 +63,7 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
   var yogaNode = newYGNode()
   node.attached = yogaNode
   node.font = layout.font
+  print layout.stylesheet
 
   template blockElem =
     node.attached.setWidthPercent(100) # Take up 100% of the parent's width - force all new content to start from the next line.
@@ -74,7 +77,10 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
   case node.element.tag
   of TAG_P:
     let text = &node.element.text()
-    node.font.size = toPixels(&layout.stylesheet.getProperty(node.element, Property.FontSize))
+    let fontSize = toPixels(&layout.stylesheet.getProperty(node.element, Property.FontSize))
+    node.processed.fontSize = fontSize
+    node.font.size = fontSize
+
     let bounds = node.font.layoutBounds(text)
     
     blockElem
@@ -82,15 +88,21 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
     node.processed.dimensions = bounds
   of { TAG_H1, TAG_H2, TAG_H3, TAG_H4, TAG_H5, TAG_H6 }:
     let text = &node.element.text()
-    node.font.size = toPixels(&layout.stylesheet.getProperty(node.element, Property.FontSize))
+    let fontSize = toPixels(&layout.stylesheet.getProperty(node.element, Property.FontSize)) # The font-size attribute
+    node.processed.fontSize = fontSize
+    node.font.size = fontSize
+
     let bounds = node.font.layoutBounds(text)
     
-    blockElem
+    blockElem # tell the layout engine to treat these as block elements
+
     node.attached.setHeight(bounds.y)
     node.processed.dimensions = bounds
   of TAG_STRONG:
     let text = &node.element.text()
-    node.font.size = toPixels(&layout.stylesheet.getProperty(node.element, Property.FontSize))
+    let fontSize = toPixels(&layout.stylesheet.getProperty(node.element, Property.FontSize))
+    node.font.size = fontSize
+    node.processed.fontSize = fontSize
     let bounds = node.font.layoutBounds(text)
 
     inlineElem
