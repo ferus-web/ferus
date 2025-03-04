@@ -1,6 +1,5 @@
-import std/[options, strutils, tables, importutils, logging, sets]
-import ferusgfx
-import opengl, pretty, chroma, jsony, vmath
+import std/[options, strutils, tables, sugar, importutils, logging, sets]
+import pkg/[ferusgfx, opengl, pretty, chroma, jsony, vmath, bumpy]
 import ../shared/sugar
 import ./ipc
 import ../../components/parsers/html/document
@@ -9,18 +8,25 @@ import ../../components/layout/[processor]
 import ../../components/web/legacy_color
 import ../../components/ipc/client/prelude
 
-when defined(ferusUseGlfw): import glfw else: import windy
+import glfw
 
-type FerusRenderer* = ref object
-  window*: Window
-  ipc*: IPCClient
-  scene*: Scene
+type
+  CursorManager* = object
+    normal*, hand*, forbidden*: Cursor
 
-  needsNewContent*: bool = true
-  viewport*: Vec2
-  document*: HTMLDocument
+    hovered*: bool
 
-  layout*: Layout
+  FerusRenderer* = ref object
+    window*: Window
+    cursorMgr*: CursorManager
+    ipc*: IPCClient
+    scene*: Scene
+
+    needsNewContent*: bool = true
+    viewport*: Vec2
+    document*: HTMLDocument
+
+    layout*: Layout
 
 proc mutate*(renderer: FerusRenderer, list: Option[DisplayList]) {.inline.} =
   if not *list:
@@ -40,10 +46,7 @@ proc tick*(renderer: FerusRenderer) {.inline.} =
   renderer.scene.draw()
   renderer.window.swapBuffers()
 
-  when defined(ferusUseGlfw):
-    glfw.pollEvents()
-  else:
-    pollEvents()
+  glfw.pollEvents()
 
   # privateAccess renderer.scene.camera.typeof
   # renderer.ipc.debug $renderer.scene.camera.delta
@@ -51,9 +54,8 @@ proc tick*(renderer: FerusRenderer) {.inline.} =
 proc close*(renderer: FerusRenderer) {.inline.} =
   info "Closing renderer."
 
-  when defined(ferusUseGlfw):
-    destroy renderer.window
-    glfw.terminate()
+  destroy renderer.window
+  glfw.terminate()
 
 proc setWindowTitle*(renderer: FerusRenderer, title: string) {.inline.} =
   info "Setting window title to \"" & title & "\""
@@ -73,8 +75,7 @@ proc buildDisplayList*(
 
   if node.processed.dimensions.x > 0 and node.processed.dimensions.y > 0:
     case node.element.tag
-    of TAG_P:
-      assert node.processed.fontSize != 0f
+    of {TAG_P, TAG_STRONG}:
       list.add(
         newTextNode(
           &node.element.text,
@@ -82,7 +83,7 @@ proc buildDisplayList*(
           node.processed.dimensions,
           renderer.scene.fontManager.getTypeface("Default"),
           node.processed.fontSize,
-          color = color(0, 0, 0, 1),
+          color = node.processed.color.asColor(),
         )
       )
     of {TAG_H1, TAG_H2, TAG_H3, TAG_H4, TAG_H5, TAG_H6}:
@@ -93,9 +94,44 @@ proc buildDisplayList*(
           node.processed.dimensions,
           renderer.scene.fontManager.getTypeface("Default"),
           node.processed.fontSize,
-          color = color(0, 0, 0, 1),
+          color = node.processed.color.asColor()
         )
       )
+    of TAG_A:
+      list.add(
+        newTextNode(
+          &node.element.text,
+          node.processed.position,
+          node.processed.dimensions,
+          renderer.scene.fontManager.getTypeface("Default"),
+          node.processed.fontSize,
+          color = node.processed.color.asColor(),
+        )
+      )
+
+      # Add a touch interest node
+      var pList = list.addr
+
+      capture node:
+        pList[].add(
+          newTouchInterestNode(
+            rect(node.processed.position, node.processed.dimensions),
+            proc(_: seq[string], mouse: MouseClick) =
+              if mouse != MouseClick.Left:
+                return
+
+              let href = node.element.attribute("href")
+              failCond *href
+
+              renderer.ipc.send(
+                RendererGotoURL(url: &href)
+              ),
+
+            proc(_: seq[string]) =
+              echo "hovered, yippee."
+              renderer.cursorMgr.hovered = true
+          )
+        )
     else:
       discard
 
@@ -185,6 +221,10 @@ proc shouldClose*(renderer: FerusRenderer): bool =
 
 proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
   info "Rendering HTML document - calculating layout"
+  if renderer.cursorMgr.hovered:
+    renderer.window.cursor = renderer.cursorMgr.hand
+  else:
+    renderer.window.cursor = renderer.cursorMgr.normal
 
   var layout = Layout(
     ipc: renderer.ipc,
@@ -215,6 +255,10 @@ proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
   # FIXME: do this in a compliant way.
   for child in body.children:
     if child.tag == TAG_STYLE:
+      if !child.text:
+        warn "renderer: <style> tag has no content; ignoring."
+        continue
+
       var parser = newCSSParser(&child.text())
       layout.stylesheet &= parser.consumeRules()
 
@@ -245,58 +289,56 @@ proc resize*(renderer: FerusRenderer, dims: tuple[w, h: int32]) {.inline.} =
 proc initialize*(renderer: FerusRenderer) {.inline.} =
   info "Initializing renderer."
 
-  when defined(ferusUseGlfw):
-    glfw.initialize()
+  glfw.initialize()
 
   loadExtensions()
 
-  when defined(ferusUseGlfw):
-    var conf = DefaultOpenglWindowConfig
-    conf.title = "Ferus"
-    conf.size = (w: 1280, h: 1080)
-    conf.makeContextCurrent = true
-    conf.version = glv30
+  var conf = DefaultOpenglWindowConfig
+  conf.title = "Ferus"
+  conf.size = (w: 1280, h: 1080)
+  conf.makeContextCurrent = true
+  conf.version = glv30
 
-    var window =
-      try:
-        newWindow(conf)
-      except GLFWError as exc:
-        error "Failed to initialize GLFW window: " & exc.msg
-        quit(8)
-  else:
-    var window = newWindow("Initializing", ivec2(1280, 720))
-    window.makeContextCurrent()
+  var window =
+    try:
+      newWindow(conf)
+    except GLFWError as exc:
+      error "Failed to initialize GLFW window: " & exc.msg
+      quit(8)
 
   renderer.window = window
   renderer.scene = newScene(1280, 1080)
+  renderer.cursorMgr = CursorManager(
+    normal: createStandardCursor(csArrow),
+    hand: createStandardCursor(csHand),
+    forbidden: createStandardCursor(csNotAllowed)
+  )
 
-  when defined(ferusUseGlfw):
-    window.windowSizeCb = proc(_: Window, size: tuple[w, h: int32]) =
-      renderer.resize(size)
+  window.windowSizeCb = proc(_: Window, size: tuple[w, h: int32]) =
+    renderer.resize(size)
 
-    window.scrollCb = proc(_: Window, offset: tuple[x, y: float64]) =
-      # debug "Scrolling (offset: " & $offset & ")"
-      let vector = vec2(offset.x, offset.y)
-      renderer.scene.onScroll(vector)
+  window.scrollCb = proc(_: Window, offset: tuple[x, y: float64]) =
+    # debug "Scrolling (offset: " & $offset & ")"
+    let vector = vec2(offset.x, offset.y)
+    renderer.scene.onScroll(vector)
 
-    window.mouseButtonCb = proc(
-        _: Window, button: MouseButton, pressed: bool, mods: set[ModifierKey]
-    ) =
-      if button == mbLeft:
-        renderer.scene.onCursorClick(pressed, MouseClick.Left)
-      elif button == mbRight:
-        renderer.scene.onCursorClick(pressed, MouseClick.Right)
+  window.mouseButtonCb = proc(
+      _: Window, button: MouseButton, pressed: bool, mods: set[ModifierKey]
+  ) =
+    if button == mbLeft:
+      renderer.scene.onCursorClick(pressed, MouseClick.Left)
+    elif button == mbRight:
+      renderer.scene.onCursorClick(pressed, MouseClick.Right)
 
-    window.cursorPositionCb = proc(_: Window, pos: tuple[x, y: float64]) =
-      renderer.scene.onCursorMotion(vec2(pos.x, pos.y))
+  window.cursorPositionCb = proc(_: Window, pos: tuple[x, y: float64]) =
+    renderer.cursorMgr.hovered = false
+    renderer.scene.onCursorMotion(vec2(pos.x, pos.y))
+    if renderer.cursorMgr.hovered:
+      renderer.window.cursor = renderer.cursorMgr.hand
+    else:
+      renderer.window.cursor = renderer.cursorMgr.normal
 
-    renderer.window = window
-  else:
-    window.onResize = proc() =
-      renderer.resize((w: window.size.x.int32, h: window.size.x.int32))
-
-    window.onScroll = proc() =
-      renderer.scene.onScroll(vec2(window.scrollDelta.x, window.scrollDelta.y))
+  renderer.window = window
 
 proc newFerusRenderer*(client: var IPCClient): FerusRenderer {.inline.} =
   FerusRenderer(ipc: client, viewport: vec2(1280, 1080))
