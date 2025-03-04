@@ -72,7 +72,7 @@ proc parseRule*(parser: CSSParser): Option[Rule] =
 
   if !ovalue:
     return
-  
+
   let value = &ovalue
 
   var parsedValue: CSSValue

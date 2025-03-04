@@ -93,11 +93,11 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
       toPixels(&layout.stylesheet.getProperty(node.element, Property.FontSize))
       # The font-size attribute
 
-    let color = evaluateRGBXFunction(
-      &layout.stylesheet.getProperty(node.element, Property.Color)
-    )
+    let color =
+      evaluateRGBXFunction(&layout.stylesheet.getProperty(node.element, Property.Color))
 
-    failCond *color # FIXME: Use a more fault-tolerant approach. Currently we just skip the entire node and its children upon this basic failure.
+    failCond *color
+      # FIXME: Use a more fault-tolerant approach. Currently we just skip the entire node and its children upon this basic failure.
     node.processed.fontSize = fontSize
     node.processed.color = &color
     node.font.size = fontSize
@@ -112,11 +112,11 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
     let text = &node.element.text()
     let fontSize =
       toPixels(&layout.stylesheet.getProperty(node.element, Property.FontSize))
-    let color = evaluateRGBXFunction(
-      &layout.stylesheet.getProperty(node.element, Property.Color)
-    )
+    let color =
+      evaluateRGBXFunction(&layout.stylesheet.getProperty(node.element, Property.Color))
 
-    failCond *color # FIXME: Use a more fault-tolerant approach. Currently we just skip the entire node and its children upon this basic failure.
+    failCond *color
+      # FIXME: Use a more fault-tolerant approach. Currently we just skip the entire node and its children upon this basic failure.
     node.font.size = fontSize
     node.processed.fontSize = fontSize
     node.processed.color = &color
@@ -125,19 +125,19 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
     inlineElem
     node.processed.dimensions = bounds
   of TAG_A:
-    let text = if *node.element.text:
-      &node.element.text()
-    else:
-      newString(0)
+    let text =
+      if *node.element.text:
+        &node.element.text()
+      else:
+        newString(0)
 
-    let fontSize = toPixels(
-      &layout.stylesheet.getProperty(node.element, Property.FontSize)
-    )
-    let color = evaluateRGBXFunction(
-      &layout.stylesheet.getProperty(node.element, Property.Color)
-    )
+    let fontSize =
+      toPixels(&layout.stylesheet.getProperty(node.element, Property.FontSize))
+    let color =
+      evaluateRGBXFunction(&layout.stylesheet.getProperty(node.element, Property.Color))
 
-    failCond *color # FIXME: Use a more fault-tolerant approach. Currently we just skip the entire node and its children upon this basic failure.
+    failCond *color
+      # FIXME: Use a more fault-tolerant approach. Currently we just skip the entire node and its children upon this basic failure.
 
     node.font.size = fontSize
     node.processed.fontSize = fontSize

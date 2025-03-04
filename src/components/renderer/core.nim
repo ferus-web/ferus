@@ -94,7 +94,7 @@ proc buildDisplayList*(
           node.processed.dimensions,
           renderer.scene.fontManager.getTypeface("Default"),
           node.processed.fontSize,
-          color = node.processed.color.asColor()
+          color = node.processed.color.asColor(),
         )
       )
     of TAG_A:
@@ -123,13 +123,9 @@ proc buildDisplayList*(
               let href = node.element.attribute("href")
               failCond *href
 
-              renderer.ipc.send(
-                RendererGotoURL(url: &href)
-              ),
-
+              renderer.ipc.send(RendererGotoURL(url: &href)),
             proc(_: seq[string]) =
-              echo "hovered, yippee."
-              renderer.cursorMgr.hovered = true
+              renderer.cursorMgr.hovered = true,
           )
         )
     else:
@@ -311,7 +307,7 @@ proc initialize*(renderer: FerusRenderer) {.inline.} =
   renderer.cursorMgr = CursorManager(
     normal: createStandardCursor(csArrow),
     hand: createStandardCursor(csHand),
-    forbidden: createStandardCursor(csNotAllowed)
+    forbidden: createStandardCursor(csNotAllowed),
   )
 
   window.windowSizeCb = proc(_: Window, size: tuple[w, h: int32]) =

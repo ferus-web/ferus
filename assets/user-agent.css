@@ -12,7 +12,10 @@ p {
   color: rgb(0, 0, 0);
 }
 
-strong { font-size: 24px; } /* FIXME: add support for multiple class matchers in one selector */
+strong {
+  font-size: 24px; 
+  color: rgb(0, 0, 0);
+} /* FIXME: add support for multiple class matchers in one selector */
 a {
   font-size: 24px;
   color: rgb(0, 0, 255); /* Make anchors appear blue. */
