@@ -83,6 +83,13 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
     node.processed.fontSize = fontSize
     node.font.size = fontSize
 
+    let color =
+      evaluateRGBXFunction(&layout.stylesheet.getProperty(node.element, Property.Color))
+
+    failCond *color
+      # FIXME: Use a more fault-tolerant approach. Currently we just skip the entire node and its children upon this basic failure.
+    node.processed.color = &color
+
     let bounds = node.font.layoutBounds(text)
 
     blockElem
