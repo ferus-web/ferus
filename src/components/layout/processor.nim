@@ -4,7 +4,7 @@ import pkg/[pixie, vmath]
 import ../../bindings/yoga
 import ../../components/parsers/html/document
 import ../../components/parsers/css/[parser, anb, types]
-import ../../components/style/[selector_engine, style_matcher]
+import ../../components/style/[selector_engine, style_matcher, functions]
 import ../../components/shared/sugar
 import ../../components/ipc/[client/prelude, shared]
 
@@ -16,6 +16,7 @@ type
     position*: Vec2
     dimensions*: Vec2
     fontSize*: float32
+    color*: ColorRGBA
 
   LayoutNode* = object
     parent*: ptr LayoutNode
@@ -91,7 +92,14 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
     let fontSize =
       toPixels(&layout.stylesheet.getProperty(node.element, Property.FontSize))
       # The font-size attribute
+
+    let color = evaluateRGBXFunction(
+      &layout.stylesheet.getProperty(node.element, Property.Color)
+    )
+
+    failCond *color # FIXME: Use a more fault-tolerant approach. Currently we just skip the entire node and its children upon this basic failure.
     node.processed.fontSize = fontSize
+    node.processed.color = &color
     node.font.size = fontSize
 
     let bounds = node.font.layoutBounds(text)
@@ -104,8 +112,36 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
     let text = &node.element.text()
     let fontSize =
       toPixels(&layout.stylesheet.getProperty(node.element, Property.FontSize))
+    let color = evaluateRGBXFunction(
+      &layout.stylesheet.getProperty(node.element, Property.Color)
+    )
+
+    failCond *color # FIXME: Use a more fault-tolerant approach. Currently we just skip the entire node and its children upon this basic failure.
     node.font.size = fontSize
     node.processed.fontSize = fontSize
+    node.processed.color = &color
+    let bounds = node.font.layoutBounds(text)
+
+    inlineElem
+    node.processed.dimensions = bounds
+  of TAG_A:
+    let text = if *node.element.text:
+      &node.element.text()
+    else:
+      newString(0)
+
+    let fontSize = toPixels(
+      &layout.stylesheet.getProperty(node.element, Property.FontSize)
+    )
+    let color = evaluateRGBXFunction(
+      &layout.stylesheet.getProperty(node.element, Property.Color)
+    )
+
+    failCond *color # FIXME: Use a more fault-tolerant approach. Currently we just skip the entire node and its children upon this basic failure.
+
+    node.font.size = fontSize
+    node.processed.fontSize = fontSize
+    node.processed.color = &color
     let bounds = node.font.layoutBounds(text)
 
     inlineElem
