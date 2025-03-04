@@ -25,10 +25,7 @@ requires "jsony >= 1.1.5"
 requires "chagashi >= 0.5.4"
 requires "curly >= 1.1.1"
 requires "webby >= 0.2.1"
-
-when defined(ferusUseGlfw):
-  requires "glfw >= 3.4.0.4"
-else:
-  requires "windy >= 0.0.0"
-
 requires "waterpark >= 0.1.7"
+requires "chroma >= 0.2.7"
+requires "bumpy >= 1.1.2"
+requires "glfw >= 3.4.0.4"

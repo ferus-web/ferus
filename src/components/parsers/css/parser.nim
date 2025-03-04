@@ -55,9 +55,6 @@ proc parseFunction*(parser: CSSParser, nameTok: Token): Option[CSSValue] {.inlin
 
   parser.state.atStartOf = none(BlockType)
 
-  if !parser.state.expectSemicolon():
-    return
-
   some(function(name, move(args)))
 
 proc parseRule*(parser: CSSParser): Option[Rule] =
@@ -77,6 +74,7 @@ proc parseRule*(parser: CSSParser): Option[Rule] =
     return
 
   let value = &ovalue
+
   var parsedValue: CSSValue
 
   case value.kind
@@ -123,6 +121,6 @@ proc consumeRules*(parser: CSSParser): Stylesheet =
     of tkIdent:
       stylesheet &= parser.onEncounterIdentifier(init)
     else:
-      assert off, $init.kind
+      discard
 
   stylesheet
