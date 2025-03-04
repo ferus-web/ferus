@@ -32,3 +32,5 @@ else:
   requires "windy >= 0.0.0"
 
 requires "waterpark >= 0.1.7"
+
+requires "chroma >= 0.2.7"
