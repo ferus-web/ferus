@@ -1,22 +1,25 @@
-import std/[base64, strutils, logging, options, json, net]
-import sanchar/[http, proto/http/shared], sanchar/parse/url
-import pretty
+import std/[base64, strutils, sequtils, importutils, logging, options, json, net]
+import pkg/sanchar/[http, proto/http/shared], pkg/sanchar/parse/url
+import pkg/pretty
+import pkg/whisky
 
 when defined(ferusUseCurl):
-  import webby/httpheaders
-  import curly
+  import pkg/webby/httpheaders
+  import pkg/curly
 
-import jsony
+import pkg/jsony
 import ../../components/shared/[nix, sugar]
-import ../../components/network/ipc
+import ../../components/network/[websocket, types, ipc]
 import ../../components/build_utils
 import ../../components/ipc/client/prelude
+
+privateAccess(WebSocket)
 
 when defined(ferusUseCurl):
   var curl = newCurly()
 
 func getUAString*(): string {.inline.} =
-  "Mozilla/5.0 ($1 $2) Ferus/$3 (Ferus, like Gecko) Ferus/$3 Firefox/129.0" % [
+  "Mozilla/5.0 ($1 $2) Ferus/$3 (Ferus, like Gecko) Ferus/$3 Firefox/134.0" % [
     (
       when defined(linux):
         "X11; Linux"
@@ -36,9 +39,9 @@ func getUAString*(): string {.inline.} =
   ]
 
 proc networkFetch*(
-    client: var IPCClient, fetchData: Option[NetworkFetchPacket]
+    client: FerusNetworkClient, fetchData: Option[NetworkFetchPacket]
 ): NetworkFetchResult {.inline.} =
-  client.setState(Processing)
+  client.ipc.setState(Processing)
   if not *fetchData:
     error "Could not reinterpret JSON data as `NetworkFetchPacket`!"
     return
@@ -87,18 +90,18 @@ proc networkFetch*(
 
   info "Fetched HTTP/GET response from: " & $url
 
-  client.setState(Idling)
+  client.ipc.setState(Idling)
 
-proc talk(client: var IPCClient, process: FerusProcess) {.inline.} =
+proc talk(client: FerusNetworkClient, process: FerusProcess) {.inline.} =
   var count: cint
 
-  discard nix.ioctl(client.socket.getFd().cint, nix.FIONREAD, addr count)
+  discard nix.ioctl(client.ipc.socket.getFd().cint, nix.FIONREAD, addr count)
 
   if count < 1:
     return
 
   let
-    data = client.receive()
+    data = client.ipc.receive()
     jdata = tryParseJson(data, JsonNode)
 
   if not *jdata:
@@ -117,7 +120,7 @@ proc talk(client: var IPCClient, process: FerusProcess) {.inline.} =
     var odata = client.networkFetch(tryParseJson(data, NetworkFetchPacket))
 
     if !odata.response:
-      client.send(odata.move())
+      client.ipc.send(odata.move())
       return
 
     var resp = &odata.response
@@ -125,13 +128,48 @@ proc talk(client: var IPCClient, process: FerusProcess) {.inline.} =
 
     odata.response = some(move(resp))
 
-    client.send(odata.move())
+    client.ipc.send(odata.move())
+  of feNetworkOpenWebSocket:
+    let openReq = &tryParseJson(data, NetworkOpenWebSocket)
+    let numOwnedAlready =
+      uint32(client.websockets.filterIt(it.owner == openReq.owner).len)
+
+    if numOwnedAlready >= 1024:
+      # Impose an arbitrary limit of 1024 WebSockets per network process.
+      # If you need anything beyond that, you're:
+      # 1) out of luck
+      # and
+      # 2) mentally deranged. No, seriously. Go seek help.
+      client.ipc.send(
+        NetworkWebSocketCreationResult(
+          error: some("too many concurrent WebSocket connections")
+        )
+      )
+
+    var ws: WebSocketConnection
+    try:
+      ws = WebSocketConnection(
+        owner: openReq.owner,
+        id: numOwnedAlready + 1'u32,
+        handle: newWebSocket($openReq.address),
+      )
+    except CatchableError as exc:
+      error "network: Failed to create WebSocket connection! Whisky returned: " & exc.msg
+      client.ipc.send(
+        NetworkWebSocketCreationResult(error: some("internal error: " & exc.msg))
+      )
+
+    info "network: Created WebSocket connection to address " & $openReq.address &
+      " successfully!"
+    client.ipc.send(NetworkWebSocketCreationResult(error: none(string)))
   else:
     discard
 
 proc networkProcessLogic*(client: var IPCClient, process: FerusProcess) {.inline.} =
   info "Entering network process logic."
-  client.setState(Idling)
+  var client = FerusNetworkClient(ipc: client)
+  client.ipc.setState(Idling)
 
   while true:
     client.talk(process)
+    client.tickAllConnections()

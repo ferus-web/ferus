@@ -1,6 +1,6 @@
 ## Yoga-based layout engine
 import std/[logging, tables]
-import pkg/[pixie, vmath]
+import pkg/[pixie, vmath, pretty]
 import ../../bindings/yoga
 import ../../components/parsers/html/document
 import ../../components/parsers/css/[parser, anb, types]
@@ -71,6 +71,7 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
     node.attached.setAlignSelf(YGAlignStretch)
 
   template inlineElem() =
+    node.attached.setFlexDirection(YGFlexDirectionRow)
     node.attached.setWidth(bounds.x) # Only take up as much space this element needs.
     node.attached.setHeight(bounds.y)
 

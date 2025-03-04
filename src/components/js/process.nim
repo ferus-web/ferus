@@ -7,6 +7,7 @@ import jsony
 import ../../components/shared/[nix, sugar]
 import ../../components/web/[window]
 import ../../components/web/document as jsdoc
+import ../../components/web/websockets as jswebsocket
 from ../../components/parsers/html/document import HTMLDocument
 import ./ipc
 
@@ -34,6 +35,7 @@ proc jsExecBuffer*(js: var JSProcess, data: string) =
   js.runtime = newRuntime(data.name.decode(), js.parser.parse())
   window.generateIR(js.runtime)
   jsdoc.generateIR(js.runtime)
+  jswebsocket.generateBindings(js.runtime, js.ipc)
   jsdoc.updateDocumentState(js.runtime, js.document)
   js.runtime.run()
 

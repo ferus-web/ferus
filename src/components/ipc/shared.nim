@@ -252,6 +252,24 @@ type
     ## `document`: components::parsers::html::document::HTMLDocument
     feJSTakeDocument
 
+    ## feJSCreateWebSocket
+    ## The JavaScript process sends this to the IPC server, which in turn sends a `feNetworkOpenWebSocket`
+    ## packet to the network process for that tab.
+    ## `address`: sanchar::parse::url::URL
+    feJSCreateWebSocket
+
+    ## feNetworkOpenWebSocket
+    feNetworkOpenWebSocket
+
+    ## feNetworkWebSocketCreationResult
+    ## The IPC master receives this from the network process in response to a `feNetworkOpenWebSocket` packet.
+    ## The IPC master must relay this to the JavaScript process if it the WebSocket was created by JavaScript code.
+    ## `error`: Option[string]
+    feNetworkWebSocketCreationResult
+
+    ## feJSWebSocketEvent
+    feJSWebSocketEvent
+
   DataTransferRequest* = ref object
     kind: FerusMagic = feDataTransferRequest
 

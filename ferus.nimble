@@ -29,3 +29,5 @@ requires "waterpark >= 0.1.7"
 requires "chroma >= 0.2.7"
 requires "bumpy >= 1.1.2"
 requires "glfw >= 3.4.0.4"
+
+requires "whisky >= 0.1.3"

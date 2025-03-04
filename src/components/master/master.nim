@@ -451,6 +451,48 @@ proc packetHandler*(
       location = base.scheme() & "://" & base.hostname() & '/' & location
 
     master.urls[process.group] = parse(location)
+  of feJSCreateWebSocket:
+    let data = tryParseJson(data, JSCreateWebSocket)
+    if process.kind != JSRuntime:
+      master.server.reportBadMessage(
+        process, "Non-JS runtime process attempted to use `feJSCreateWebSocket`!", High
+      )
+      return
+
+    if !data:
+      master.server.reportBadMessage(
+        process,
+        "Cannot reinterpret data for kind `feJSCreateWebSocket` as `JSCreateWebSocket`",
+        Low,
+      )
+      return
+
+    let address = (&data).address
+    debug "JavaScript process wants to create WebSocket - telling network process"
+
+    let proces = master.server.groups[process.group].findProcess(Network)
+    if !proces:
+      warn "Network process seems to have crashed (or was it never initialized?)"
+      return
+
+    let networkProcess = &proces
+    master.server.send(networkProcess.socket, NetworkOpenWebSocket(address: address))
+
+    var resp: Option[NetworkWebSocketCreationResult]
+    var attempts = 0
+    while !resp and attempts < 256:
+      let packet =
+        master.server.receive(networkProcess.socket, NetworkWebSocketCreationResult)
+      inc attempts
+
+      if !packet:
+        continue
+
+    if !resp:
+      warn "Network process did not send a WebSocket creation result in 256 iterations."
+      return
+
+    master.server.send(process.socket, &resp)
   else:
     warn "Unhandled IPC protocol magic: " & $kind
     return

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>WebSockets example</title>
+  </head>
+  <body>
+    <script>
+      var ws = new WebSocket("wss://echo.websocket.org");
+      function onopen() {
+        console.log("Connected to echo.websocket.org")
+        ws.send("Hello WebSockets!")
+      }
+      
+      function onmessage(event) {
+        console.log("Received a message:", event.data)
+      }
+
+      ws.onopen = onopen;
+    </script>
+    <h1>Check your console, there must be a few log messages there :^)</h1>
+    <p>There should be stuff in there, I think.</p>
+    
+    <h2>There aren't that many logs (or there's none!)</h2>
+    <p>File a bug report.</p>
+  </body>
