@@ -4,6 +4,13 @@ It has rudimentary support for layout and JavaScript.
 ![A screenshot of Ferus rendering SourceHut](screenshots/ferus_sourcehut.jpg)
 ![A screenshot of Ferus rendering GitHub](screenshots/ferus_github.jpg)
 
+Ferus currently consists of a bunch of different packages put together into a single repository:
+- Stylus, the CSS3 parser
+- Bali, the JavaScript engine
+- ferusgfx, the rendering pipeline
+- sanchar, the URL utilities provider and previously, the HTTP client
+- ferrite, the general utilities/shared code library with helpers for encoding/decoding UTF-16 and UTF-8 content
+
 # Features
 - When possible, we write our own solution to a component of the overall modern web stack. This has resulted in projects like Stylus (our CSS3 compliant parser derived from Servo) and Bali (our JavaScript engine based on Mirage, our bytecode interpreter) and Sanchar (our HTTP client and URL parser) that are beneficial for the overall Nim community.
 
