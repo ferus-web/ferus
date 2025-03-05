@@ -5,12 +5,12 @@ import pkg/[pixie, vmath, ferusgfx]
 privateAccess(TextNode)
 
 proc newTextNode*(
-  content: string,
-  pos: Vec2,
-  dimensions: Vec2,
-  font: Font,
-  fontSize: float32,
-  color: Color
+    content: string,
+    pos: Vec2,
+    dimensions: Vec2,
+    font: Font,
+    fontSize: float32,
+    color: Color,
 ): TextNode =
   # TODO: forward this to upstream ferusgfx
   when defined(ferusgfxDrawDamagedRegions):
@@ -19,7 +19,7 @@ proc newTextNode*(
     paint.color = color(1, 0, 0, 0.5)
 
   font.paint.color = color
-  
+
   result = TextNode(
     textContent: content,
     position: pos,

@@ -19,6 +19,7 @@ strong {
 a {
   font-size: 24px;
   color: rgb(0, 0, 255); /* Make anchors appear blue. */
+  text-decoration: underline;
 }
 
 /* Headings
