@@ -6,3 +6,4 @@
 type Property* {.pure.} = enum
   FontSize = "font-size"
   Color = "color"
+  TextDecoration = "text-decoration"

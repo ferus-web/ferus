@@ -72,65 +72,70 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
 
   template inlineElem() =
     node.attached.setFlexDirection(YGFlexDirectionRow)
+    node.attached.setAlignSelf(YGAlignFlexStart)
     node.attached.setWidth(bounds.x) # Only take up as much space this element needs.
     node.attached.setHeight(bounds.y)
+
+  template applyStyle() =
+    let fontSize =
+      toPixels(&layout.stylesheet.getProperty(node.element, Property.FontSize))
+    node.processed.fontSize = fontSize
+    node.font.size = fontSize
+
+    let textDecoration =
+      layout.stylesheet.getProperty(node.element, Property.TextDecoration)
+
+    if *textDecoration:
+      let property = &textDecoration
+      if property.kind == cssString:
+        case property.str
+        of "underline":
+          node.font.underline = true
+        of "line-through":
+          node.font.strikethrough = true
+        of "none":
+          discard
+        else:
+          warn "layout: UNIMPLEMENTED: `text-decoration` mode: " & property.str
+
+    let color =
+      evaluateRGBXFunction(&layout.stylesheet.getProperty(node.element, Property.Color))
+
+    failCond *color
+      # FIXME: Use a more fault-tolerant approach. Currently we just skip the entire node and its children upon this basic failure.
+    node.processed.color = &color
 
   case node.element.tag
   of TAG_P:
     let text = &node.element.text()
-    let fontSize =
-      toPixels(&layout.stylesheet.getProperty(node.element, Property.FontSize))
-    node.processed.fontSize = fontSize
-    node.font.size = fontSize
 
-    let color =
-      evaluateRGBXFunction(&layout.stylesheet.getProperty(node.element, Property.Color))
-
-    failCond *color
-      # FIXME: Use a more fault-tolerant approach. Currently we just skip the entire node and its children upon this basic failure.
-    node.processed.color = &color
+    applyStyle()
 
     let bounds = node.font.layoutBounds(text)
 
-    blockElem
+    blockElem()
+
     node.attached.setHeight(bounds.y)
     node.processed.dimensions = bounds
   of {TAG_H1, TAG_H2, TAG_H3, TAG_H4, TAG_H5, TAG_H6}:
     let text = &node.element.text()
-    let fontSize =
-      toPixels(&layout.stylesheet.getProperty(node.element, Property.FontSize))
-      # The font-size attribute
 
-    let color =
-      evaluateRGBXFunction(&layout.stylesheet.getProperty(node.element, Property.Color))
-
-    failCond *color
-      # FIXME: Use a more fault-tolerant approach. Currently we just skip the entire node and its children upon this basic failure.
-    node.processed.fontSize = fontSize
-    node.processed.color = &color
-    node.font.size = fontSize
+    applyStyle()
 
     let bounds = node.font.layoutBounds(text)
 
-    blockElem # tell the layout engine to treat these as block elements
+    blockElem() # tell the layout engine to treat these as block elements
 
     node.attached.setHeight(bounds.y)
     node.processed.dimensions = bounds
   of TAG_STRONG:
     let text = &node.element.text()
-    let fontSize =
-      toPixels(&layout.stylesheet.getProperty(node.element, Property.FontSize))
-    let color =
-      evaluateRGBXFunction(&layout.stylesheet.getProperty(node.element, Property.Color))
 
-    failCond *color
-      # FIXME: Use a more fault-tolerant approach. Currently we just skip the entire node and its children upon this basic failure.
-    node.font.size = fontSize
-    node.processed.fontSize = fontSize
-    node.processed.color = &color
+    applyStyle()
+
     let bounds = node.font.layoutBounds(text)
 
-    inlineElem
+    inlineElem()
     node.processed.dimensions = bounds
   of TAG_A:
     let text =
@@ -139,20 +144,11 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
       else:
         newString(0)
 
-    let fontSize =
-      toPixels(&layout.stylesheet.getProperty(node.element, Property.FontSize))
-    let color =
-      evaluateRGBXFunction(&layout.stylesheet.getProperty(node.element, Property.Color))
+    applyStyle()
 
-    failCond *color
-      # FIXME: Use a more fault-tolerant approach. Currently we just skip the entire node and its children upon this basic failure.
-
-    node.font.size = fontSize
-    node.processed.fontSize = fontSize
-    node.processed.color = &color
     let bounds = node.font.layoutBounds(text)
 
-    inlineElem
+    inlineElem()
     node.processed.dimensions = bounds
   else:
     discard
