@@ -1,7 +1,7 @@
 import std/[options, strutils, tables, sugar, importutils, logging, sets]
 import pkg/[ferusgfx, opengl, pretty, chroma, jsony, vmath, bumpy]
 import ../shared/sugar
-import ./ipc
+import ./[utils, ipc]
 import ../../components/parsers/html/document
 import ../../components/parsers/css/[parser]
 import ../../components/layout/[processor]
@@ -81,7 +81,7 @@ proc buildDisplayList*(
           &node.element.text,
           node.processed.position,
           node.processed.dimensions,
-          renderer.scene.fontManager.getTypeface("Default"),
+          node.font.typeface,
           node.processed.fontSize,
           color = node.processed.color.asColor(),
         )
@@ -92,7 +92,7 @@ proc buildDisplayList*(
           &node.element.text,
           node.processed.position,
           node.processed.dimensions,
-          renderer.scene.fontManager.getTypeface("Default"),
+          node.font.typeface,
           node.processed.fontSize,
           color = node.processed.color.asColor(),
         )
@@ -103,7 +103,7 @@ proc buildDisplayList*(
           &node.element.text,
           node.processed.position,
           node.processed.dimensions,
-          renderer.scene.fontManager.getTypeface("Default"),
+          node.font,
           node.processed.fontSize,
           color = node.processed.color.asColor(),
         )
