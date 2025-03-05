@@ -1,5 +1,5 @@
 ## Yoga-based layout engine
-import std/[logging, tables]
+import std/[logging, tables, options]
 import pkg/[pixie, vmath, pretty]
 import ../../bindings/yoga
 import ../../components/parsers/html/document
@@ -59,7 +59,7 @@ proc constructTree*(layout: var Layout, document: HTMLDocument) =
 
   # print layout.tree
 
-proc traverse*(layout: Layout, node: var LayoutNode) =
+proc traverse*(layout: Layout, prev: Option[LayoutNode], node: var LayoutNode): bool {.discardable.} =
   var yogaNode = newYGNode()
   node.attached = yogaNode
   node.font = layout.font
@@ -69,12 +69,19 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
       # Take up 100% of the parent's width - force all new content to start from the next line.
     node.attached.setFlexDirection(YGFlexDirectionColumn)
     node.attached.setAlignSelf(YGAlignStretch)
+    result = false
 
   template inlineElem() =
     node.attached.setFlexDirection(YGFlexDirectionRow)
-    node.attached.setAlignSelf(YGAlignFlexStart)
-    node.attached.setWidth(bounds.x) # Only take up as much space this element needs.
+
+    #node.attached.setAlignSelf(YGAlignFlexStart)
+    node.attached.setWidth(bounds.x)
     node.attached.setHeight(bounds.y)
+
+    # Get parented to the previous node, if it exists.
+    if *prev:
+      (&prev).attached.insertChild(node.attached, cast[ptr YGNode]((&prev).attached)[].childCount())
+      result = true
 
   template applyStyle() =
     let fontSize =
@@ -104,7 +111,7 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
     failCond *color
       # FIXME: Use a more fault-tolerant approach. Currently we just skip the entire node and its children upon this basic failure.
     node.processed.color = &color
-
+  
   case node.element.tag
   of TAG_P:
     let text = &node.element.text()
@@ -112,11 +119,11 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
     applyStyle()
 
     let bounds = node.font.layoutBounds(text)
-
-    blockElem()
-
+    
     node.attached.setHeight(bounds.y)
     node.processed.dimensions = bounds
+
+    blockElem()
   of {TAG_H1, TAG_H2, TAG_H3, TAG_H4, TAG_H5, TAG_H6}:
     let text = &node.element.text()
 
@@ -124,10 +131,8 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
 
     let bounds = node.font.layoutBounds(text)
 
-    blockElem() # tell the layout engine to treat these as block elements
-
     node.attached.setHeight(bounds.y)
-    node.processed.dimensions = bounds
+    blockElem() # tell the layout engine to treat these as block elements
   of TAG_STRONG:
     let text = &node.element.text()
 
@@ -136,7 +141,6 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
     let bounds = node.font.layoutBounds(text)
 
     inlineElem()
-    node.processed.dimensions = bounds
   of TAG_A:
     let text =
       if *node.element.text:
@@ -149,15 +153,21 @@ proc traverse*(layout: Layout, node: var LayoutNode) =
     let bounds = node.font.layoutBounds(text)
 
     inlineElem()
-    node.processed.dimensions = bounds
   else:
     discard
 
   for i, _ in node.children:
-    layout.traverse(node.children[i])
-    node.attached.insertChild(
-      node.children[i].attached, cast[ptr YGNode](node.attached)[].childCount()
+    let inlined = layout.traverse(
+      if i > 0:
+        some(node.children[i - 1])
+      else: node.some(),
+      node.children[i]
     )
+    
+    if not inlined:
+      node.attached.insertChild(
+        node.children[i].attached, cast[ptr YGNode](node.attached)[].childCount()
+      )
 
 proc traversePass2*(node: var LayoutNode) =
   node.processed.position = vec2(
@@ -173,7 +183,8 @@ proc traversePass2*(node: var LayoutNode) =
     node.children[i].traversePass2()
 
 proc finalizeLayout*(layout: var Layout) =
-  layout.traverse(layout.tree) # Attach a Yoga node to all the nodes in the layout tree
+  layout.traverse(none(LayoutNode), layout.tree) # Attach a Yoga node to all the nodes in the layout tree
+
   layout.tree.attached.setWidth(layout.viewport.x)
   layout.tree.attached.setHeight(layout.viewport.y)
   layout.tree.attached.calculateLayout(
