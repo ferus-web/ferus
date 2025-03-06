@@ -29,5 +29,9 @@ requires "waterpark >= 0.1.7"
 requires "chroma >= 0.2.7"
 requires "bumpy >= 1.1.2"
 requires "glfw >= 3.4.0.4"
-
 requires "whisky >= 0.1.3"
+requires "npeg >= 1.3.0"
+requires "webidl2nim >= 0.0.1"
+
+task niskriya, "Build Niskriya, the WebIDL to Nim source generator":
+  exec "nim c --define:release --out:niskriya tools/niskriya.nim"

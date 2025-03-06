@@ -1,5 +1,5 @@
 ## Yoga-based layout engine
-import std/[logging, tables, options]
+import std/[logging, strutils, tables, options]
 import pkg/[pixie, vmath, pretty]
 import ../../bindings/yoga
 import ../../components/parsers/html/document
@@ -36,6 +36,18 @@ type
     recalculating*: bool = false
     stylesheet*: Stylesheet
 
+func dump*(node: LayoutNode, level: uint = 1): string =
+  ## Dump a layout node and its children
+  var s: string
+  s &= "<" & $node.element.tag & ", x: " & $node.processed.position.x & ", y: " & $node.processed.position.y & ", w: " & $node.processed.dimensions.x & ", h: " & $node.processed.dimensions.y & ">\n"
+
+  for child in node.children:
+    s &= ' '.repeat(level)
+    s &= child.dump(level + 1)
+    s &= '\n'
+
+  s
+
 proc constructFromElem*(layout: var Layout, elem: HTMLElement): LayoutNode =
   var node: LayoutNode
   node.element = elem
@@ -59,7 +71,7 @@ proc constructTree*(layout: var Layout, document: HTMLDocument) =
 
   # print layout.tree
 
-proc traverse*(layout: Layout, prev: Option[LayoutNode], node: var LayoutNode): bool {.discardable.} =
+proc traverse*(layout: Layout, prev: ptr LayoutNode, node: var LayoutNode): bool {.discardable.} =
   var yogaNode = newYGNode()
   node.attached = yogaNode
   node.font = layout.font
@@ -72,16 +84,15 @@ proc traverse*(layout: Layout, prev: Option[LayoutNode], node: var LayoutNode): 
     result = false
 
   template inlineElem() =
-    node.attached.setFlexDirection(YGFlexDirectionRow)
-
-    #node.attached.setAlignSelf(YGAlignFlexStart)
+    # FIXME: this is utterly broken!
+    node.attached.setFlexDirection(YGFlexDirectionColumn)
     node.attached.setWidth(bounds.x)
     node.attached.setHeight(bounds.y)
 
     # Get parented to the previous node, if it exists.
-    if *prev:
-      (&prev).attached.insertChild(node.attached, cast[ptr YGNode]((&prev).attached)[].childCount())
-      result = true
+    #[ if prev != nil:
+      prev.attached.insertChild(node.attached, cast[ptr YGNode](prev.attached)[].childCount())
+      result = true ]#
 
   template applyStyle() =
     let fontSize =
@@ -159,8 +170,8 @@ proc traverse*(layout: Layout, prev: Option[LayoutNode], node: var LayoutNode): 
   for i, _ in node.children:
     let inlined = layout.traverse(
       if i > 0:
-        some(node.children[i - 1])
-      else: node.some(),
+        node.children[i - 1].addr
+      else: nil,
       node.children[i]
     )
     
@@ -183,7 +194,7 @@ proc traversePass2*(node: var LayoutNode) =
     node.children[i].traversePass2()
 
 proc finalizeLayout*(layout: var Layout) =
-  layout.traverse(none(LayoutNode), layout.tree) # Attach a Yoga node to all the nodes in the layout tree
+  layout.traverse(nil, layout.tree) # Attach a Yoga node to all the nodes in the layout tree
 
   layout.tree.attached.setWidth(layout.viewport.x)
   layout.tree.attached.setHeight(layout.viewport.y)

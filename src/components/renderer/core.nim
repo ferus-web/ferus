@@ -1,5 +1,5 @@
 import std/[options, strutils, tables, sugar, importutils, logging, sets]
-import pkg/[ferusgfx, opengl, pretty, chroma, jsony, vmath, bumpy]
+import pkg/[ferusgfx, opengl, pretty, chroma, jsony, vmath, pixie, bumpy]
 import ../shared/sugar
 import ./[utils, ipc]
 import ../../components/parsers/html/document
@@ -27,6 +27,9 @@ type
     document*: HTMLDocument
 
     layout*: Layout
+    statusTextNode: TextNode
+
+    commitQueue*: seq[DisplayList]
 
 proc mutate*(renderer: FerusRenderer, list: Option[DisplayList]) {.inline.} =
   if not *list:
@@ -45,6 +48,10 @@ proc mutate*(renderer: FerusRenderer, list: Option[DisplayList]) {.inline.} =
 proc tick*(renderer: FerusRenderer) {.inline.} =
   renderer.scene.draw()
   renderer.window.swapBuffers()
+
+  if renderer.commitQueue.len > 0:
+    var list = renderer.commitQueue.pop()
+    list.commit()
 
   glfw.pollEvents()
 
@@ -66,6 +73,40 @@ proc onAnchorClick*(renderer: FerusRenderer, location: string) =
   renderer.ipc.send(RendererGotoURL(url: location))
 
   renderer.scene.camera.reset()
+
+proc setStatusText*(renderer: FerusRenderer, statusText: string) =
+  var baseFont = renderer.scene.fontManager.get("Default")
+  baseFont.size = 20
+  let bounds = baseFont.layoutBounds(statusText)
+
+  var list = newDisplayList(renderer.scene.addr)
+  list.doClearAll = false
+  
+  if renderer.statusTextNode != nil:
+    list.remove(renderer.statusTextNode)
+  
+  var statusNode =
+    newTextNode(
+      statusText,
+      vec2(16, renderer.viewport.y - 64),
+      vec2(bounds.x, bounds.y),
+      baseFont,
+      20'f32,
+      color(0, 0, 0, 255)
+    )
+
+  statusNode.id = uint.high
+  
+  renderer.statusTextNode = statusNode
+  list.add(ensureMove(statusNode))
+  renderer.commitQueue.add(ensureMove(list))
+
+proc gotoURL*(renderer: FerusRenderer, url: string) =
+  debug "renderer: heading to URL: " & url
+  renderer.setStatusText("Establishing connection to " & url)
+  renderer.ipc.send(RendererGotoURL(url: url))
+  
+  # TODO: can we make the status line/indicator an IPC magic code so that the master can control it?
 
 proc buildDisplayList*(
     renderer: FerusRenderer, list: var DisplayList, node: LayoutNode
@@ -123,7 +164,7 @@ proc buildDisplayList*(
               let href = node.element.attribute("href")
               failCond *href
 
-              renderer.ipc.send(RendererGotoURL(url: &href)),
+              renderer.gotoURL(&href),
             proc(_: seq[string]) =
               renderer.cursorMgr.hovered = true,
           )
@@ -139,6 +180,7 @@ proc paintLayout*(renderer: FerusRenderer) =
   displayList.doClearAll = true
 
   var start, ending: Vec2
+  echo renderer.layout.tree.dump()
   renderer.buildDisplayList(displayList, renderer.layout.tree)
 
   #[ for i, box in renderer.layout.boxes:
