@@ -97,7 +97,6 @@ proc setStatusText*(renderer: FerusRenderer, statusText: string) =
 
   statusNode.id = uint.high
   
-  renderer.statusTextNode = statusNode
   list.add(ensureMove(statusNode))
   renderer.commitQueue.add(ensureMove(list))
 
@@ -239,8 +238,9 @@ proc paintLayout*(renderer: FerusRenderer) =
 
       displayList.add(node)
   ]#
-
-  ending = renderer.viewport
+  
+  start = vec2(0, -32)
+  ending = renderer.layout.tree.children[renderer.layout.tree.children.len - 1].processed.position
   renderer.scene.camera.setBoundaries(start, ending)
   displayList.commit()
 
