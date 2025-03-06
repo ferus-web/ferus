@@ -368,6 +368,8 @@ proc `=destroy`*(server: IPCServer) =
 
   if server.path.len > 0:
     discard unlink(server.path.cstring)
+
+    removeFile(server.path)
     server.socket.close()
 
 proc bindServerPath*(server: var IPCServer): string =
