@@ -270,6 +270,16 @@ type
     ## feJSWebSocketEvent
     feJSWebSocketEvent
 
+    ## feShutdown
+    ## The IPC server sends this to a process when it needs to close. The process doesn't need to actually close during the scenarios below:
+    ## - the renderer is busy laying out content during the exit
+    ## - the JavaScript runtime is executing an unrecoverable loop
+    ## - the HTML/CSS parser is deadlocked due to a bug
+    ## - the network process is fetching some content
+    ## 
+    ## It's more of a hint to start cleaning up, as the IPC server will soonly after call `kill(2)` on the process.
+    feGoodbye
+
   DataTransferRequest* = ref object
     kind: FerusMagic = feDataTransferRequest
 
@@ -281,11 +291,14 @@ type
 
     success*: bool
     data*: string
-
+  
   # TODO: might wanna move these into their own file
   HandshakePacket* = ref object
     kind: FerusMagic = feHandshake
     process*: FerusProcess
+  
+  GoodbyePacket* = object
+    kind: FerusMagic = feGoodbye
 
   ExitReason* = enum
     erUnknown ## Unhandled crash, most likely.

@@ -1,4 +1,4 @@
-import std/[os, logging, osproc, strutils, options, base64, net, sets, terminal, tables]
+import std/[os, logging, osproc, strutils, options, base64, net, sets, terminal, posix, tables]
 import ../../components/ipc/server/prelude
 import jsony
 import ./summon
@@ -408,6 +408,20 @@ proc onConsoleLog*(
     resetStyle,
   )
 
+proc requestShutdown*(master: MasterProcess, process: FerusProcess) =
+  info "Requesting shutdown for "  & $process.kind & " process (PID " & $process.pid & ")"
+  master.server.send(process.socket, GoodbyePacket())
+
+proc cleanupAllProcesses*(master: MasterProcess) =
+  for group in master.server.groups:
+    for process in group:
+      master.requestShutdown(process)
+
+  for group in master.server.groups:
+    for process in group:
+      if kill(process.pid.Pid, SIGKILL) != 0:
+        error "An error occured whilst killing child process: " & $strerror(errno)
+
 proc packetHandler*(
     master: MasterProcess, process: FerusProcess, kind: FerusMagic, data: string
 ) =
@@ -493,6 +507,15 @@ proc packetHandler*(
       return
 
     master.server.send(process.socket, &resp)
+  of feRendererExit:
+    if process.kind != Renderer:
+      master.server.reportBadMessage(
+        process,
+        "Non-renderer process sent `feRendererExit` opcode",
+        High
+      )
+
+    debug "The renderer has shut down."
   else:
     warn "Unhandled IPC protocol magic: " & $kind
     return

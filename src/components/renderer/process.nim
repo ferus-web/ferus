@@ -163,5 +163,5 @@ proc renderProcessLogic*(client: var IPCClient, process: FerusProcess) {.inline.
   while not renderer.shouldClose:
     client.talk(renderer, process)
     renderer.tick()
-
+  
   close renderer

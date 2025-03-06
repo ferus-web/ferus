@@ -1,8 +1,8 @@
 import std/base64
-
-import ../../components/ipc/shared, vmath
-from ferusgfx import Scene
-import ferusgfx/displaylist
+import ../../components/ipc/shared
+import pkg/vmath
+from pkg/ferusgfx import Scene
+import pkg/ferusgfx/displaylist
 
 import ../parsers/html/document
 
@@ -23,25 +23,28 @@ type
     of GIFNode:
       gifContent*: string
 
-  RendererMutationPacket* = ref object
+  RendererMutationPacket* = object
     kind: FerusMagic = feRendererMutation
     list*: IPCDisplayList
 
-  RendererLoadFontPacket* = ref object
+  RendererLoadFontPacket* = object
     kind: FerusMagic = feRendererLoadFont
     name*, content*, format*: string
 
-  RendererSetWindowTitle* = ref object
+  RendererSetWindowTitle* = object
     kind: FerusMagic = feRendererSetWindowTitle
     title*: string
 
-  RendererRenderDocument* = ref object
+  RendererRenderDocument* = object
     kind: FerusMagic = feRendererRenderDocument
     document*: HTMLDocument
 
-  RendererGotoURL* = ref object
+  RendererGotoURL* = object
     kind: FerusMagic = feRendererGotoURL
     url*: string
+  
+  RendererExit* = object
+    kind: FerusMagic = feRendererExit
 
   IPCDisplayList* = GDisplayList[Drawable] ## IPC display list
 

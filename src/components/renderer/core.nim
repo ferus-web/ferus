@@ -62,6 +62,7 @@ proc close*(renderer: FerusRenderer) {.inline.} =
   info "Closing renderer."
 
   destroy renderer.window
+  renderer.ipc.send(RendererExit()) # tell the IPC server we're exiting.
   glfw.terminate()
 
 proc setWindowTitle*(renderer: FerusRenderer, title: string) {.inline.} =
