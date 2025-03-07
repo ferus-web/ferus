@@ -116,7 +116,14 @@ proc consumeRules*(parser: CSSParser): Stylesheet =
   var stylesheet: Stylesheet
 
   while not parser.eof:
-    let init = &parser.state.next()
+    let initToken = parser.state.next()
+
+    if !initToken:
+      let err = initToken.error()
+      if err.kind == bpEndOfInput:
+        break
+
+    let init = &initToken
     case init.kind
     of tkIdent:
       stylesheet &= parser.onEncounterIdentifier(init)

@@ -297,7 +297,7 @@ proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
       if !child.text:
         warn "renderer: <style> tag has no content; ignoring."
         continue
-
+      
       var parser = newCSSParser(&child.text())
       layout.stylesheet &= parser.consumeRules()
 
