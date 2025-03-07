@@ -45,6 +45,7 @@
               xorg.libX11
               icu76
               libseccomp.dev
+              fontconfig
               boehmgc
               gmp
               openssl.dev
@@ -59,6 +60,7 @@
               openssl
               boehmgc
               curl.dev
+              fontconfig.dev
               libseccomp.dev
               gmp.dev
               icu76.dev
@@ -73,6 +75,7 @@
                   curl.dev
                   boehmgc.dev
                   libseccomp.dev
+                  fontconfig.dev
                   gmp.dev
                   glfw
                   icu76.dev
