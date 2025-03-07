@@ -390,6 +390,8 @@ proc magicFromStr*(s: string): Option[FerusMagic] =
     return some feJSPropertyValue
   of "feJSTakeDocument":
     return some feJSTakeDocument
+  of "feRendererExit":
+    return some feRendererExit
   else:
     warn "magicFromStr(" & s & "): no such magic string found."
 
