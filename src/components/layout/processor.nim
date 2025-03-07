@@ -71,20 +71,38 @@ proc constructTree*(layout: var Layout, document: HTMLDocument) =
 
   # print layout.tree
 
+proc handleWidthProperty*(layout: Layout, node: var LayoutNode, default: CSSValue = dimension(100, CSSUnit.Percent)) =
+  ## Handle the `width` CSS property on a node.
+  let widthRule = 
+    if (let x = layout.stylesheet.getProperty(node.element, Property.Width); *x):
+      debug "layout: node " & $node.element.tag & " has width property"
+      &x
+    else:
+      debug "layout: node " & $node.element.tag & " does not have width property, defaulting to 100%"
+      default
+  
+  failCond widthRule.kind == cssDimension
+  case widthRule.kind
+  of cssDimension:
+    case widthRule.dim.unit
+    of { CSSUnit.Mm, CSSUnit.In, CSSUnit.Cm, CSSUnit.Px }:
+      node.attached.setWidth(widthRule.toPixels())
+    of CSSUnit.Percent:
+      node.attached.setWidthPercent(widthRule.dim.value)
+  else: unreachable
+
 proc traverse*(layout: Layout, prev: ptr LayoutNode, node: var LayoutNode): bool {.discardable.} =
   var yogaNode = newYGNode()
   node.attached = yogaNode
   node.font = layout.font
 
   template blockElem() =
-    node.attached.setWidthPercent(100)
-      # Take up 100% of the parent's width - force all new content to start from the next line.
+    layout.handleWidthProperty(node)
     node.attached.setFlexDirection(YGFlexDirectionColumn)
     node.attached.setAlignSelf(YGAlignStretch)
     result = false
 
   template inlineElem() =
-    # FIXME: this is utterly broken!
     node.attached.setFlexDirection(YGFlexDirectionColumn)
     node.attached.setWidth(bounds.x)
     node.attached.setHeight(bounds.y)
