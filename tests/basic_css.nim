@@ -4,9 +4,8 @@ import pretty
 
 var src = """
       h1 {
-        font-size: 64px;
+        width: 50%;
       }
-
 """
 
 let css = newCSSParser(src)

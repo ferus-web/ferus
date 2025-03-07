@@ -302,7 +302,7 @@ proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
       layout.stylesheet &= parser.consumeRules()
 
   renderer.document = document
-  renderer.layout = move(layout)
+  renderer.layout = ensureMove(layout)
   renderer.layout.constructTree(document)
   renderer.layout.finalizeLayout()
 

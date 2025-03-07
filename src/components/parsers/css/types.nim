@@ -1,4 +1,4 @@
-import std/[options]
+import std/[options, logging]
 import stylus/[shared, tokenizer]
 import ./units
 
@@ -72,6 +72,7 @@ type
     Cm
     Mm
     In
+    Percent
 
   CSSDimension* = object
     value*: float32
@@ -115,7 +116,7 @@ func decimal*(dec: float32): CSSValue {.inline.} =
 func dimension*(value: float32, unit: CSSUnit): CSSValue {.inline.} =
   CSSValue(kind: cssDimension, dim: CSSDimension(value: value, unit: unit))
 
-func toPixels*(value: CSSValue): float32 =
+proc toPixels*(value: CSSValue): float32 =
   assert(
     value.kind == cssDimension, "BUG: toPixels() called on non-dimensional CSS value!"
   )
@@ -133,6 +134,10 @@ func toPixels*(value: CSSValue): float32 =
   of CSSUnit.In:
     # FIXME: very silly calculations: electric boogaloo
     return value.dim.value * 96
+  of CSSUnit.Percent:
+    # TODO: implement percentages support
+    warn "css: TODO: toPixels() needs percentage support"
+    return 32
 
 func parseUnit*(str: string): Option[CSSUnit] =
   if not Units.contains(str):

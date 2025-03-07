@@ -29,6 +29,8 @@ proc parseValueFromToken*(parser: CSSParser, token: Token): CSSValue =
         return decimal(token.dValue)
       else:
         return number(&token.dIntVal)
+  of tkPercentage:
+    return dimension(token.pUnitValue * 100, CSSUnit.Percent) # FIXME: for some weird reason, percentage tokens are divided by 100 in stylus?
   of tkIdent:
     return str(token.ident)
   else:
@@ -80,7 +82,7 @@ proc parseRule*(parser: CSSParser): Option[Rule] =
   case value.kind
   of tkFunction:
     parsedValue = &parser.parseFunction(value)
-  of tkDimension, tkIdent:
+  of tkDimension, tkIdent, tkPercentage:
     parsedValue = parser.parseValueFromToken(value)
   else:
     unreachable
