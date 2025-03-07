@@ -90,7 +90,7 @@ proc parseHTMLElement*(document: Document, element: Element): HTMLElement =
       TAG_SPAN,
       TAG_STRONG,
       TAG_LI,
-      TAG_A:
+      TAG_A, TAG_STYLE:
     var text: string
 
     for txt in element.textNodes:
