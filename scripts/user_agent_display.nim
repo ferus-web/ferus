@@ -17,6 +17,7 @@ proc indexHandler(request: Request) =
     <title>Ferus User Agent Displayer</title>
   </head>
   <body>
+    <link rel="stylesheet" href="style.css"></style>
     <script>
       console.log(document.baseURI)
     </script>
@@ -27,8 +28,23 @@ proc indexHandler(request: Request) =
     [request.headers["User-Agent"]]
   request.respond(200, headers, content)
 
+proc styleHandler(request: Request) =
+  echo "Request for network stylesheet"
+
+  var headers: HttpHeaders
+  headers["Content-Type"] = "text/css"
+  request.respond(
+    200, headers,
+    """
+h1 {
+  font-size: 64px;
+}
+    """,
+  )
+
 var router: Router
 router.get("/", indexHandler)
+router.get("/style.css", styleHandler)
 
 let server = newServer(router)
 echo "Serving on http://localhost:8080"

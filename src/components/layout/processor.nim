@@ -1,5 +1,5 @@
 ## Yoga-based layout engine
-import std/[logging, strutils, tables, options]
+import std/[logging, strutils, tables, importutils, options]
 import pkg/[pixie, vmath, pretty]
 import ../../bindings/yoga
 import ../../components/parsers/html/document
@@ -39,7 +39,10 @@ type
 func dump*(node: LayoutNode, level: uint = 1): string =
   ## Dump a layout node and its children
   var s: string
-  s &= "<" & $node.element.tag & ", x: " & $node.processed.position.x & ", y: " & $node.processed.position.y & ", w: " & $node.processed.dimensions.x & ", h: " & $node.processed.dimensions.y & ">\n"
+  s &=
+    "<" & $node.element.tag & ", x: " & $node.processed.position.x & ", y: " &
+    $node.processed.position.y & ", w: " & $node.processed.dimensions.x & ", h: " &
+    $node.processed.dimensions.y & ">\n"
 
   for child in node.children:
     s &= ' '.repeat(level)
@@ -71,35 +74,43 @@ proc constructTree*(layout: var Layout, document: HTMLDocument) =
 
   # print layout.tree
 
-proc handleWidthProperty*(layout: Layout, node: var LayoutNode, default: CSSValue = dimension(100, CSSUnit.Percent)) =
+proc handleWidthProperty*(
+    layout: Layout,
+    node: var LayoutNode,
+    default: CSSValue = dimension(100, CSSUnit.Percent),
+) =
   ## Handle the `width` CSS property on a node.
-  let widthRule = 
+  let widthRule =
     if (let x = layout.stylesheet.getProperty(node.element, Property.Width); *x):
       debug "layout: node " & $node.element.tag & " has width property"
       &x
     else:
-      debug "layout: node " & $node.element.tag & " does not have width property, defaulting to 100%"
+      debug "layout: node " & $node.element.tag &
+        " does not have width property, defaulting to 100%"
       default
-  
+
   failCond widthRule.kind == cssDimension
   case widthRule.kind
   of cssDimension:
     case widthRule.dim.unit
-    of { CSSUnit.Mm, CSSUnit.In, CSSUnit.Cm, CSSUnit.Px }:
+    of {CSSUnit.Mm, CSSUnit.In, CSSUnit.Cm, CSSUnit.Px}:
       node.attached.setWidth(widthRule.toPixels())
     of CSSUnit.Percent:
       node.attached.setWidthPercent(widthRule.dim.value)
-  else: unreachable
+  else:
+    unreachable
 
-proc traverse*(layout: Layout, prev: ptr LayoutNode, node: var LayoutNode): bool {.discardable.} =
+proc traverse*(
+    layout: Layout, prev: ptr LayoutNode, node: var LayoutNode
+): bool {.discardable.} =
   var yogaNode = newYGNode()
   node.attached = yogaNode
   node.font = layout.font
 
   template blockElem() =
     layout.handleWidthProperty(node)
-    node.attached.setFlexDirection(YGFlexDirectionColumn)
-    node.attached.setAlignSelf(YGAlignStretch)
+    node.attached.setFlexDirection(YGFlexDirectionRow)
+    # node.attached.setAlignSelf(YGAlignStretch)
     result = false
 
   template inlineElem() =
@@ -107,8 +118,11 @@ proc traverse*(layout: Layout, prev: ptr LayoutNode, node: var LayoutNode): bool
     node.attached.setWidth(bounds.x)
     node.attached.setHeight(bounds.y)
 
+    result = false
+
     # Get parented to the previous node, if it exists.
     #[ if prev != nil:
+      echo $node.element.tag & " parented to " & $prev.element.tag
       prev.attached.insertChild(node.attached, cast[ptr YGNode](prev.attached)[].childCount())
       result = true ]#
 
@@ -140,7 +154,7 @@ proc traverse*(layout: Layout, prev: ptr LayoutNode, node: var LayoutNode): bool
     failCond *color
       # FIXME: Use a more fault-tolerant approach. Currently we just skip the entire node and its children upon this basic failure.
     node.processed.color = &color
-  
+
   case node.element.tag
   of TAG_P:
     let text = &node.element.text()
@@ -148,7 +162,7 @@ proc traverse*(layout: Layout, prev: ptr LayoutNode, node: var LayoutNode): bool
     applyStyle()
 
     let bounds = node.font.layoutBounds(text)
-    
+
     node.attached.setHeight(bounds.y)
     node.processed.dimensions = bounds
 
@@ -171,16 +185,16 @@ proc traverse*(layout: Layout, prev: ptr LayoutNode, node: var LayoutNode): bool
 
     inlineElem()
   of TAG_A:
-    let text =
-      if *node.element.text:
-        &node.element.text()
-      else:
-        newString(0)
+    if *node.element.text:
+      let text = &node.element.text()
 
-    applyStyle()
+      applyStyle()
 
-    let bounds = node.font.layoutBounds(text)
+      let bounds = node.font.layoutBounds(text)
 
+      inlineElem()
+  of TAG_BODY:
+    let bounds = layout.viewport
     inlineElem()
   else:
     discard
@@ -189,10 +203,11 @@ proc traverse*(layout: Layout, prev: ptr LayoutNode, node: var LayoutNode): bool
     let inlined = layout.traverse(
       if i > 0:
         node.children[i - 1].addr
-      else: nil,
-      node.children[i]
+      else:
+        node.addr,
+      node.children[i],
     )
-    
+
     if not inlined:
       node.attached.insertChild(
         node.children[i].attached, cast[ptr YGNode](node.attached)[].childCount()
@@ -212,10 +227,9 @@ proc traversePass2*(node: var LayoutNode) =
     node.children[i].traversePass2()
 
 proc finalizeLayout*(layout: var Layout) =
-  layout.traverse(nil, layout.tree) # Attach a Yoga node to all the nodes in the layout tree
+  layout.traverse(nil, layout.tree)
+    # Attach a Yoga node to all the nodes in the layout tree
 
-  layout.tree.attached.setWidth(layout.viewport.x)
-  layout.tree.attached.setHeight(layout.viewport.y)
   layout.tree.attached.calculateLayout(
     layout.viewport.x, layout.viewport.y, YGDirectionLTR
   ) # Compute layout of the root

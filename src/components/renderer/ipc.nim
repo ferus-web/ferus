@@ -42,7 +42,7 @@ type
   RendererGotoURL* = object
     kind: FerusMagic = feRendererGotoURL
     url*: string
-  
+
   RendererExit* = object
     kind: FerusMagic = feRendererExit
 

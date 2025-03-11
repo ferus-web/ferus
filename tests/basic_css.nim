@@ -2,7 +2,8 @@ import std/[tables]
 import components/parsers/css/parser
 import pretty
 
-var src = """
+var src =
+  """
       h1 {
         width: 50%;
       }

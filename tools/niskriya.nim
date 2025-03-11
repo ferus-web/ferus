@@ -1,11 +1,10 @@
 ## Niskriya is Ferus' WebIDL to Nim generator
 ## Usage: niskriya [path to file] [output file]
 import std/[os, logging, sequtils, deques]
-import components/idl/baligen,
-       components/argparser
+import components/idl/baligen, components/argparser
 import pkg/[colored_logger, webidl2nim, jsony, pretty]
 
-proc showHelp =
+proc showHelp() =
   echo """
 Niskriya is Ferus' WebIDL to Nim code generator.
 
@@ -17,7 +16,7 @@ Flags:
 """
   quit(0)
 
-proc main =
+proc main() =
   setLogFilter(lvlInfo)
   addHandler(newColoredLogger())
 
@@ -41,12 +40,13 @@ proc main =
     error "niskriya: no such file exists: " & source
     quit(1)
 
-  let content = try:
-    readFile(source)
-  except OSError as exc:
-    error "niskriya: whilst reading source file: " & exc.msg
-    quit(1)
-    newString(0)
+  let content =
+    try:
+      readFile(source)
+    except OSError as exc:
+      error "niskriya: whilst reading source file: " & exc.msg
+      quit(1)
+      newString(0)
 
   let tokens = tokenize(patchSource(content))
   debug "niskriya: tokenized source into " & $tokens.len & " tokens."
@@ -55,10 +55,10 @@ proc main =
   if input.enabled("dump-tree", "D"):
     print(tree)
     quit(0)
-  
+
   debug "niskriya: generating Bali wrapper"
   let wrapper = generateBaliWrapper(tree)
-  
+
   try:
     writeFile(destination, wrapper & '\n')
   except OSError as exc:

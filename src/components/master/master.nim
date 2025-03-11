@@ -1,4 +1,6 @@
-import std/[os, logging, osproc, strutils, options, base64, net, sets, terminal, posix, tables]
+import
+  std/
+    [os, logging, osproc, strutils, options, base64, net, sets, terminal, posix, tables]
 import ../../components/ipc/server/prelude
 import jsony
 import ./summon
@@ -409,7 +411,7 @@ proc onConsoleLog*(
   )
 
 proc requestShutdown*(master: MasterProcess, process: FerusProcess) =
-  info "Requesting shutdown for "  & $process.kind & " process (PID " & $process.pid & ")"
+  info "Requesting shutdown for " & $process.kind & " process (PID " & $process.pid & ")"
   master.server.send(process.socket, GoodbyePacket())
 
 proc cleanupAllProcesses*(master: MasterProcess) =
@@ -510,9 +512,7 @@ proc packetHandler*(
   of feRendererExit:
     if process.kind != Renderer:
       master.server.reportBadMessage(
-        process,
-        "Non-renderer process sent `feRendererExit` opcode",
-        High
+        process, "Non-renderer process sent `feRendererExit` opcode", High
       )
 
     debug "The renderer has shut down."

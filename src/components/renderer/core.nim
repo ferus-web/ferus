@@ -82,22 +82,21 @@ proc setStatusText*(renderer: FerusRenderer, statusText: string) =
 
   var list = newDisplayList(renderer.scene.addr)
   list.doClearAll = false
-  
+
   if renderer.statusTextNode != nil:
     list.remove(renderer.statusTextNode)
-  
-  var statusNode =
-    newTextNode(
-      statusText,
-      vec2(16, renderer.viewport.y - 64),
-      vec2(bounds.x, bounds.y),
-      baseFont,
-      20'f32,
-      color(0, 0, 0, 255)
-    )
+
+  var statusNode = newTextNode(
+    statusText,
+    vec2(16, renderer.viewport.y - 64),
+    vec2(bounds.x, bounds.y),
+    baseFont,
+    20'f32,
+    color(0, 0, 0, 255),
+  )
 
   statusNode.id = uint.high
-  
+
   list.add(ensureMove(statusNode))
   renderer.commitQueue.add(ensureMove(list))
 
@@ -105,7 +104,7 @@ proc gotoURL*(renderer: FerusRenderer, url: string) =
   debug "renderer: heading to URL: " & url
   renderer.setStatusText("Establishing connection to " & url)
   renderer.ipc.send(RendererGotoURL(url: url))
-  
+
   # TODO: can we make the status line/indicator an IPC magic code so that the master can control it?
 
 proc buildDisplayList*(
@@ -239,9 +238,10 @@ proc paintLayout*(renderer: FerusRenderer) =
 
       displayList.add(node)
   ]#
-  
+
   start = vec2(0, -32)
-  ending = renderer.layout.tree.children[renderer.layout.tree.children.len - 1].processed.position
+  ending =
+    renderer.layout.tree.children[renderer.layout.tree.children.len - 1].processed.position
   renderer.scene.camera.setBoundaries(start, ending)
   displayList.commit()
 
@@ -293,13 +293,42 @@ proc renderDocument*(renderer: FerusRenderer, document: HTMLDocument) =
 
   # FIXME: do this in a compliant way.
   for child in body.children:
-    if child.tag == TAG_STYLE:
+    case child.tag
+    of TAG_STYLE:
       if !child.text:
-        warn "renderer: <style> tag has no content; ignoring."
+        warn "renderer: <style> tag has no CSS content"
         continue
-      
+
       var parser = newCSSParser(&child.text())
       layout.stylesheet &= parser.consumeRules()
+    of TAG_LINK:
+      let rel = &child.attribute("rel")
+      if rel != "stylesheet":
+        continue
+
+      let
+        href = &child.attribute("href")
+        transfer = renderer.ipc.requestDataTransfer(
+          ResourceRequired, DataLocation(kind: DataLocationKind.WebRequest, url: href)
+        )
+
+      if !transfer:
+        warn "renderer: ungraceful error: failed to fetch stylesheet over network from " &
+          href
+        continue
+
+      if !transfer:
+        warn "renderer: graceful error: failed to fetch stylesheet over network from " &
+          href
+        continue
+
+      let transferred = &transfer
+
+      debug "renderer: applying network stylesheet"
+      var parser = newCSSParser(transferred.content)
+      layout.stylesheet &= parser.consumeRules()
+    else:
+      discard
 
   renderer.document = document
   renderer.layout = ensureMove(layout)

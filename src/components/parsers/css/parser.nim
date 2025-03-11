@@ -30,7 +30,8 @@ proc parseValueFromToken*(parser: CSSParser, token: Token): CSSValue =
       else:
         return number(&token.dIntVal)
   of tkPercentage:
-    return dimension(token.pUnitValue * 100, CSSUnit.Percent) # FIXME: for some weird reason, percentage tokens are divided by 100 in stylus?
+    return dimension(token.pUnitValue * 100, CSSUnit.Percent)
+      # FIXME: for some weird reason, percentage tokens are divided by 100 in stylus?
   of tkIdent:
     return str(token.ident)
   else:

@@ -5,26 +5,31 @@
 
 type JSEventTarget* = object
 type JSEventListenerOptions* = object
-  capture*: JSValue    # boolean
+  capture*: JSValue # boolean
 
 type JSAddEventListenerOptions* = object of JSEventListenerOptions
-  passive*: JSValue    # boolean
-  once*: JSValue    # boolean
-  signal*: JSValue    # AbortSignal
+  passive*: JSValue # boolean
+  once*: JSValue # boolean
+  signal*: JSValue # AbortSignal
 
 type JSNode* = object of JSEventTarget
-  
 
 type JSGetRootNodeOptions* = object
-  composed*: JSValue    # boolean
+  composed*: JSValue # boolean
 
-proc addEventListenerImpl*(self: JSEventTarget, kind: JSValue, callback: JSValue): JSValue
-proc removeEventListenerImpl*(self: JSEventTarget, kind: JSValue, callback: JSValue): JSValue
+proc addEventListenerImpl*(
+  self: JSEventTarget, kind: JSValue, callback: JSValue
+): JSValue
+
+proc removeEventListenerImpl*(
+  self: JSEventTarget, kind: JSValue, callback: JSValue
+): JSValue
+
 proc dispatchEventImpl*(self: JSEventTarget, event: JSValue): JSValue
-proc getRootNodeImpl*(self: JSNode, ): JSValue
-proc hasChildNodesImpl*(self: JSNode, ): JSValue
-proc normalizeImpl*(self: JSNode, ): JSValue
-proc cloneNodeImpl*(self: JSNode, ): JSValue
+proc getRootNodeImpl*(self: JSNode): JSValue
+proc hasChildNodesImpl*(self: JSNode): JSValue
+proc normalizeImpl*(self: JSNode): JSValue
+proc cloneNodeImpl*(self: JSNode): JSValue
 proc isEqualNodeImpl*(self: JSNode, otherNode: JSValue): JSValue
 proc isSameNodeImpl*(self: JSNode, otherNode: JSValue): JSValue
 proc compareDocumentPositionImpl*(self: JSNode, other: JSValue): JSValue

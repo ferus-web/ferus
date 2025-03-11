@@ -1,4 +1,4 @@
-import std/[times, net, logging, options]
+import std/[times, net, logging, options, base64]
 
 proc `*`[T](opt: Option[T]): bool {.inline, noSideEffect, gcsafe.} =
   # dumb hacks to make code look less yucky
@@ -291,12 +291,12 @@ type
 
     success*: bool
     data*: string
-  
+
   # TODO: might wanna move these into their own file
   HandshakePacket* = ref object
     kind: FerusMagic = feHandshake
     process*: FerusProcess
-  
+
   GoodbyePacket* = object
     kind: FerusMagic = feGoodbye
 
@@ -335,6 +335,9 @@ type
 
 proc `==`*(a, b: FerusProcess): bool {.inline.} =
   a.worker == b.worker and a.kind == b.kind and a.socket == b.socket
+
+func content*(packet: DataTransferResult): string {.inline.} =
+  packet.data.decode()
 
 proc magicFromStr*(s: string): Option[FerusMagic] =
   case s
