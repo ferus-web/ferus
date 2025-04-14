@@ -448,7 +448,8 @@ proc packetHandler*(
   of feRendererGotoURL:
     let data = tryParseJson(data, RendererGotoURL)
 
-    if process.kind != Renderer:
+    if process.kind notin {Renderer, JSRuntime}:
+      # TODO: separate magic code for jsruntime
       master.server.reportBadMessage(
         process, "Non-renderer process attempted to use `feRendererGotoURL`!", High
       )

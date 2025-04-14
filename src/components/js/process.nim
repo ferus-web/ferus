@@ -33,7 +33,7 @@ proc jsExecBuffer*(js: var JSProcess, data: string) =
 
   js.parser = newParser(data.buffer.decode())
   js.runtime = newRuntime(data.name.decode(), js.parser.parse())
-  window.generateIR(js.runtime)
+  window.generateIR(js.runtime, js.ipc)
   jsdoc.generateIR(js.runtime)
   jswebsocket.generateBindings(js.runtime, js.ipc)
   jsdoc.updateDocumentState(js.runtime, js.document)
