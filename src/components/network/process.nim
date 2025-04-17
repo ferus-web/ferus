@@ -1,4 +1,4 @@
-import std/[base64, strutils, sequtils, importutils, logging, options, json, net]
+import std/[base64, strutils, sequtils, importutils, logging, options, os, json, net]
 import pkg/sanchar/[http, proto/http/shared], pkg/sanchar/parse/url
 import pkg/pretty
 import pkg/whisky
@@ -98,6 +98,7 @@ proc talk(client: FerusNetworkClient, process: FerusProcess) {.inline.} =
   discard nix.ioctl(client.ipc.socket.getFd().cint, nix.FIONREAD, addr count)
 
   if count < 1:
+    sleep(100)
     return
 
   let

@@ -349,7 +349,7 @@ proc talk(server: var IPCServer, process: var FerusProcess) {.inline.} =
 
 proc receiveMessages*(server: var IPCServer) {.inline.} =
   for gi, group in server.groups:
-    validate group
+    # validate group
     # debug "receiveMessages(): processing group " & $group.id
 
     for i, _ in group:
@@ -357,7 +357,7 @@ proc receiveMessages*(server: var IPCServer) {.inline.} =
       server.talk(process)
       server.groups[gi][i] = move(process)
 
-  server.commitKicks()
+  sleep(100)
 
 proc poll*(server: var IPCServer) =
   server.findDeadProcesses()
