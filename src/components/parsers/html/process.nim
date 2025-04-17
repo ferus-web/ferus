@@ -1,4 +1,4 @@
-import std/[base64, options, json, logging, monotimes, net]
+import std/[base64, options, json, logging, monotimes, net, os]
 import ./ipc
 import ./document
 import ../../web/dom
@@ -35,6 +35,7 @@ proc talk(
   discard nix.ioctl(client.socket.getFd().cint, nix.FIONREAD, addr(count))
 
   if count < 1:
+    sleep(250)
     return
 
   let
