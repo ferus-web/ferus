@@ -15,6 +15,7 @@ type JSProcess* = object
   ipc*: IPCClient
   parser*: Parser
   runtime*: Runtime
+  running*: bool = true
 
   document*: HTMLDocument
 
@@ -72,6 +73,14 @@ proc talk(js: var JSProcess, process: FerusProcess) =
 
     debug "Got document for this tab - passing it to JS land."
     js.document = packet.document
+  of feGoodbye:
+    info "js: got goodbye packet, cleaning up."
+    # TODO: make it so that we always respond to goodbye(s), even when in an unreachable/expensive VM loop
+    # there's two ways to do this:
+    # a) either add a way for a hook function to constantly monitor for this packet (bad performance)
+    # b) shift the VM to another thread (good performance but harder to work with)
+    js.runtime.vm.halt = true
+    js.running = false
   else:
     discard
 
@@ -87,5 +96,5 @@ proc jsProcessLogic*(client: var IPCClient, process: FerusProcess) {.inline.} =
   else:
     setLogFilter(lvlNone)
 
-  while true:
+  while js.running:
     js.talk(process)
