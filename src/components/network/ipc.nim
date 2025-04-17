@@ -1,6 +1,11 @@
-import std/[base64, options]
-import ../../components/shared/[sugar]
-import sanchar/parse/url, sanchar/proto/http/shared, ../../components/ipc/shared
+#!fmt: off
+import std/[options]
+import pkg/sanchar/parse/url,
+       pkg/sanchar/proto/http/shared,
+       pkg/simdutf/base64
+import ../../components/ipc/shared,
+       ../../components/shared/[sugar]
+#!fmt: on
 
 type
   NetworkFetchPacket* = object
@@ -20,8 +25,8 @@ type
     kind*: FerusMagic = feNetworkWebSocketCreationResult
     error*: Option[string]
 
-func content*(res: NetworkFetchResult): string {.inline.} =
+proc content*(res: NetworkFetchResult): string {.inline.} =
   if !res.response:
     return
 
-  (&res.response).content.decode()
+  (&res.response).content.decode(urlSafe = true)

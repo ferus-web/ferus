@@ -1,7 +1,8 @@
-import std/[options, json, logging, base64, importutils, logging, posix, net]
-import jsony
-import ferusgfx/[displaylist, fontmgr, textnode, imagenode, gifnode]
-import pixie
+import std/[options, json, logging, importutils, logging, posix, net]
+import
+  pkg/ferusgfx/[displaylist, fontmgr, textnode, imagenode, gifnode],
+  pkg/[jsony, pixie],
+  pkg/simdutf/base64
 when defined(linux):
   import ../../components/sandbox/linux
 
@@ -45,7 +46,7 @@ proc loadFont*(
     font: Option[Font]
 
   try:
-    typeface = some decode(data).readTypeface(packet.format)
+    typeface = some cast[string](decodeSeq(data, urlSafe = true)).parseTtf()
   except PixieError as exc:
     error "Failed to load typeface: " & exc.msg & ": fmt=" & packet.format
     return
@@ -135,7 +136,7 @@ proc talk(
       return
 
     client.setState(Processing)
-    renderer.setWindowTitle((&reinterpreted).title.decode())
+    renderer.setWindowTitle((&reinterpreted).title.decode(urlSafe = true))
     client.setState(Idling)
   of feRendererRenderDocument:
     let reinterpreted = tryParseJson(data, RendererRenderDocument)

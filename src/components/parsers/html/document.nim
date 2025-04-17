@@ -1,11 +1,10 @@
 ## I love chame
 
-import std/[options, logging, strutils, tables, base64]
-import chagashi/charset
-import sanchar/parse/url
-import ../../shared/sugar
-import ../../web/dom
-import pretty
+#!fmt:off
+import std/[options, logging, strutils, tables]
+import pkg/[pretty], pkg/chagashi/charset, pkg/sanchar/parse/url, pkg/simdutf/base64
+import ../../shared/sugar, ../../web/dom
+#!fmt:on
 
 type
   HTMLElement* = ref object
@@ -55,15 +54,15 @@ func findAll*(
 
   res
 
-func text*(elem: HTMLElement): Option[string] {.inline.} =
+proc text*(elem: HTMLElement): Option[string] {.inline.} =
   if *elem.text:
-    return some(decode(&elem.text))
+    return some(decode(&elem.text, urlSafe = true))
 
-func attribute*(elem: HTMLElement, name: string): Option[string] {.inline.} =
+proc attribute*(elem: HTMLElement, name: string): Option[string] {.inline.} =
   if name in elem.attributes:
-    return some(decode(elem.attributes[name]))
+    return some(decode(elem.attributes[name], urlSafe = true))
 
-func classes*(elem: HTMLElement): seq[string] {.inline.} =
+proc classes*(elem: HTMLElement): seq[string] {.inline.} =
   let classAttr = elem.attribute("class")
   if !classAttr:
     return
@@ -79,7 +78,7 @@ proc parseHTMLElement*(document: Document, element: Element): HTMLElement =
   for (prefix, namespace, name, value) in element.attrs:
     # we currently don't really care about the namespace
     let mappedName = document.factory.atomToStr(name)
-    elem.attributes[mappedName] = encode(value)
+    elem.attributes[mappedName] = encode(value, urlSafe = true)
 
   case tag
   of TAG_P,
@@ -97,7 +96,7 @@ proc parseHTMLElement*(document: Document, element: Element): HTMLElement =
     for txt in element.textNodes:
       text &= txt.data
 
-    elem.text = some(encode(text))
+    elem.text = some(encode(text, urlSafe = true))
   else:
     discard
 

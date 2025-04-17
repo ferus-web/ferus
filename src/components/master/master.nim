@@ -2,25 +2,20 @@
 ## It essentially allows you to do anything with your own group of processes (renderer, JS runtime, CSS/HTML parsers, etc.)
 ## This includes summoning them, telling them to do a task, telling them to exit, et cetera.
 
+import std/[os, logging, osproc, strutils, options, net, sets, terminal, posix, tables]
 import
-  std/
-    [os, logging, osproc, strutils, options, base64, net, sets, terminal, posix, tables]
-import ../../components/ipc/server/prelude
-import jsony
-import ./summon
-import pretty
+  pkg/[jsony, pretty],
+  pkg/sanchar/parse/url,
+  pkg/sanchar/proto/http/shared,
+  pkg/simdutf/base64
 
-# Process specific imports
-
-# Network
-import sanchar/parse/url
-import sanchar/proto/http/shared
-
-import ../../components/shared/[nix, sugar]
 import
+  ../../components/shared/[nix, sugar],
   ../../components/
-    [network/ipc, renderer/ipc, parsers/html/ipc, parsers/html/document, js/ipc]
-import ../../components/web/cookie/parsed_cookie
+    [network/ipc, renderer/ipc, parsers/html/ipc, parsers/html/document, js/ipc],
+  ../../components/web/cookie/parsed_cookie,
+  ../../components/ipc/server/prelude,
+  ./summon
 
 when defined(unix):
   import std/posix
@@ -139,7 +134,9 @@ proc parseHTML*(
 
   info ("Sending group $1 HTML parser process a request to parse some HTML" % [$group])
 
-  master.server.send((&process).socket, ParseHTMLPacket(source: encode(source)))
+  master.server.send(
+    (&process).socket, ParseHTMLPacket(source: encode(source, urlSafe = true))
+  )
 
   info ("Waiting for response from group $1 HTML parser process" % [$group])
 
@@ -217,7 +214,8 @@ proc executeJS*(
   var prc = &process
   assert prc.kind == JSRuntime
   master.server.send(
-    prc.socket, JSExecPacket(name: name.encode(), buffer: code.encode())
+    prc.socket,
+    JSExecPacket(name: name.encode(urlSafe = true), buffer: code.encode(urlSafe = true)),
   )
 
   info "Dispatching JS code to runtime process."
@@ -236,7 +234,7 @@ proc setWindowTitle*(master: MasterProcess, title: string) {.inline.} =
   master.server.send(
     (&process).socket,
     RendererSetWindowTitle(
-      title: title.encode(safe = true) # So that we can get spaces
+      title: title.encode(urlSafe = true) # So that we can get spaces
     ),
   )
 
@@ -288,7 +286,7 @@ proc loadFont*(
   let encoded = encode(
     # encode the data in base64 to ensure that it doesn't mess up the JSON packet
     readFile file,
-    safe = true,
+    urlSafe = true,
   )
   master.server.send(
     (&process).socket,

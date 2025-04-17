@@ -1,17 +1,19 @@
-import std/[base64, strutils, sequtils, importutils, logging, options, os, json, net]
-import pkg/sanchar/[http, proto/http/shared], pkg/sanchar/parse/url
-import pkg/pretty
-import pkg/whisky
+import std/[strutils, sequtils, importutils, logging, options, os, json, net]
+import
+  pkg/[pretty, whisky, jsony],
+  pkg/sanchar/[http, proto/http/shared],
+  pkg/sanchar/parse/url,
+  pkg/simdutf/base64
 
 when defined(ferusUseCurl):
-  import pkg/webby/httpheaders
-  import pkg/curly
+  #!fmt:off
+  import pkg/webby/httpheaders, pkg/curly #!fmt:on
 
-import pkg/jsony
-import ../../components/shared/[nix, sugar]
-import ../../components/network/[websocket, types, ipc]
-import ../../components/build_utils
-import ../../components/ipc/client/prelude
+import
+  ../../components/shared/[nix, sugar],
+  ../../components/network/[websocket, types, ipc],
+  ../../components/build_utils,
+  ../../components/ipc/client/prelude
 
 privateAccess(WebSocket)
 
@@ -125,7 +127,7 @@ proc talk(client: FerusNetworkClient, process: FerusProcess) {.inline.} =
       return
 
     var resp = &odata.response
-    resp.content = resp.content.encode()
+    resp.content = resp.content.encode(urlSafe = true)
 
     odata.response = some(move(resp))
 

@@ -1,10 +1,10 @@
-import std/[base64, options, json, logging, monotimes, net, os]
-import ./ipc
-import ./document
-import ../../web/dom
-import ../../shared/[nix, sugar]
-import ../../../components/ipc/client/prelude
-import jsony
+import std/[options, json, logging, monotimes, net, os]
+import pkg/jsony, pkg/simdutf/base64
+import
+  ./[document, ipc],
+  ../../web/dom,
+  ../../shared/[nix, sugar],
+  ../../../components/ipc/client/prelude
 
 proc htmlParse*(oparsingData: Option[ParseHTMLPacket]): HTMLParseResult =
   if !oparsingData:
@@ -17,7 +17,7 @@ proc htmlParse*(oparsingData: Option[ParseHTMLPacket]): HTMLParseResult =
 
   let
     startTime = getMonoTime()
-    document = parseHTML(newStringStream(decode(parsingData.source)))
+    document = parseHTML(newStringStream(decode(parsingData.source, urlSafe = true)))
     endTime = getMonoTime()
 
   info "Parsed HTML in " & $(endTime - startTime)

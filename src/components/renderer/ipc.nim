@@ -1,9 +1,7 @@
-import std/base64
 import ../../components/ipc/shared
 import pkg/vmath
 from pkg/ferusgfx import Scene
-import pkg/ferusgfx/displaylist
-
+import pkg/ferusgfx/displaylist, pkg/simdutf/base64
 import ../parsers/html/document
 
 type
@@ -58,17 +56,24 @@ proc parseHook*(s: string, i: int, v2: ptr Scene) {.inline.} =
 
 proc newTextNode*(content: string, position: Vec2, font: string): Drawable {.inline.} =
   Drawable(
-    kind: TextNode, content: content.encode(safe = true), position: position, font: font
+    kind: TextNode,
+    content: content.encode(urlSafe = true),
+    position: position,
+    font: font,
   )
 
 proc newImageNode*(path: string, position: Vec2): Drawable {.inline.} =
   Drawable(
-    kind: ImageNode, imgContent: path.readFile().encode(safe = true), position: position
+    kind: ImageNode,
+    imgContent: path.readFile().encode(urlSafe = true),
+    position: position,
   )
 
 proc newGIFNode*(path: string, position: Vec2): Drawable {.inline.} =
   Drawable(
-    kind: GIFNode, gifContent: path.readFile().encode(safe = true), position: position
+    kind: GIFNode,
+    gifContent: path.readFile().encode(urlSafe = true),
+    position: position,
   )
 
 proc newDisplayList*(clearAll: bool = false): IPCDisplayList {.inline.} =

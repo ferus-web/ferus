@@ -1,15 +1,18 @@
-import std/[logging, json, base64, net]
-import ../../components/ipc/client/prelude
-import bali/grammar/prelude
-import bali/runtime/prelude
-import bali/stdlib/console
-import jsony
-import ../../components/shared/[nix, sugar]
-import ../../components/web/[window]
-import ../../components/web/document as jsdoc
-import ../../components/web/websockets as jswebsocket
+import std/[logging, json, net]
+import
+  pkg/jsony,
+  pkg/simdutf/base64,
+  pkg/bali/grammar/prelude,
+  pkg/bali/runtime/prelude,
+  pkg/bali/stdlib/console
+import
+  ../../components/shared/[nix, sugar],
+  ../../components/ipc/client/prelude,
+  ../../components/web/[window],
+  ../../components/web/document as jsdoc,
+  ../../components/web/websockets as jswebsocket,
+  ./ipc
 from ../../components/parsers/html/document import HTMLDocument
-import ./ipc
 
 type JSProcess* = object
   ipc*: IPCClient
@@ -32,8 +35,8 @@ proc jsExecBuffer*(js: var JSProcess, data: string) =
   js.ipc.setState(Processing)
   let data = &tryParseJson(data, JSExecPacket)
 
-  js.parser = newParser(data.buffer.decode())
-  js.runtime = newRuntime(data.name.decode(), js.parser.parse())
+  js.parser = newParser(data.buffer.decode(urlSafe = true))
+  js.runtime = newRuntime(data.name.decode(urlSafe = true), js.parser.parse())
   window.generateIR(js.runtime, js.ipc)
   jsdoc.generateIR(js.runtime)
   jswebsocket.generateBindings(js.runtime, js.ipc)
