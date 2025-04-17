@@ -75,7 +75,7 @@ proc main() {.inline.} =
   tab1.load()
   tabs.add(tab1.move())
 
-  while true:
+  while tabs[0].master.alive:
     master.poll()
     for i, _ in tabs:
       tabs[i].heartbeat()
