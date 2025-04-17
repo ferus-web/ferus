@@ -162,6 +162,17 @@ proc talk(client: FerusNetworkClient, process: FerusProcess) {.inline.} =
     info "network: Created WebSocket connection to address " & $openReq.address &
       " successfully!"
     client.ipc.send(NetworkWebSocketCreationResult(error: none(string)))
+  of feGoodbye:
+    info "network: received goodbye packet."
+
+    info "network: closing all websockets"
+    for ws in client.websockets:
+      ws.handle.close()
+
+    info "network: closing cURL handle"
+    curl.close()
+
+    client.running = false
   else:
     discard
 
@@ -170,6 +181,6 @@ proc networkProcessLogic*(client: var IPCClient, process: FerusProcess) {.inline
   var client = FerusNetworkClient(ipc: client)
   client.ipc.setState(Idling)
 
-  while true:
+  while client.running:
     client.talk(process)
     client.tickAllConnections()

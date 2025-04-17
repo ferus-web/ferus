@@ -1,3 +1,7 @@
+## The IPC "master". This is just an abstraction over the IPC server.
+## It essentially allows you to do anything with your own group of processes (renderer, JS runtime, CSS/HTML parsers, etc.)
+## This includes summoning them, telling them to do a task, telling them to exit, et cetera.
+
 import
   std/
     [os, logging, osproc, strutils, options, base64, net, sets, terminal, posix, tables]
@@ -24,6 +28,8 @@ when defined(unix):
 type MasterProcess* = ref object
   server*: IPCServer
   urls*: Table[uint, URL]
+
+  alive*: bool = true
 
 proc initialize*(master: MasterProcess) {.inline.} =
   master.server.add(FerusGroup())
@@ -515,8 +521,20 @@ proc packetHandler*(
       master.server.reportBadMessage(
         process, "Non-renderer process sent `feRendererExit` opcode", High
       )
+      return
 
-    debug "The renderer has shut down."
+    info "The renderer has shut down. Beginning cleanup."
+
+    # Here, we start sending "goodbye" packets to all processes.
+    # We're essentially telling them, "Hey, start cleaning up and die."
+    for i, group in master.server.groups:
+      for process in group:
+        debug "Telling PID " & $process.pid & " (group " & $i & "'s " & $process.kind &
+          ") to exit"
+        master.server.send(process.socket, GoodbyePacket())
+
+    info "Cleanup completed. Adios!"
+    master.alive = false
   else:
     warn "Unhandled IPC protocol magic: " & $kind
     return

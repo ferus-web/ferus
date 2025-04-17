@@ -18,7 +18,7 @@ static:
   echo pwd
 
 {.passC: "-I" & gorge("pwd") & "/install/include".}
-{.passL: "-L" & gorge("pwd") & "/install/lib64 -lyogacore".}
+{.passL: "-L" & gorge("pwd") & "/install/lib -lyogacore".}
 
 {.push header: "<yoga/Yoga.h>".}
 type
