@@ -10,3 +10,4 @@ type
   FerusNetworkClient* = ref object
     ipc*: IPCClient
     websockets*: seq[WebSocketConnection] ## All open WebSocket instances
+    running*: bool = true
