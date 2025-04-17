@@ -24,7 +24,13 @@ proc htmlParse*(oparsingData: Option[ParseHTMLPacket]): HTMLParseResult =
 
   HTMLParseResult(document: some(document.parseHTMLDocument()))
 
-proc talk(client: var IPCClient, process: FerusProcess) {.inline.} =
+type HTMLParserData* = object
+  running*: bool = true
+  documentsParsed*: uint64
+
+proc talk(
+    client: var IPCClient, state: var HTMLParserData, process: FerusProcess
+) {.inline.} =
   var count: cint
   discard nix.ioctl(client.socket.getFd().cint, nix.FIONREAD, addr(count))
 
@@ -53,13 +59,21 @@ proc talk(client: var IPCClient, process: FerusProcess) {.inline.} =
 
     client.send(data)
     client.setState(Idling)
+
+    inc state.documentsParsed
+  of feGoodbye:
+    info "html: got goodbye packet, exiting."
+    info "html: we parsed " & $state.documentsParsed &
+      " documents throughout this process's lifetime"
+    state.running = false
   else:
     discard
 
 proc htmlParserProcessLogic*(client: var IPCClient, process: FerusProcess) {.inline.} =
   info "Entering HTML parser process logic."
+  var data = HTMLParserData()
   client.setState(Idling)
   client.poll()
 
-  while true:
-    client.talk(process)
+  while data.running:
+    client.talk(data, process)
