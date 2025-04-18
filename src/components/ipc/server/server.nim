@@ -70,7 +70,7 @@ proc send*[T](server: var IPCServer, sock: Socket, data: T) {.inline.} =
   let serialized = (toJson data) & '\0'
 
   when defined(ferusIpcLogSendsToStdout):
-    echo serialized
+    echo "server sends -> " & serialized
 
   sock.send(serialized)
 

@@ -134,9 +134,8 @@ proc parseHTML*(
 
   info ("Sending group $1 HTML parser process a request to parse some HTML" % [$group])
 
-  master.server.send(
-    (&process).socket, ParseHTMLPacket(source: encode(source, urlSafe = true))
-  )
+  let html = encode(source, urlSafe = true)
+  master.server.send((&process).socket, ParseHTMLPacket(source: html))
 
   info ("Waiting for response from group $1 HTML parser process" % [$group])
 
