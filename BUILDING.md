@@ -10,6 +10,16 @@ the following libraries:
 - libX11
 - libXext
 - wayland, wayland-protocols and wayland-scanner
+- simdutf
+- LibICU
+
+You also need to resolve Ferus' submodules using
+
+    git submodule update --init --recursive
+
+This makes sure that Yoga is available for the bindings to compile.
+
+> **Note:** Clang seems to be completely borked due to a silly SIMD function signature issue. See [this issue](https://github.com/treeform/pixie/issues/506) for more details.
 
 When these are all installed, run
 
