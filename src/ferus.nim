@@ -2,8 +2,9 @@ import std/[os, strutils, logging, tables]
 import colored_logger
 import
   components/
-    [build_utils, argparser, master/master, network/ipc, renderer/ipc, web/controller]
-import components/parsers/html/document
+    [build_utils, argparser, master/master, network/ipc, renderer/ipc, web/controller],
+  components/parsers/html/document,
+  components/ipc/server/prelude
 import pkg/sanchar/parse/url, pkg/[shakar, pretty]
 
 {.passC: gorge("pkg-config --cflags openssl").strip().}
@@ -71,6 +72,9 @@ proc main() {.inline.} =
     master.poll()
     for i, _ in tabs:
       tabs[i].heartbeat()
+
+  for tab in tabs:
+    tab.master.server.close() # Shut down each tab's IPC master
 
 when isMainModule:
   main()
