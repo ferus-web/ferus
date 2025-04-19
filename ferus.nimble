@@ -33,6 +33,7 @@ requires "whisky >= 0.1.3"
 requires "npeg >= 1.3.0"
 requires "webidl2nim >= 0.0.1"
 requires "shakar >= 0.1.3"
+requires "mimalloc >= 0.3.1"
 
 task niskriya, "Build Niskriya, the WebIDL to Nim source generator":
   exec "nim c --define:release --out:niskriya tools/niskriya.nim"
