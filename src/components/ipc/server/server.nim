@@ -187,14 +187,7 @@ proc acceptNewConnection*(server: var IPCServer) =
     conn: Socket
     address: string
 
-  while true:
-    try:
-      server.socket.acceptAddr(conn, address)
-      break
-    except OSError:
-      continue
-
-    sleep(150)
+  server.socket.acceptAddr(conn, address)
 
   info "New connection from: " & address
   let packet = server.receive(conn, HandshakePacket)
@@ -413,9 +406,7 @@ proc bindServerPath*(server: var IPCServer): string =
     InitializationFailed, "Windows/non *NIX systems are not supported yet. Sorry! :("
   )
 
-proc initialize*(server: var IPCServer, path: Option[string] = none string) {.inline.} =
-  debug "IPC server initializing"
-  # server.socket.setSockOpt(OptReusePort, true)
+proc setNonBlocking*(server: var IPCServer) =
   let flags = fcntl(server.socket.getFd(), F_GETFL, 0)
   if flags == -1:
     server.socket.close()
@@ -429,6 +420,10 @@ proc initialize*(server: var IPCServer, path: Option[string] = none string) {.in
       InitializationFailed,
       "fcntl(F_SETFL) returned -1; " & $strerror(errno) & " (" & $errno & ')',
     )
+
+proc initialize*(server: var IPCServer, path: Option[string] = none string) {.inline.} =
+  debug "IPC server initializing"
+  # server.socket.setSockOpt(OptReusePort, true)
 
   if path.isSome:
     server.socket.bindUnix(path.unsafeGet())

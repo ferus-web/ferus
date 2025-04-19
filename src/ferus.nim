@@ -72,7 +72,7 @@ proc main() {.inline.} =
     master.poll()
     for i, _ in tabs:
       tabs[i].heartbeat()
-
+  
   for tab in tabs:
     tab.master.server.close() # Shut down each tab's IPC master
 

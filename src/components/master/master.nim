@@ -524,6 +524,7 @@ proc packetHandler*(
 
     # Here, we start sending "goodbye" packets to all processes.
     # We're essentially telling them, "Hey, start cleaning up and die."
+    master.server.setNonBlocking() # We do not want to block at this point. We won't be receiving anything now so it doesn't matter.
     for i, group in master.server.groups:
       for process in group:
         debug "Telling PID " & $process.pid & " (group " & $i & "'s " & $process.kind &
