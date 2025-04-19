@@ -1,6 +1,6 @@
 # Package
 
-version = "0.2.5"
+version = "0.2.51"
 author = "xTrayambak"
 description = "The Ferus Web Engine"
 license = "GPL3"
