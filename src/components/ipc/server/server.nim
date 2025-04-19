@@ -1,20 +1,15 @@
 import std/[os, logging, net, options, sugar, strutils, times, json]
+import pkg/[shakar, jsony]
 
 when defined(ssl):
   import std/openssl
 
-proc `*`[T](opt: Option[T]): bool {.inline, noSideEffect, gcsafe.} =
-  # dumb hacks to make code look less yucky
-  opt.isSome
-
-proc `&`[T](opt: Option[T]): T {.inline, noSideEffect, gcsafe.} =
-  opt.get()
-
-import jsony
 import ../shared, ./groups
 
 when defined(unix):
-  from std/posix import getuid, kill, SIGKILL, unlink
+  from std/posix import
+    getuid, kill, SIGKILL, unlink, fcntl, F_SETFL, F_GETFL, strerror, errno, O_NONBLOCK,
+    send
 
 when defined(ssl):
   proc parseHook*(s: string, i: int, v2: SslPtr) =
@@ -72,7 +67,11 @@ proc send*[T](server: var IPCServer, sock: Socket, data: T) {.inline.} =
   when defined(ferusIpcLogSendsToStdout):
     echo "server sends -> " & serialized
 
-  sock.send(serialized)
+  let sent = posix.send(sock.getFd(), serialized[0].addr, serialized.len, 0)
+
+  if sent < 0:
+    warn "Failed to send data to fd " & $sock.getFd().int & ": " & $strerror(errno) &
+      " (" & $errno & ')'
 
 proc commitKicks*(server: var IPCServer) {.inline.} =
   for i, process in server.kickQueue:
@@ -188,7 +187,14 @@ proc acceptNewConnection*(server: var IPCServer) =
     conn: Socket
     address: string
 
-  server.socket.acceptAddr(conn, address)
+  while true:
+    try:
+      server.socket.acceptAddr(conn, address)
+      break
+    except OSError:
+      continue
+
+    sleep(150)
 
   info "New connection from: " & address
   let packet = server.receive(conn, HandshakePacket)
@@ -363,7 +369,7 @@ proc poll*(server: var IPCServer) =
   server.findDeadProcesses()
   server.receiveMessages()
 
-proc `=destroy`*(server: IPCServer) =
+proc close*(server: IPCServer) =
   info "IPC server is now shutting down; closing socket!"
 
   if server.path.len > 0:
@@ -410,6 +416,20 @@ proc bindServerPath*(server: var IPCServer): string =
 proc initialize*(server: var IPCServer, path: Option[string] = none string) {.inline.} =
   debug "IPC server initializing"
   # server.socket.setSockOpt(OptReusePort, true)
+  let flags = fcntl(server.socket.getFd(), F_GETFL, 0)
+  if flags == -1:
+    server.socket.close()
+    raise newException(
+      InitializationFailed,
+      "fcntl(F_GETFL) returned -1; " & $strerror(errno) & " (" & $errno & ')',
+    )
+
+  if fcntl(server.socket.getFd(), F_SETFL, flags or O_NONBLOCK) == -1:
+    raise newException(
+      InitializationFailed,
+      "fcntl(F_SETFL) returned -1; " & $strerror(errno) & " (" & $errno & ')',
+    )
+
   if path.isSome:
     server.socket.bindUnix(path.unsafeGet())
     server.path = unsafeGet path
