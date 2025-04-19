@@ -1,6 +1,5 @@
 import std/[options, strutils, tables, sugar, importutils, logging, sets]
-import pkg/[ferusgfx, opengl, pretty, chroma, jsony, vmath, pixie, bumpy]
-import ../shared/sugar
+import pkg/[ferusgfx, opengl, pretty, chroma, jsony, vmath, pixie, bumpy, shakar]
 import ./[utils, ipc]
 import ../../components/parsers/html/document
 import ../../components/parsers/css/[parser]

@@ -1,4 +1,5 @@
-import std/[os, net, options, sugar, times, sets], jsony
+import std/[os, net, options, sugar, times, sets]
+import pkg/jsony
 import ../shared
 
 when not defined(ferusInJail):

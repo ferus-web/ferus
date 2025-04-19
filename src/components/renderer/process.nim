@@ -1,13 +1,13 @@
 import std/[options, json, logging, importutils, logging, posix, net]
 import
   pkg/ferusgfx/[displaylist, fontmgr, textnode, imagenode, gifnode],
-  pkg/[jsony, pixie],
+  pkg/[jsony, pixie, shakar],
   pkg/simdutf/base64
 when defined(linux):
   import ../../components/sandbox/linux
 
 import ../../components/renderer/[core]
-import ../../components/shared/[nix, sugar]
+import ../../components/shared/[nix]
 import ../../components/renderer/ipc except newDisplayList
 import ../../components/ipc/client/prelude
 

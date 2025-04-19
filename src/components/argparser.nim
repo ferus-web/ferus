@@ -1,5 +1,5 @@
 import std/[os, parseopt, logging, tables, options]
-import ../components/shared/sugar
+import pkg/shakar
 
 type Input* = object
   arguments*: seq[string]

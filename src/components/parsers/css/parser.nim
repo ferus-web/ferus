@@ -1,8 +1,8 @@
+#!fmt:off
 import std/[strutils, tables, options]
-import stylus/[parser, shared, tokenizer], results
-import pkg/pretty
 import ./[types, selector_parser, anb, keywords, units]
-import ../../shared/sugar
+import pkg/stylus/[parser, shared, tokenizer], pkg/[shakar, pretty, results]
+#!fmt:on
 
 type CSSParser* = ref object
   state*: Parser

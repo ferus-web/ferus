@@ -1,11 +1,10 @@
 ## Yoga-based layout engine
 import std/[logging, strutils, tables, importutils, options]
-import pkg/[pixie, vmath, pretty]
+import pkg/[pixie, vmath, pretty, shakar]
 import ../../bindings/yoga
 import ../../components/parsers/html/document
 import ../../components/parsers/css/[parser, anb, types]
 import ../../components/style/[selector_engine, style_matcher, functions]
-import ../../components/shared/sugar
 import ../../components/ipc/[client/prelude, shared]
 
 type

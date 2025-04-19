@@ -4,13 +4,13 @@
 
 import std/[os, logging, osproc, strutils, options, net, sets, terminal, posix, tables]
 import
-  pkg/[jsony, pretty],
+  pkg/[jsony, pretty, shakar],
   pkg/sanchar/parse/url,
   pkg/sanchar/proto/http/shared,
   pkg/simdutf/base64
 
 import
-  ../../components/shared/[nix, sugar],
+  ../../components/shared/[nix],
   ../../components/
     [network/ipc, renderer/ipc, parsers/html/ipc, parsers/html/document, js/ipc],
   ../../components/web/cookie/parsed_cookie,

@@ -1,6 +1,6 @@
 import std/unittest
 import components/web/cookie/parsed_cookie
-import components/shared/sugar
+import pkg/shakar
 
 suite "basic cookie parsing":
   let ck = parseCookie(

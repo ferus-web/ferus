@@ -1,6 +1,8 @@
+#!fmt:off
 import std/[options, sequtils, strutils, times]
-import ./cookie
-import ../../shared/[sugar, parse_ints]
+import ./cookie, ../../shared/[parse_ints]
+import pkg/shakar
+#!fmt:on
 
 type ParsedCookie* = object
   name*, value*: string

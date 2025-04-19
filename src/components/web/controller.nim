@@ -2,8 +2,8 @@
 import std/[os, logging, strutils, tables]
 import sanchar/parse/url
 import ../../components/parsers/html/document
-import ../../components/[master/master, network/ipc, renderer/ipc, shared/sugar]
-import pkg/[pretty]
+import ../../components/[master/master, network/ipc, renderer/ipc]
+import pkg/[pretty, shakar]
 
 type WebMasterController* = object
   document*: HTMLDocument

@@ -1,18 +1,10 @@
 import std/[os, strutils, logging, tables]
 import colored_logger
 import
-  components/[
-    build_utils,
-    argparser,
-    master/master,
-    network/ipc,
-    renderer/ipc,
-    shared/sugar,
-    web/controller,
-  ]
+  components/
+    [build_utils, argparser, master/master, network/ipc, renderer/ipc, web/controller]
 import components/parsers/html/document
-import sanchar/parse/url
-import pretty
+import pkg/sanchar/parse/url, pkg/[shakar, pretty]
 
 {.passC: gorge("pkg-config --cflags openssl").strip().}
 {.passL: gorge("pkg-config --libs openssl").strip().}

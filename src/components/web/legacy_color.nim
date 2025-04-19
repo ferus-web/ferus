@@ -1,8 +1,6 @@
 ## Legacy color parser
 import std/[strutils, options, logging]
-import pkg/bali/internal/trim_string
-import pkg/chroma
-import ../shared/sugar
+import pkg/bali/internal/trim_string, pkg/[shakar, chroma]
 
 proc parseLegacyColorValue*(str: string): Option[Color] =
   if str.len < 2:

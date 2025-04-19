@@ -1,10 +1,9 @@
 ## WebSocket logic
 ## This currently uses the Whisky library, but there are plans to use a homegrown implementation sooner or later.
 import std/[importutils, net]
-import pkg/[jsony, whisky]
+import pkg/[jsony, whisky, shakar]
 import ../ipc/client/prelude
 import ../js/ipc
-import ../shared/sugar
 import ./[types, ipc]
 
 privateAccess(WebSocket)

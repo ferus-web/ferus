@@ -1,10 +1,12 @@
+#!fmt:off
 import std/[options, json, logging, monotimes, net, os]
-import pkg/jsony, pkg/simdutf/base64
+import pkg/[jsony, shakar], pkg/simdutf/base64
 import
   ./[document, ipc],
   ../../web/dom,
-  ../../shared/[nix, sugar],
+  ../../shared/[nix],
   ../../../components/ipc/client/prelude
+#!fmt:off
 
 proc htmlParse*(oparsingData: Option[ParseHTMLPacket]): HTMLParseResult =
   if !oparsingData:

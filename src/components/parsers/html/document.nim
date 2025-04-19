@@ -2,8 +2,9 @@
 
 #!fmt:off
 import std/[options, logging, strutils, tables]
-import pkg/[pretty], pkg/chagashi/charset, pkg/sanchar/parse/url, pkg/simdutf/base64
-import ../../shared/sugar, ../../web/dom
+import
+  pkg/[pretty, shakar], pkg/chagashi/charset, pkg/sanchar/parse/url, pkg/simdutf/base64
+import ../../web/dom
 #!fmt:on
 
 type

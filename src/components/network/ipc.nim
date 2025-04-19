@@ -2,9 +2,9 @@
 import std/[options]
 import pkg/sanchar/parse/url,
        pkg/sanchar/proto/http/shared,
-       pkg/simdutf/base64
-import ../../components/ipc/shared,
-       ../../components/shared/[sugar]
+       pkg/simdutf/base64,
+       pkg/[shakar]
+import ../../components/ipc/shared
 #!fmt: on
 
 type

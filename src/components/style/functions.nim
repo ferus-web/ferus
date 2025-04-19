@@ -4,8 +4,7 @@
 ## Trayambak Rai (xtrayambak at disroot dot org)
 import std/[logging, strutils, options]
 import ../parsers/css/[types]
-import ../shared/sugar
-import pkg/[chroma]
+import pkg/[chroma, shakar]
 
 proc evaluateRGBAFunction*(value: CSSValue): Option[ColorRGBA] =
   ## Evaluate a RGBA function (`rgba()`)

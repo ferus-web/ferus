@@ -1,12 +1,12 @@
 import std/[logging, json, net]
 import
-  pkg/jsony,
+  pkg/[jsony, shakar],
   pkg/simdutf/base64,
   pkg/bali/grammar/prelude,
   pkg/bali/runtime/prelude,
   pkg/bali/stdlib/console
 import
-  ../../components/shared/[nix, sugar],
+  ../../components/shared/[nix],
   ../../components/ipc/client/prelude,
   ../../components/web/[window],
   ../../components/web/document as jsdoc,

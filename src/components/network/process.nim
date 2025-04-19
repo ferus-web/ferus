@@ -1,6 +1,6 @@
 import std/[strutils, sequtils, importutils, logging, options, os, json, net]
 import
-  pkg/[pretty, whisky, jsony],
+  pkg/[pretty, whisky, jsony, shakar],
   pkg/sanchar/[http, proto/http/shared],
   pkg/sanchar/parse/url,
   pkg/simdutf/base64
@@ -10,7 +10,7 @@ when defined(ferusUseCurl):
   import pkg/webby/httpheaders, pkg/curly #!fmt:on
 
 import
-  ../../components/shared/[nix, sugar],
+  ../../components/shared/[nix],
   ../../components/network/[websocket, types, ipc],
   ../../components/build_utils,
   ../../components/ipc/client/prelude

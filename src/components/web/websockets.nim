@@ -1,11 +1,9 @@
 ## JavaScript interface for WebSocket API.
 
 import std/[logging]
-import ../ipc/shared, ../ipc/client/prelude, ../shared/sugar
+import ../ipc/shared, ../ipc/client/prelude
 import ../js/ipc
-import pkg/bali/runtime/prelude
-import pkg/sanchar/parse/url
-import pkg/jsony
+import pkg/bali/runtime/prelude, pkg/sanchar/parse/url, pkg/[shakar, jsony]
 
 type JSWebSocket* = object
   onopen*: JSValue
