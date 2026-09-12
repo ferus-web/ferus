@@ -1,5 +1,5 @@
 # Notice
-Work on Ferus has been stopped entirely, in favor of [Sirius](https://git.xtrayambak.xyz/ferus-web/sirius), which is vastly superior to this engine, both architecturally and somewhat in terms of specs.
+Work on Ferus has been stopped entirely, in favor of [Sirius](https://github.com/ferus-web/sirius), which is vastly superior to this engine, both architecturally and somewhat in terms of specs.
 
 # The Ferus Web Engine
 The Ferus web engine is a tiny web engine written in Nim which aims to be a full replacement for something like Chromium's Blink, Safari's WebKit or Firefox's Gecko. \
